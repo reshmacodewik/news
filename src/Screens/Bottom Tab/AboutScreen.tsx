@@ -52,51 +52,6 @@ const AboutScreen: React.FC = () => {
             with clear, reliable, and transparent news that empowers smarter decisions and deeper
             global understanding.
           </Text>
-          <Text style={styles.body}>
-            Arcalis News is dedicated to delivering truthful, timely, and unbiased reporting in
-            today’s fast-paced digital world, where misinformation spreads rapidly. Founded in 2023,
-            we are an independent platform covering diverse topics such as world events, politics,
-            business, health, technology, lifestyle, and the environment.
-          </Text>
-
-          <Text style={styles.body}>
-            Our mission is to go beyond headlines, providing fact-checked stories, in-depth
-            analysis, and expert insights on issues that matter most. We believe journalism is a
-            two-way conversation and value reader engagement. Join our community to stay informed
-            with clear, reliable, and transparent news that empowers smarter decisions and deeper
-            global understanding.
-          </Text><Text style={styles.body}>
-            Arcalis News is dedicated to delivering truthful, timely, and unbiased reporting in
-            today’s fast-paced digital world, where misinformation spreads rapidly. Founded in 2023,
-            we are an independent platform covering diverse topics such as world events, politics,
-            business, health, technology, lifestyle, and the environment.
-          </Text>
-
-          <Text style={styles.body}>
-            Our mission is to go beyond headlines, providing fact-checked stories, in-depth
-            analysis, and expert insights on issues that matter most. We believe journalism is a
-            two-way conversation and value reader engagement. Join our community to stay informed
-            with clear, reliable, and transparent news that empowers smarter decisions and deeper
-            global understanding.
-          </Text><Text style={styles.body}>
-            Arcalis News is dedicated to delivering truthful, timely, and unbiased reporting in
-            today’s fast-paced digital world, where misinformation spreads rapidly. Founded in 2023,
-            we are an independent platform covering diverse topics such as world events, politics,
-            business, health, technology, lifestyle, and the environment.
-          </Text>
-
-          <Text style={styles.body}>
-            Our mission is to go beyond headlines, providing fact-checked stories, in-depth
-            analysis, and expert insights on issues that matter most. We believe journalism is a
-            two-way conversation and value reader engagement. Join our community to stay informed
-            with clear, reliable, and transparent news that empowers smarter decisions and deeper
-            global understanding.
-          </Text><Text style={styles.body}>
-            Arcalis News is dedicated to delivering truthful, timely, and unbiased reporting in
-            today’s fast-paced digital world, where misinformation spreads rapidly. Founded in 2023,
-            we are an independent platform covering diverse topics such as world events, politics,
-            business, health, technology, lifestyle, and the environment.
-          </Text>
 
           <Text style={styles.body}>
             Our mission is to go beyond headlines, providing fact-checked stories, in-depth
