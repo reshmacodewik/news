@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -7,20 +7,51 @@ import {
   ScrollView,
   Image,
   ImageBackground,
-} from 'react-native';
-import { styles } from '../../style/SignupScreenstyles';
+} from "react-native";
+import { styles } from "../../style/SignupScreenstyles";
+import { apiPost } from "../../Utils/api/common";
+import { signupSchema } from "../../validation/signupSchema";
+import { useFormik } from "formik";
+import { API_REGISTER } from "../../Utils/api/APIConstant";
+import ShowToast from "../../Utils/ShowToast";
+import { navigate } from "../../Navigators/utils";
 
 const SignupScreen = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [subscribeNews, setSubscribeNews] = useState(false);
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      email: "",
+      password: "",
+      agreeTerms: false,
+      subscribeNews: false,
+    },
+    validationSchema: signupSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      try {
+        const res = await apiPost({
+          url: API_REGISTER,
+          values: {
+            name: values.name,
+            email: values.email,
+            password: values.password,
+            subscribeNews: values.subscribeNews,
+          },
+        });
 
-  const handleSignUp = () => {
-    if (!agreeTerms) return; // guard
-    console.log('Sign up pressed', { name, email, subscribeNews });
-  };
+        if (res?.success) {
+          ShowToast(res?.message, "success");
+          navigate("Login" as never);
+        } else {
+          ShowToast(res?.error || "Register Failed", "error");
+        }
+      } catch (error: any) {
+        console.log("Register error:", error);
+        ShowToast(error?.error || "Something went wrong", "error");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
 
   return (
     <View style={styles.container}>
@@ -31,7 +62,7 @@ const SignupScreen = () => {
         keyboardShouldPersistTaps="handled"
       >
         <ImageBackground
-          source={require('../../icons/background.png')}
+          source={require("../../icons/background.png")}
           resizeMode="cover"
           style={{ flex: 1 }}
         >
@@ -39,7 +70,7 @@ const SignupScreen = () => {
           <View style={styles.headerContainer}>
             <View style={styles.logoContainer}>
               <Image
-                source={require('../../icons/logo.png')}
+                source={require("../../icons/logo.png")}
                 style={styles.logo}
                 resizeMode="contain"
               />
@@ -60,11 +91,15 @@ const SignupScreen = () => {
                 style={styles.textInput}
                 placeholder="Name"
                 placeholderTextColor="#9CA3AF"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-                autoCorrect={false}
+                value={formik.values.name}
+                onChangeText={formik.handleChange("name")}
+                onBlur={formik.handleBlur("name")}
               />
+              {formik.touched.name && formik.errors.name && (
+                <Text style={{ color: "red", fontSize: 12 }}>
+                  {formik.errors.name}
+                </Text>
+              )}
             </View>
 
             {/* Email */}
@@ -74,12 +109,17 @@ const SignupScreen = () => {
                 style={styles.textInput}
                 placeholder="Example@email.com"
                 placeholderTextColor="#9CA3AF"
-                value={email}
-                onChangeText={setEmail}
+                value={formik.values.email}
+                onChangeText={formik.handleChange("email")}
+                onBlur={formik.handleBlur("email")}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                autoCorrect={false}
               />
+              {formik.touched.email && formik.errors.email && (
+                <Text style={{ color: "red", fontSize: 12 }}>
+                  {formik.errors.email}
+                </Text>
+              )}
             </View>
 
             {/* Password */}
@@ -89,51 +129,67 @@ const SignupScreen = () => {
                 style={styles.textInput}
                 placeholder="at least 8 characters"
                 placeholderTextColor="#9CA3AF"
-                value={password}
-                onChangeText={setPassword}
+                value={formik.values.password}
+                onChangeText={formik.handleChange("password")}
+                onBlur={formik.handleBlur("password")}
                 secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
               />
+              {formik.touched.password && formik.errors.password && (
+                <Text style={{ color: "red", fontSize: 12 }}>
+                  {formik.errors.password}
+                </Text>
+              )}
             </View>
 
             {/* --- Checkboxes --- */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setAgreeTerms(v => !v)}
+              onPress={() =>
+                formik.setFieldValue("agreeTerms", !formik.values.agreeTerms)
+              }
               style={styles.checkboxRow}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: agreeTerms }}
             >
               <View
                 style={[
                   styles.checkboxBox,
-                  agreeTerms && styles.checkboxBoxChecked,
+                  formik.values.agreeTerms && styles.checkboxBoxChecked,
                 ]}
               >
-                {agreeTerms ? <Text style={styles.checkIcon}>✓</Text> : null}
+                {formik.values.agreeTerms ? (
+                  <Text style={styles.checkIcon}>✓</Text>
+                ) : null}
               </View>
               <Text style={styles.checkboxText}>
-                I agree to the website’s{' '}
-                <Text style={styles.linkText}>Terms & Conditions</Text> and{' '}
+                I agree to the website’s{" "}
+                <Text style={styles.linkText}>Terms & Conditions</Text> and{" "}
                 <Text style={styles.linkText}>Privacy Policy</Text>.
               </Text>
             </TouchableOpacity>
+            {formik.touched.agreeTerms && formik.errors.agreeTerms && (
+              <Text style={{ color: "red", fontSize: 12 }}>
+                {formik.errors.agreeTerms}
+              </Text>
+            )}
 
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setSubscribeNews(v => !v)}
+              onPress={() =>
+                formik.setFieldValue(
+                  "subscribeNews",
+                  !formik.values.subscribeNews
+                )
+              }
               style={styles.checkboxRow}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: subscribeNews }}
             >
               <View
                 style={[
                   styles.checkboxBox,
-                  subscribeNews && styles.checkboxBoxChecked,
+                  formik.values.subscribeNews && styles.checkboxBoxChecked,
                 ]}
               >
-                {subscribeNews ? <Text style={styles.checkIcon}>✓</Text> : null}
+                {formik.values.subscribeNews ? (
+                  <Text style={styles.checkIcon}>✓</Text>
+                ) : null}
               </View>
               <Text style={styles.checkboxText}>
                 I want to receive newsletters, updates, and personalized news.
@@ -142,9 +198,12 @@ const SignupScreen = () => {
 
             {/* CTA */}
             <TouchableOpacity
-              style={[styles.signInButton, !agreeTerms && { opacity: 0.6 }]}
-              onPress={handleSignUp}
-              disabled={!agreeTerms}
+              style={[
+                styles.signInButton,
+                !formik.values.agreeTerms && { opacity: 0.6 },
+              ]}
+              onPress={formik.handleSubmit as any}
+              disabled={!formik.values.agreeTerms || formik.isSubmitting}
               activeOpacity={0.9}
             >
               <Text style={styles.signInButtonText}>Sign Up</Text>
@@ -153,12 +212,12 @@ const SignupScreen = () => {
             {/* Footer link */}
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>
-                Already have an account?{' '}
+                Already have an account?{" "}
                 <Text
                   style={styles.signUpLink}
-                  onPress={() => console.log('Go to Sign In')}
+                  onPress={() => navigate("Login" as never)}
                 >
-                  Login In
+                  Login
                 </Text>
               </Text>
             </View>

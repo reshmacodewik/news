@@ -6,6 +6,7 @@ import SignupScreen from '../../Screens/Auth/SignupScreen';
 import BottomTab from '../Navigation/BottomTab/BottomTab';
 import ArticleDetailScreen from '../../Screens/ArticleDetailScreen';
 import PrivacyPolicyScreen from '../../Screens/PrivacyPolicyScreen';
+import EditProfileScreen from '../../Screens/EditProfileScreen';
 
 export const notAuthenticatedRoutes = [
   {
@@ -42,6 +43,12 @@ export const notAuthenticatedRoutes = [
     routeName: SCREEN_NAMES.privacy,
     headerHeading: 'PrivacyPolicy',
     component: PrivacyPolicyScreen,
+    headerShown: false,
+  },
+  {
+    routeName: SCREEN_NAMES.editProfile,
+    headerHeading: 'EditProfile',
+    component: EditProfileScreen,
     headerShown: false,
   }
   

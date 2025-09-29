@@ -121,7 +121,7 @@ const MoreScreen: React.FC = () => {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.editBtn} activeOpacity={0.9}>
+          <TouchableOpacity style={styles.editBtn} activeOpacity={0.9} onPress={() => navigate('EditProfile' as never)}>
             <Image source={EDIT} style={styles.editIcon} />
             <Text style={styles.editText}>Edit Profile</Text>
           </TouchableOpacity>

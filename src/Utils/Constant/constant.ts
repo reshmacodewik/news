@@ -7,10 +7,11 @@ export const SCREEN_NAMES = {
 
   // bottom tabs
   home: 'Home',
-  about: 'About',
+  about: 'Fast News',
   trending: 'Trending',
-  subscription: 'Subscription',
+  subscription: 'Premium',
   more: 'More',
+  editProfile: 'EditProfile',
  
 } as const;
 
