@@ -74,13 +74,69 @@ export const styles = StyleSheet.create({
     marginBottom: scale(10),
   },
   byline: { fontSize: 14, color: '#727272' },
-  byAuthor: { color: '#727272' ,fontSize: f(13)},
+  byAuthor: { color: '#727272', fontSize: f(13) },
   dateline: { marginTop: scale(2), fontSize: f(13), color: '#727272' },
 
+  heartIcon: {
+    width: 16,
+    height: 16,
+    marginRight: 4,
+  },
+
+  chatIcon: {
+    width: 16,
+    height: 16,
+    marginRight: 4,
+  },
+
+  likeCount: {
+    fontSize: 14,
+    color: '#333',
+  },
+
+  sheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    maxHeight: '85%',
+  },
+  handle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#ccc',
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  heading: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+  },
+  commentBtn: {
+    backgroundColor: '#000',
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  divider: { height: 1, backgroundColor: '#eee', marginVertical: 10 },
+  commentBox: { flexDirection: 'row', marginBottom: 15 },
+  avatar: { width: 36, height: 36, borderRadius: 18, marginRight: 10 },
+  username: { fontWeight: '600', fontSize: 14 },
+  time: { color: '#888', fontSize: 12 },
+  text: { marginTop: 4, fontSize: 14, color: '#333' },
+  actions: { flexDirection: 'row', marginTop: 6, gap: 10 },
+  actionBtn: { color: '#555', fontSize: 13 },
+  replyBtn: { color: '#007bff', fontSize: 13 },
   /* Body text */
   body: {
     paddingHorizontal: scale(16),
-    fontSize:16,
+    fontSize: 16,
     lineHeight: f(24),
     color: '#111827',
     marginTop: scale(12),

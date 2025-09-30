@@ -4,8 +4,7 @@ const { width, height } = Dimensions.get('window');
 const BASE_W = 375;
 
 export const scale = (n: number) => (width / BASE_W) * n;
-const f = (n: number) =>
-  Math.round(PixelRatio.roundToNearestPixel(scale(n)));
+const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
@@ -55,7 +54,8 @@ export const styles = StyleSheet.create({
   },
   planCardHighlight: {
     padding: scale(2), // for blue border effect
-    backgroundColor: '#2260B2', 
+    backgroundColor: '#2260B2',
+  
   },
 
   ribbon: {
@@ -66,9 +66,12 @@ export const styles = StyleSheet.create({
     height: scale(35),
     borderTopLeftRadius: scale(12),
     borderTopRightRadius: scale(12),
+  
     backgroundColor: '#1E4FA8',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#2260B2',
     zIndex: 2,
   },
   ribbonText: {
@@ -107,7 +110,13 @@ export const styles = StyleSheet.create({
     marginBottom: scale(0),
   },
   price: { fontSize: f(36), fontWeight: '800', color: '#0F172A' },
-  cadence: { marginLeft: scale(8), marginBottom: scale(15), color: '#374151', fontSize: f(16), fontWeight: '700' },
+  cadence: {
+    marginLeft: scale(8),
+    marginBottom: scale(15),
+    color: '#374151',
+    fontSize: f(16),
+    fontWeight: '700',
+  },
 
   featureRow: {
     flexDirection: 'row',
@@ -118,12 +127,10 @@ export const styles = StyleSheet.create({
     width: scale(16),
     height: scale(16),
     resizeMode: 'contain',
-   
+
     marginRight: scale(10),
   },
-  featureIconBlue: {
-   
-  },
+  featureIconBlue: {},
   featureText: {
     fontSize: f(15),
     color: '#111827',

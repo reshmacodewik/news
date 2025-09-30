@@ -13,7 +13,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../../style/MoreStyles';
 import BottomSheet from '../../Components/BottomSheet';
 import { navigate } from '../../Navigators/utils';
-
+import { apiPost, getApiWithOutQuery } from '../../Utils/api/common';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { API_GET_PROFILE, API_RESET_PASSWORD, API_VERIFY_EMAIL, API_VERIFY_OTP } from '../../Utils/api/APIConstant';
+import ShowToast from '../../Utils/ShowToast';
 // ---- Assets (replace with your actual files) ----
 const LOGO = require('../../icons/logoblack.png');
 const AVATAR_BG = require('../../icons/user.png'); // a circular gradient PNG
@@ -50,7 +53,9 @@ const Row = ({
 
 const MoreScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
-  const [sheet, setSheet] = useState<'none' | 'email' | 'code' | 'newPassword'>('none');
+  const [sheet, setSheet] = useState<'none' | 'email' | 'code' | 'newPassword'>(
+    'none',
+  );
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -60,24 +65,86 @@ const MoreScreen: React.FC = () => {
   const openCode = () => setSheet('code');
   const close = () => setSheet('none');
 
-  const handleSend = () => {
-    // TODO call API
+  const {
+    data: profile,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['profile-info'],
+    queryFn: async () => {
+      const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
+      console.log('API response ===>', res); // log it
+      return res.data;
+    },
+  });
+// Send password reset email
+const requestPasswordReset = useMutation({
+  mutationFn: async () => {
+    const res = await apiPost({
+      url: API_VERIFY_EMAIL,
+      values: { email }
+    });
+    return res.data;
+  },
+  onSuccess: () => {
     openCode();
-  };
+  },
+  onError: (err) => {
+    console.log('Request password reset error', err);
+  },
+});
 
-  const handleVerify = () => {
-    // TODO: verify code with API
+// Verify OTP
+const verifyOtp = useMutation({
+  mutationFn: async () => {
+    const res = await apiPost({
+      url: API_VERIFY_OTP,
+      values: { email,code}
+    });
+    return res.data;
+  },
+  onSuccess: () => {
     setSheet('newPassword');
-  };
+  },
+  onError: (err) => {
+    console.log('Verify OTP error', err);
+  },
+});
 
-  // const handleResetPassword = () => {
-  //   if (newPassword !== confirmPassword) {
-  //     showAlert('Passwords do not match');
-  //     return;
-  //   }
-  //   // TODO: call reset API
-  //   setSheet('none');
-  // };
+// Reset password
+const resetPassword = useMutation({
+  mutationFn: async () => {
+    const res = await apiPost({
+      url: API_RESET_PASSWORD,
+     values :{ email, newPassword, confirmPassword },
+    });
+    return res.data;
+  },
+  onSuccess: () => {
+    setSheet('none');
+  },
+  onError: (err) => {
+    console.log('Reset password error', err);
+  },
+});
+
+ const handleSend = () => {
+  if (!email) return ShowToast('Please enter your email');
+  requestPasswordReset.mutate();
+};
+
+const handleVerify = () => {
+  if (!code) return ShowToast('Please enter the OTP');
+  verifyOtp.mutate();
+};
+
+const handleResetPassword = () => {
+  if (!newPassword || !confirmPassword) return ShowToast('Please enter all fields');
+  if (newPassword !== confirmPassword) return ShowToast('Passwords do not match');
+  resetPassword.mutate();
+};
+
   const onEmail = () => Linking.openURL('mailto:support@arcalisnews.com');
 
   return (
@@ -109,19 +176,33 @@ const MoreScreen: React.FC = () => {
               />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.name}>Alex John</Text>
-              <View style={styles.line}>
-                <Image source={MAIL} style={styles.smallIcon} />
-                <Text style={styles.lineText}>alexjouhn56@gmail.com</Text>
-              </View>
-              <View style={styles.line}>
-                <Image source={PHONE} style={styles.smallIcon} />
-                <Text style={styles.lineText}>+1 666-777-3335</Text>
-              </View>
+             
+                <>
+                  <Text style={styles.name}>{profile?.name }</Text>
+
+                  <View style={styles.line}>
+                    <Image source={MAIL} style={styles.smallIcon} />
+                    <Text style={styles.lineText}>
+                      {profile?.email }
+                    </Text>
+                  </View>
+
+                  <View style={styles.line}>
+                    <Image source={PHONE} style={styles.smallIcon} />
+                    <Text style={styles.lineText}>
+                      {profile?.phoneNumber }
+                    </Text>
+                  </View>
+                </>
+            
             </View>
           </View>
 
-          <TouchableOpacity style={styles.editBtn} activeOpacity={0.9} onPress={() => navigate('EditProfile' as never)}>
+          <TouchableOpacity
+            style={styles.editBtn}
+            activeOpacity={0.9}
+            onPress={() => navigate('EditProfile' as never)}
+          >
             <Image source={EDIT} style={styles.editIcon} />
             <Text style={styles.editText}>Edit Profile</Text>
           </TouchableOpacity>
@@ -139,7 +220,11 @@ const MoreScreen: React.FC = () => {
 
         {/* Group 2 */}
         <View style={styles.cardGroup}>
-          <Row icon={SHIELD} label="Privacy Policy" onPress={() => navigate('PrivacyPolicy' as never)} />
+          <Row
+            icon={SHIELD}
+            label="Privacy Policy"
+            onPress={() => navigate('PrivacyPolicy' as never)}
+          />
           <Row
             icon={TERMS}
             label="Terms of Usage & Conditions"
@@ -194,7 +279,7 @@ const MoreScreen: React.FC = () => {
               </Text>
 
               <Text style={styles.inputLabel}>Email</Text>
-              <TextInput
+               <TextInput
                 style={styles.input}
                 placeholder="Example@email.com"
                 placeholderTextColor="#9CA3AF"
@@ -204,11 +289,10 @@ const MoreScreen: React.FC = () => {
                 onChangeText={setEmail}
               />
 
-              <TouchableOpacity
-                style={[styles.primaryBtn, { marginTop: 16 }]}
-                onPress={handleSend}
-              >
-                <Text style={styles.primaryBtnText}>Send</Text>
+              <TouchableOpacity style={[styles.primaryBtn, { marginTop: 16 }]} onPress={handleSend}>
+                <Text style={styles.primaryBtnText}>
+                  {requestPasswordReset.isPending ? 'Sending...' : 'Send'}
+                </Text>
               </TouchableOpacity>
             </>
           )}
@@ -224,7 +308,7 @@ const MoreScreen: React.FC = () => {
               </Text>
 
               <Text style={styles.inputLabel}>Code</Text>
-              <TextInput
+                 <TextInput
                 style={styles.input}
                 placeholder="Enter Code"
                 placeholderTextColor="#9CA3AF"
@@ -234,11 +318,10 @@ const MoreScreen: React.FC = () => {
                 onChangeText={setCode}
               />
 
-              <TouchableOpacity
-                style={[styles.primaryBtn, { marginTop: 16 }]}
-                onPress={handleVerify}
-              >
-                <Text style={styles.primaryBtnText}>Verification</Text>
+              <TouchableOpacity style={[styles.primaryBtn, { marginTop: 16 }]} onPress={handleVerify}>
+                <Text style={styles.primaryBtnText}>
+                  {verifyOtp.isPending ? 'Verifying...' : 'Verification'}
+                </Text>
               </TouchableOpacity>
             </>
           )}
@@ -251,7 +334,7 @@ const MoreScreen: React.FC = () => {
               </Text>
 
               <Text style={styles.inputLabel}>New Password</Text>
-              <TextInput
+               <TextInput
                 style={styles.input}
                 placeholder="New Password"
                 placeholderTextColor="#9CA3AF"
@@ -270,11 +353,10 @@ const MoreScreen: React.FC = () => {
                 onChangeText={setConfirmPassword}
               />
 
-              <TouchableOpacity
-                style={[styles.primaryBtn, { marginTop: 16 }]}
-                // onPress={handleResetPassword}
-              >
-                <Text style={styles.primaryBtnText}>Verification</Text>
+              <TouchableOpacity style={[styles.primaryBtn, { marginTop: 16 }]} onPress={handleResetPassword}>
+                <Text style={styles.primaryBtnText}>
+                  {resetPassword.isPending ? 'Resetting...' : 'Reset Password'}
+                </Text>
               </TouchableOpacity>
             </>
           )}

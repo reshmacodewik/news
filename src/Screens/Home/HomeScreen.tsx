@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { styles } from '../../style/HomeStyles';
 import { navigate } from '../../Navigators/utils';
+import { useAuth } from '../Auth/AuthContext';
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
 const { width } = Dimensions.get('window');
@@ -84,6 +85,7 @@ const makeArticles = (prefix: string, count = 8): Article[] =>
   }));
 
 const HomeScreen: React.FC = () => {
+   const { session, loading } = useAuth();
   const [activeSlide, setActiveSlide] = useState(0);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>('Top News');
   const listRef = useRef<FlatList<Article>>(null);
@@ -102,26 +104,34 @@ const HomeScreen: React.FC = () => {
     const index = Math.round(e.nativeEvent.contentOffset.x / width);
     if (index !== activeSlide) setActiveSlide(index);
   };
+// const { session, loading } = useAuth();
+
+const handleAvatarPress = () => {
+
+  if (loading) return; // wait until session is loaded
+  if (!session?.user) {
+    console.log("No session/user found, navigating to Login");
+    navigate("Login" as never);
+  } else {
+    console.log("User found:", session.user);
+    navigate("More" as never);
+  }
+};
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={{ paddingBottom: scale(24) }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* ===== HEADER ===== */}
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: scale(24) }} showsVerticalScrollIndicator={false}>
+        {/* HEADER */}
         <ImageBackground source={BG} style={styles.header} resizeMode="cover">
           <View style={styles.topBar}>
-            {/* wordmark; replace with your logo asset or Text */}
             <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-            <TouchableOpacity style={styles.avatarBtn} onPress={() => navigate('Login')}>
+            <TouchableOpacity style={styles.avatarBtn} onPress={handleAvatarPress}>
               <Image source={AVATAR} style={styles.avatar} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.welcomeBlock}>
-            <Text style={styles.welcomeHeading}>Welcome back, Tyler!</Text>
+            <Text  style={styles.welcomeHeading}>Welcome back, {session?.user?.name ?? 'Reader'}</Text>
             <Text style={styles.welcomeSubtitle}>
               Discover a world of news that matters to you
             </Text>
@@ -243,7 +253,7 @@ const HomeScreen: React.FC = () => {
           keyExtractor={i => i.id}
           scrollEnabled={false} // we’re inside a ScrollView
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.rowCard} activeOpacity={0.9}>
+            <TouchableOpacity style={styles.rowCard} activeOpacity={0.9}   onPress={() => navigate('ArticleDetail' as never)}>
               <View style={styles.rowLeft}>
                 <Text style={styles.rowTitle} numberOfLines={2}>
                   {item.title}

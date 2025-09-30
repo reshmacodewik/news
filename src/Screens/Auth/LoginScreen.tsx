@@ -6,43 +6,43 @@ import {
   ScrollView,
   Image,
   ImageBackground,
-} from "react-native";
-import { styles } from "../../style/LoginScreenstyles";
-import React from "react";
-import { navigate } from "../../Navigators/utils";
+} from 'react-native';
+import { styles } from '../../style/LoginScreenstyles';
+import React from 'react';
+import { navigate } from '../../Navigators/utils';
 import { useFormik } from 'formik';
-import { loginSchema } from "../../validation/signupSchema";
-import ShowToast from "../../Utils/ShowToast";
-import { AuthSession } from "../../storage/mmkvPersister";
-import { apiPost } from "../../Utils/api/common";
-import { API_LOGIN } from "../../Utils/api/APIConstant";
-import { useAuth } from "./AuthContext";
+import { loginSchema } from '../../validation/signupSchema';
+import ShowToast from '../../Utils/ShowToast';
+import { apiPost } from '../../Utils/api/common';
+import { API_LOGIN } from '../../Utils/api/APIConstant';
+import { AuthSession, useAuth } from './AuthContext';
 
 const LoginScreen = () => {
-   const { signIn } = useAuth();
+  const { signIn } = useAuth();
   const formik = useFormik({
-    initialValues: { email: "", password: "" },
+    initialValues: { email: '', password: '' },
     validationSchema: loginSchema,
-    onSubmit: async (values) => {
+    onSubmit: async values => {
       try {
         const res = await apiPost({ url: API_LOGIN, values });
 
-        if (res?.success && res?.data?.token) {
+        if (res?.success) {
           const session: AuthSession = {
             accessToken: res.data.token,
-            refreshToken: res.data?.refreshToken,
             user: res.data?.user,
           };
-
           signIn(session);
-          console.log("Saved session:", session);
-          ShowToast(res?.message, "success");
-          navigate("Home" as never);
+
+          console.log('Saved session:', session);
+          ShowToast(res?.message, 'success');
+
+          // Navigate after session is saved
+          navigate('Home' as never);
         } else {
-          ShowToast(res?.message || "Login Failed", "error");
+          ShowToast(res?.message || 'Login Failed', 'error');
         }
       } catch (e: any) {
-        ShowToast(e?.message || "Something went wrong", "error");
+        ShowToast(e?.message || 'Something went wrong', 'error');
       }
     },
   });
@@ -55,7 +55,7 @@ const LoginScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <ImageBackground
-          source={require("../../icons/background.png")}
+          source={require('../../icons/background.png')}
           resizeMode="cover"
           style={{ flex: 1 }}
         >
@@ -63,7 +63,7 @@ const LoginScreen = () => {
           <View style={styles.headerContainer}>
             <View style={styles.logoContainer}>
               <Image
-                source={require("../../icons/logo.png")}
+                source={require('../../icons/logo.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />
@@ -84,13 +84,13 @@ const LoginScreen = () => {
                 placeholder="Example@email.com"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.email}
-                onChangeText={formik.handleChange("email")}
-                onBlur={formik.handleBlur("email")}
+                onChangeText={formik.handleChange('email')}
+                onBlur={formik.handleBlur('email')}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
               {formik.touched.email && formik.errors.email && (
-                <Text style={{ color: "red", fontSize: 12 }}>
+                <Text style={{ color: 'red', fontSize: 12 }}>
                   {formik.errors.email}
                 </Text>
               )}
@@ -104,13 +104,13 @@ const LoginScreen = () => {
                 placeholder="at least 8 characters"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.password}
-                onChangeText={formik.handleChange("password")}
-                onBlur={formik.handleBlur("password")}
+                onChangeText={formik.handleChange('password')}
+                onBlur={formik.handleBlur('password')}
                 secureTextEntry
                 autoCapitalize="none"
               />
               {formik.touched.password && formik.errors.password && (
-                <Text style={{ color: "red", fontSize: 12 }}>
+                <Text style={{ color: 'red', fontSize: 12 }}>
                   {formik.errors.password}
                 </Text>
               )}
@@ -119,7 +119,7 @@ const LoginScreen = () => {
             {/* Forgot Password Link */}
             <TouchableOpacity
               style={styles.forgotPasswordContainer}
-              onPress={() => console.log("Forgot Password pressed")}
+              onPress={() => console.log('Forgot Password pressed')}
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -142,10 +142,10 @@ const LoginScreen = () => {
             {/* Social Sign In Buttons */}
             <TouchableOpacity
               style={styles.socialButton}
-              onPress={() => console.log("Google Sign in pressed")}
+              onPress={() => console.log('Google Sign in pressed')}
             >
               <Image
-                source={require("../../icons/Google.png")}
+                source={require('../../icons/Google.png')}
                 style={styles.socialIcon}
               />
               <Text style={styles.socialButtonText}>Sign in with Google</Text>
@@ -153,10 +153,10 @@ const LoginScreen = () => {
 
             <TouchableOpacity
               style={styles.socialButton}
-              onPress={() => console.log("Facebook Sign in pressed")}
+              onPress={() => console.log('Facebook Sign in pressed')}
             >
               <Image
-                source={require("../../icons/Facebook.png")}
+                source={require('../../icons/Facebook.png')}
                 style={styles.socialIcon}
               />
               <Text style={styles.socialButtonText}>Sign in with Facebook</Text>
@@ -165,10 +165,10 @@ const LoginScreen = () => {
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>
-                Don't you have an account?{" "}
+                Don't you have an account?{' '}
                 <Text
                   style={styles.signUpLink}
-                  onPress={() => navigate("Signup" as never)}
+                  onPress={() => navigate('Signup' as never)}
                 >
                   Sign up
                 </Text>
@@ -182,5 +182,3 @@ const LoginScreen = () => {
 };
 
 export default LoginScreen;
-
-

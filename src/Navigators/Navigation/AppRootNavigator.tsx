@@ -7,6 +7,8 @@ import AuthenticatedStackNavigation from './Stack/AuthenticatedStackNavigation';
 import NoInternetConnection from '../../Components/NoInternetConnection';
 import { getAccessToken } from '../../storage/mmkvPersister';
 
+
+
 const AppRootNavigator = () => {
   const isOffline = useCheckInternetConnection();
   const isAuthenticate = getAccessToken();

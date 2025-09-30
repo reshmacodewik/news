@@ -1,5 +1,11 @@
 export const API_REGISTER: string = "/users/signup";
 export const API_LOGIN: string = "/users/login";
 export const API_USER_DETAILS: string = "/users/details";
-export const API_VERIFY_EMAIL: string = "/users/verify-email";
+export const API_VERIFY_EMAIL: string = "/users/request-password-reset";
+export const API_VERIFY_OTP: string = "/users/verify-otp";
 export const API_RESET_PASSWORD: string = "/users/reset-password";
+export const API_GET_PROFILE: string = "/users/profile";
+export const API_EDIT_PROFILE: string = "/users/update-profile";
+export const API_PRIVACY_POLICY: string = "users/cms/privacy-policy";
+export const API_ABOUT_US: string = "users/cms/about-us";
+export const API_SUBSCRIPTION_PLANS: string = "/users/subscriptions";

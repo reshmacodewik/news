@@ -1,6 +1,8 @@
 
+import axios from 'axios';
 import ShowToast from '../ShowToast';
 import { defaultAxios } from './axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ApiParams {
@@ -21,6 +23,7 @@ interface postParams {
   headers?: Record<string, string>;
 }
 
+
 export const getApiWithOutQuery = async ({
   url,
 }: {
@@ -34,7 +37,6 @@ export const getApiWithOutQuery = async ({
     return err?.response?.data;
   }
 };
-
 // export const getApiWithOutQueryWithToken = async ({
 //   url,
 // }: ApiParams & { token: string }): Promise<any> => {

@@ -45,7 +45,7 @@ export const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#e3e9ee',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     marginTop: '-18%',

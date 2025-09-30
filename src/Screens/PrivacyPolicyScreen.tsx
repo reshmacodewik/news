@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,32 +8,66 @@ import {
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
+import { getApiWithOutQuery } from '../Utils/api/common';
 import { styles } from '../style/PrivacyPolicyStyles';
 import { navigate } from '../Navigators/utils';
-
+import { API_PRIVACY_POLICY } from '../Utils/api/APIConstant';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
-
-// Replace with your actual logo asset
 const LOGO = require('../icons/Blacklogo.png');
-const BACK_ARROW = require('../icons/back.png'); // Add this icon to your assets
+const BACK_ARROW = require('../icons/back.png');
 
 const PrivacyPolicyScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const [lastUpdate, setLastUpdate] = useState('');
 
   const handleBackPress = () => {
-    navigate('Home'); // Replace 'Home' with your actual previous screen name
-    console.log('Back pressed');
+    navigate('Home');
   };
+
+  // Fetch CMS content safely
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['cms-privacy-policy'], // Corrected query key
+    queryFn: async () => {
+      const res = await getApiWithOutQuery({ url: API_PRIVACY_POLICY });
+      // Ensure query always returns an object
+      console.log("-------",res.data)
+      return res?.data ?? { sections: [], slug: '', updatedAt: '' };
+    },
+  });
+
+  useEffect(() => {
+    if (data?.updatedAt) {
+      const date = new Date(data.updatedAt);
+      setLastUpdate(date.toLocaleDateString());
+    }
+  }, [data]);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>Error loading content.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={{ height: insets.top }} />
-      
+
       {/* Top Navigation Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={handleBackPress}
           activeOpacity={0.7}
         >
@@ -43,40 +77,35 @@ const PrivacyPolicyScreen: React.FC = () => {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ 
-          paddingBottom: insets.bottom + scale(32) 
-        }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + scale(32) }}
       >
-        {/* Logo and Brand Section */}
+        {/* Logo Section */}
         <View style={styles.brandSection}>
           <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-         
         </View>
 
         {/* Main Heading */}
         <View style={styles.headerSection}>
-          <Text style={styles.mainHeading}>Privacy Policy</Text>
-          <Text style={styles.lastUpdate}>Last update: January 1, 2025</Text>
+          <Text style={styles.mainHeading}>
+            {data?.slug ? data.slug.replace('-', ' ').toUpperCase() : 'PRIVACY POLICY'}
+          </Text>
+          {lastUpdate ? <Text style={styles.lastUpdate}>Last update: {lastUpdate}</Text> : null}
         </View>
 
-        {/* Introduction Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeading}>Introduction</Text>
-          <Text style={styles.bodyText}>
-            At Arcalis News, your privacy is our top priority. This privacy policy explains the types of information we collect, how we use it, and the measures we take to protect your personal data. We aim to provide transparency about our practices and build trust with our readers. Whether you browse our articles, subscribe to our newsletter, or leave comments, we handle your information responsibly and securely. By visiting our site, you consent to our policies. Our goal is to create a safe online environment where you can access news, updates, and personalized content without worrying about unauthorized data use. Your trust matters to us.
-          </Text>
-        </View>
-
-        {/* Our Values Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeading}>Our Values</Text>
-          <Text style={styles.bodyText}>
-            We are committed to transparency and giving users control over their data. Protecting your privacy is fundamental to our mission. We only collect information that is essential for providing our services and improving your experience. Your personal information is never sold to third parties, and we maintain strict internal policies to safeguard it. We ensure that you can manage preferences, access data, and opt out when desired. Our team continuously reviews privacy practices to stay compliant with legal requirements and industry standards. By prioritizing user privacy, we strive to create a trustworthy platform where readers feel confident interacting with our content.
-          </Text>
-        </View>
+        {/* Sections from API */}
+        {data?.sections?.length ? (
+          data.sections.map((section: any, index: number) => (
+            <View key={index} style={styles.section}>
+              <Text style={styles.sectionHeading}>{section.title}</Text>
+              <Text style={styles.bodyText}>{section.description}</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={{ textAlign: 'center', marginTop: 20 }}>No content available.</Text>
+        )}
       </ScrollView>
     </View>
   );
