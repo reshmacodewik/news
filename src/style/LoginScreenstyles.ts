@@ -5,7 +5,6 @@ const { width, height } = Dimensions.get('window');
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-
   },
   scrollView: {
     flex: 1,
@@ -14,21 +13,19 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
   },
   headerContainer: {
-
     paddingTop: 20,
     paddingBottom: 40,
     paddingHorizontal: 24,
-   
+
     minHeight: height * 0.35,
     justifyContent: 'center',
   },
   logoContainer: {
-    marginBottom:15,
+    marginBottom: 15,
   },
   logo: {
     width: 46,
     height: 46,
-    
   },
   welcomeText: {
     fontSize: 28,
@@ -109,33 +106,31 @@ export const styles = StyleSheet.create({
     color: '#6B7280',
     marginHorizontal: 16,
   },
- socialButton: {
-  alignContent: 'center',
-  flexDirection: 'row',
-  alignItems: 'center',
-  backgroundColor: '#F0F6FF',
-  borderRadius: 12,
-  paddingVertical: 12,
-  paddingHorizontal: 16,
-  marginBottom: 12,
-  borderWidth: 1,
-  borderColor: '#E5E7EB',
-  justifyContent: 'center',
-  gap:15
-},
-socialIcon: { 
-  width: 27,
-  height: 27,
+  socialButton: {
+    alignContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F6FF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    justifyContent: 'center',
+    gap: 15,
+  },
+  socialIcon: {
+    width: 27,
+    height: 27,
+  },
 
-},
-
-socialButtonText: {
-  fontSize: 16,
-  color: '#000',
-  fontWeight: '400',
-  textAlign: 'center',
-
-},
+  socialButtonText: {
+    fontSize: 16,
+    color: '#000',
+    fontWeight: '400',
+    textAlign: 'center',
+  },
 
   signUpContainer: {
     alignItems: 'center',

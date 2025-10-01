@@ -1,68 +1,59 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { clearSession, getSession, saveSession } from '../../storage/mmkvPersister';
-
-// -------------- TYPES -----------------
-export type User = {
-  _id: string;
-  name: string;
-  email: string;
-  phoneNumber?: string;
-  role?: number;
-  photo?: string;
-};
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type AuthSession = {
   accessToken: string;
-  user: User;
+  user: any;
 };
 
 type AuthContextType = {
   session: AuthSession | null;
-  loading: boolean;
-  signIn: (s: AuthSession) => void;
+  signIn: (session: AuthSession) => void;
   signOut: () => void;
 };
 
-// -------------- CONTEXT -----------------
 const AuthContext = createContext<AuthContextType>({
   session: null,
-  loading: true,
   signIn: () => {},
   signOut: () => {},
 });
 
-// -------------- PROVIDER -----------------
-export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session from storage
+  // Load session from AsyncStorage
   useEffect(() => {
-    const boot = async () => {
-      const s = await getSession();
-      if (s?.accessToken && s.user) {
-        setSession(s);
+    const loadSession = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('userSession');
+        if (saved) {
+          setSession(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.log('Failed to load session:', e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    boot();
+    loadSession();
   }, []);
 
-  const value = useMemo(() => ({
-    session,
-    loading,
-    signIn: (s: AuthSession) => {
-      saveSession(s);
-      setSession(s);
-    },
-    signOut: () => {
-      clearSession();
-      setSession(null);
-    }
-  }), [session, loading]);
+  const signIn = async (newSession: AuthSession) => {
+    setSession(newSession);
+    await AsyncStorage.setItem('userSession', JSON.stringify(newSession));
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const signOut = async () => {
+    setSession(null);
+    await AsyncStorage.removeItem('userSession');
+  };
+
+  return (
+    <AuthContext.Provider value={{ session, signIn, signOut }}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 };
 
-// -------------- HOOK -----------------
 export const useAuth = () => useContext(AuthContext);

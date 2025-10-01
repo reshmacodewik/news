@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     backgroundColor: '#FFFFFF',
   },
-  backBtn: { padding: scale(8) },
+  backBtn: {  },
   backIcon: { width: scale(20), height: scale(20), tintColor: '#111827' },
   appTitle: { fontSize: f(16), fontWeight: '700', color: '#374151' },
 
@@ -99,7 +99,7 @@ export const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 16,
-    maxHeight: '85%',
+    maxHeight: '55%',
   },
   handle: {
     width: 40,
@@ -125,7 +125,7 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
   },
   divider: { height: 1, backgroundColor: '#eee', marginVertical: 10 },
-  commentBox: { flexDirection: 'row', marginBottom: 15 },
+  commentBox: { flexDirection: 'row', marginBottom: 0,borderWidth:1 ,borderColor:'#ECEFF3',borderRadius:10,paddingHorizontal:10},
   avatar: { width: 36, height: 36, borderRadius: 18, marginRight: 10 },
   username: { fontWeight: '600', fontSize: 14 },
   time: { color: '#888', fontSize: 12 },

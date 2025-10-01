@@ -8,7 +8,7 @@ const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  scroll: { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { flex: 1, backgroundColor: '#FFFFFF',marginBottom: scale(25) },
 
   // Top bar
   topBar: {
@@ -44,7 +44,7 @@ export const styles = StyleSheet.create({
     marginHorizontal: scale(16),
     marginBottom: scale(16),
     borderRadius: scale(20),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2260B2',
     // shadow
     shadowColor: '#000',
     shadowOpacity: 0.12,
@@ -59,25 +59,21 @@ export const styles = StyleSheet.create({
   },
 
   ribbon: {
-    position: 'absolute',
+ 
     top: scale(0),
     left: scale(0),
     right: scale(0),
-    height: scale(35),
+    padding: scale(9),
     borderTopLeftRadius: scale(12),
     borderTopRightRadius: scale(12),
-  
-    backgroundColor: '#1E4FA8',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#2260B2',
     zIndex: 2,
   },
   ribbonText: {
     color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: f(11),
+    fontWeight: '500',
+    fontSize: f(12),
     letterSpacing: 0.3,
   },
 
@@ -85,11 +81,12 @@ export const styles = StyleSheet.create({
   innerCard: {
     borderRadius: scale(18),
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: scale(18),
-    paddingTop: scale(40), // space under ribbon
+    padding: scale(15),
+    paddingHorizontal:scale(22),
     paddingBottom: scale(18),
     borderTopLeftRadius: scale(18),
     borderTopRightRadius: scale(18),
+   
   },
 
   planTitle: {
@@ -113,7 +110,7 @@ export const styles = StyleSheet.create({
   cadence: {
     marginLeft: scale(8),
     marginBottom: scale(15),
-    color: '#374151',
+    color: '#000',
     fontSize: f(16),
     fontWeight: '700',
   },

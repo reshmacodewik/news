@@ -15,11 +15,17 @@ import BottomSheet from '../../Components/BottomSheet';
 import { navigate } from '../../Navigators/utils';
 import { apiPost, getApiWithOutQuery } from '../../Utils/api/common';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { API_GET_PROFILE, API_RESET_PASSWORD, API_VERIFY_EMAIL, API_VERIFY_OTP } from '../../Utils/api/APIConstant';
+import {
+  API_GET_PROFILE,
+  API_RESET_PASSWORD,
+} from '../../Utils/api/APIConstant';
 import ShowToast from '../../Utils/ShowToast';
-// ---- Assets (replace with your actual files) ----
+import DeviceInfo from 'react-native-device-info';
+import { useAuth } from '../Auth/AuthContext';
+
+// ---- Assets ----
 const LOGO = require('../../icons/logoblack.png');
-const AVATAR_BG = require('../../icons/user.png'); // a circular gradient PNG
+const AVATAR_BG = require('../../icons/user.png');
 const MAIL = require('../../icons/email.png');
 const PHONE = require('../../icons/phone.png');
 const EDIT = require('../../icons/edit.png');
@@ -32,7 +38,10 @@ const CHAT = require('../../icons/chat.png');
 const LAYERS = require('../../icons/verison.png');
 const LOGOUT = require('../../icons/logout.png');
 const CHEVRON = require('../../icons/arrow.png');
+
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
+
+// Reusable Row Component
 const Row = ({
   icon,
   label,
@@ -52,100 +61,72 @@ const Row = ({
 );
 
 const MoreScreen: React.FC = () => {
+  const version = DeviceInfo.getVersion();
+  const buildNumber = DeviceInfo.getBuildNumber();
   const inset = useSafeAreaInsets();
-  const [sheet, setSheet] = useState<'none' | 'email' | 'code' | 'newPassword'>(
-    'none',
-  );
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+
+  // BottomSheet state
+  const [sheet, setSheet] = useState<'none' | 'newPassword'>('none');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  const openEmail = () => setSheet('email');
-  const openCode = () => setSheet('code');
+  const { signOut } = useAuth();
+  // Open / close bottom sheet
+  const openNewPassword = () => setSheet('newPassword');
   const close = () => setSheet('none');
 
-  const {
-    data: profile,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
+  // Get profile data
+  const { data: profile } = useQuery({
     queryKey: ['profile-info'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
-      console.log('API response ===>', res); // log it
-      return res.data;
+      return res?.data ?? {};
     },
   });
-// Send password reset email
-const requestPasswordReset = useMutation({
-  mutationFn: async () => {
-    const res = await apiPost({
-      url: API_VERIFY_EMAIL,
-      values: { email }
-    });
-    return res.data;
-  },
-  onSuccess: () => {
-    openCode();
-  },
-  onError: (err) => {
-    console.log('Request password reset error', err);
-  },
-});
 
-// Verify OTP
-const verifyOtp = useMutation({
-  mutationFn: async () => {
-    const res = await apiPost({
-      url: API_VERIFY_OTP,
-      values: { email,code}
-    });
-    return res.data;
-  },
-  onSuccess: () => {
-    setSheet('newPassword');
-  },
-  onError: (err) => {
-    console.log('Verify OTP error', err);
-  },
-});
+  // Reset password API
+  const resetPassword = useMutation({
+    mutationFn: async () => {
+      const res = await apiPost({
+        url: API_RESET_PASSWORD,
+        values: { newPassword, confirmPassword },
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      ShowToast('Password reset successfully');
+      setSheet('none');
+      setNewPassword('');
+      setConfirmPassword('');
+    },
+    onError: err => {
+      console.log('Reset password error', err);
+      ShowToast('Failed to reset password');
+    },
+  });
 
-// Reset password
-const resetPassword = useMutation({
-  mutationFn: async () => {
-    const res = await apiPost({
-      url: API_RESET_PASSWORD,
-     values :{ email, newPassword, confirmPassword },
-    });
-    return res.data;
-  },
-  onSuccess: () => {
-    setSheet('none');
-  },
-  onError: (err) => {
-    console.log('Reset password error', err);
-  },
-});
+  // Handler
+  const handleResetPassword = () => {
+    if (!newPassword || !confirmPassword) {
+      return ShowToast('Please enter all fields');
+    }
+    if (newPassword !== confirmPassword) {
+      return ShowToast('Passwords do not match');
+    }
+    resetPassword.mutate();
+  };
 
- const handleSend = () => {
-  if (!email) return ShowToast('Please enter your email');
-  requestPasswordReset.mutate();
-};
-
-const handleVerify = () => {
-  if (!code) return ShowToast('Please enter the OTP');
-  verifyOtp.mutate();
-};
-
-const handleResetPassword = () => {
-  if (!newPassword || !confirmPassword) return ShowToast('Please enter all fields');
-  if (newPassword !== confirmPassword) return ShowToast('Passwords do not match');
-  resetPassword.mutate();
-};
-
+  // Contact email
   const onEmail = () => Linking.openURL('mailto:support@arcalisnews.com');
+  const handleLogout = async () => {
+    try {
+      await signOut(); // clears session in AsyncStorage and state
+      ShowToast('Logged out successfully');
+      navigate('Login' as never); // redirect to login screen
+    } catch (err) {
+      console.log('Logout error:', err);
+      ShowToast('Failed to logout. Try again.');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -176,25 +157,15 @@ const handleResetPassword = () => {
               />
             </View>
             <View style={styles.profileInfo}>
-             
-                <>
-                  <Text style={styles.name}>{profile?.name }</Text>
-
-                  <View style={styles.line}>
-                    <Image source={MAIL} style={styles.smallIcon} />
-                    <Text style={styles.lineText}>
-                      {profile?.email }
-                    </Text>
-                  </View>
-
-                  <View style={styles.line}>
-                    <Image source={PHONE} style={styles.smallIcon} />
-                    <Text style={styles.lineText}>
-                      {profile?.phoneNumber }
-                    </Text>
-                  </View>
-                </>
-            
+              <Text style={styles.name}>{profile?.name}</Text>
+              <View style={styles.line}>
+                <Image source={MAIL} style={styles.smallIcon} />
+                <Text style={styles.lineText}>{profile?.email}</Text>
+              </View>
+              <View style={styles.line}>
+                <Image source={PHONE} style={styles.smallIcon} />
+                <Text style={styles.lineText}>{profile?.phoneNumber}</Text>
+              </View>
             </View>
           </View>
 
@@ -213,7 +184,7 @@ const handleResetPassword = () => {
 
         {/* Group 1 */}
         <View style={styles.cardGroup}>
-          <Row icon={LOCK} label="Change Password" onPress={openEmail} />
+          <Row icon={LOCK} label="Change Password" onPress={openNewPassword} />
           <Row icon={PLAN} label="Subscription Plan" onPress={() => {}} />
           <Row icon={ABOUT} label="About Us" onPress={() => {}} />
         </View>
@@ -225,11 +196,7 @@ const handleResetPassword = () => {
             label="Privacy Policy"
             onPress={() => navigate('PrivacyPolicy' as never)}
           />
-          <Row
-            icon={TERMS}
-            label="Terms of Usage & Conditions"
-            onPress={() => {}}
-          />
+          <Row icon={TERMS} label="Terms of Usage & Conditions" />
         </View>
 
         {/* Contact + Version */}
@@ -259,107 +226,59 @@ const handleResetPassword = () => {
             />
             <View>
               <Text style={styles.rowLabel}>App Version</Text>
-              <Text style={styles.subtle}>1.1 (104)</Text>
+              <Text style={styles.subtle}>
+                {version} ({buildNumber})
+              </Text>
             </View>
           </View>
         </View>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logoutRow} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.logoutRow}
+          activeOpacity={0.85}
+          onPress={handleLogout}
+        >
           <Image source={LOGOUT} style={styles.logoutIcon} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
-        <BottomSheet visible={sheet !== 'none'} onClose={close}>
-          {sheet === 'email' && (
-            <>
-              <Text style={styles.sheetTitle}>Change Password</Text>
-              <Text style={styles.sheetSub}>
-                Update password instructions will be sent to the email address
-                listed below.
-              </Text>
 
-              <Text style={styles.inputLabel}>Email</Text>
-               <TextInput
-                style={styles.input}
-                placeholder="Example@email.com"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
+        {/* BottomSheet for Reset Password */}
+        <BottomSheet visible={sheet === 'newPassword'} onClose={close}>
+          <Text style={styles.sheetTitle}>Create New Password</Text>
+          <Text style={styles.sheetSub}>
+            This password should be different from the previous password.
+          </Text>
 
-              <TouchableOpacity style={[styles.primaryBtn, { marginTop: 16 }]} onPress={handleSend}>
-                <Text style={styles.primaryBtnText}>
-                  {requestPasswordReset.isPending ? 'Sending...' : 'Send'}
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
+          <Text style={styles.inputLabel}>New Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="New Password"
+            placeholderTextColor="#9CA3AF"
+            secureTextEntry
+            value={newPassword}
+            onChangeText={setNewPassword}
+          />
 
-          {sheet === 'code' && (
-            <>
-              <Text style={styles.sheetTitle}>Please Check Your Email</Text>
-              <Text style={styles.sheetSub}>
-                We have sent the code to{' '}
-                <Text style={styles.boldEmail}>
-                  {email || 'xyz2@gmail.com'}
-                </Text>
-              </Text>
+          <Text style={styles.inputLabel}>Confirm Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm Password"
+            placeholderTextColor="#9CA3AF"
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
 
-              <Text style={styles.inputLabel}>Code</Text>
-                 <TextInput
-                style={styles.input}
-                placeholder="Enter Code"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="number-pad"
-                maxLength={6}
-                value={code}
-                onChangeText={setCode}
-              />
-
-              <TouchableOpacity style={[styles.primaryBtn, { marginTop: 16 }]} onPress={handleVerify}>
-                <Text style={styles.primaryBtnText}>
-                  {verifyOtp.isPending ? 'Verifying...' : 'Verification'}
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {sheet === 'newPassword' && (
-            <>
-              <Text style={styles.sheetTitle}>Create New Password</Text>
-              <Text style={styles.sheetSub}>
-                This password should be different from the previous password.
-              </Text>
-
-              <Text style={styles.inputLabel}>New Password</Text>
-               <TextInput
-                style={styles.input}
-                placeholder="New Password"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry
-                value={newPassword}
-                onChangeText={setNewPassword}
-              />
-
-              <Text style={styles.inputLabel}>Confirm Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm Password"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-              />
-
-              <TouchableOpacity style={[styles.primaryBtn, { marginTop: 16 }]} onPress={handleResetPassword}>
-                <Text style={styles.primaryBtnText}>
-                  {resetPassword.isPending ? 'Resetting...' : 'Reset Password'}
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
+          <TouchableOpacity
+            style={[styles.primaryBtn, { marginTop: 16 }]}
+            onPress={handleResetPassword}
+            disabled={resetPassword.isPending}
+          >
+            <Text style={styles.primaryBtnText}>
+              {resetPassword.isPending ? 'Resetting...' : 'Reset Password'}
+            </Text>
+          </TouchableOpacity>
         </BottomSheet>
       </ScrollView>
     </View>

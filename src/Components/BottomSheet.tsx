@@ -72,13 +72,23 @@ export default function BottomSheet({ visible, onClose, children }: Props) {
 
 const styles = StyleSheet.create({
   sheet: {
-    position: 'absolute', left: 0, right: 0, bottom: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 18, borderTopRightRadius: 18,
-    paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16,
-    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, shadowOffset: { width: 0, height: -2 },
-    elevation: 24,
-  },
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: '#FFFFFF',
+  borderTopLeftRadius: 18,
+  borderTopRightRadius: 18,
+  paddingHorizontal: 16,
+  paddingTop: 8,
+  paddingBottom: 0, // let ScrollView handle padding
+  shadowColor: '#000',
+  shadowOpacity: 0.15,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: -2 },
+  elevation: 24,
+},
+
   handle: {
     alignSelf: 'center', width: 52, height: 4, borderRadius: 999, backgroundColor: '#E5E7EB', marginBottom: 12,
   },

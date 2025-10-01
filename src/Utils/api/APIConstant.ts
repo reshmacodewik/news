@@ -9,3 +9,7 @@ export const API_EDIT_PROFILE: string = "/users/update-profile";
 export const API_PRIVACY_POLICY: string = "users/cms/privacy-policy";
 export const API_ABOUT_US: string = "users/cms/about-us";
 export const API_SUBSCRIPTION_PLANS: string = "/users/subscriptions";
+export const API_ARTICLES_LIST: string = "/users/articles";
+export const API_ARTICLE_TYPE: string = "/users/article/type";
+export const API_CATEGORIES: string = "/users/categories";
+export const API_ARTICLES_CATEGORIES: string = "/users/articles/articles-by-category";

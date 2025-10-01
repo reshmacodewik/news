@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import useCheckInternetConnection from '../../Hook/useCheckInternetConnection';
 import NoAuthenticatedStackNavigation from './Stack/NoAuthenticatedStackNavigation';
@@ -7,18 +7,29 @@ import AuthenticatedStackNavigation from './Stack/AuthenticatedStackNavigation';
 import NoInternetConnection from '../../Components/NoInternetConnection';
 import { getAccessToken } from '../../storage/mmkvPersister';
 
-
-
 const AppRootNavigator = () => {
   const isOffline = useCheckInternetConnection();
-  const isAuthenticate = getAccessToken();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await getAccessToken();
+      setIsAuthenticated(!!token);
+    };
+    checkAuth();
+  }, []);
+
+  // show nothing or loader until auth state is determined
+  if (isAuthenticated === null) {
+    return null; // or a <SplashScreen /> / <ActivityIndicator />
+  }
 
   return (
     <NavigationContainer
       linking={{ prefixes: ['http://example', 'https://example'] }}
       ref={navigationRef}
     >
-      {isAuthenticate ? (
+      {isAuthenticated ? (
         <AuthenticatedStackNavigation />
       ) : (
         <NoAuthenticatedStackNavigation />

@@ -16,6 +16,7 @@ import ShowToast from '../../Utils/ShowToast';
 import { apiPost } from '../../Utils/api/common';
 import { API_LOGIN } from '../../Utils/api/APIConstant';
 import { AuthSession, useAuth } from './AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = () => {
   const { signIn } = useAuth();
@@ -34,6 +35,8 @@ const LoginScreen = () => {
           signIn(session);
 
           console.log('Saved session:', session);
+          await AsyncStorage.setItem('userSession', JSON.stringify(session));
+
           ShowToast(res?.message, 'success');
 
           // Navigate after session is saved

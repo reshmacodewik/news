@@ -200,10 +200,11 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     color: '#111827',
+    marginBottom: scale(12),
   },
   primaryBtn: {
-    height: scale(48),
-    borderRadius: scale(24),
+    paddingVertical: scale(12),
+    borderRadius: scale(12),
     backgroundColor: '#0B2034',
     alignItems: 'center',
     justifyContent: 'center',

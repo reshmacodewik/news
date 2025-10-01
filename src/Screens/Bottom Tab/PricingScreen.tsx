@@ -21,38 +21,37 @@ const AVATAR = require('../../icons/user.png');
 const CHECK = require('../../icons/checkBlue.png');
 const DOT = require('../../icons/dot.png');
 
-type Feature = { text: string; icon?: ImageSourcePropType };
 type Plan = {
   _id: string;
   name: string;
   description: string;
-  price: { monthly: number; yearly: number }; // <- fix here
+  price: { monthly: number; yearly: number };
   features: string[];
   highlight?: boolean;
 };
 
 const PricingScreen: React.FC = () => {
-  const selectedCadence = 'monthly';
   const insets = useSafeAreaInsets();
+  const selectedCadence: 'monthly' | 'yearly' = 'monthly';
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['subscription-plans'],
     queryFn: async () => {
-      const res = await getApiWithOutQuery({
-        url: API_SUBSCRIPTION_PLANS,
-      });
-      console.log("Subscription Plans:",res.data);
+      const res = await getApiWithOutQuery({ url: API_SUBSCRIPTION_PLANS });
+      console.log('Subscription Plans:', res.data);
       return res.data as Plan[];
-      
     },
   });
 
-  // Compute most expensive plan
+  // Compute most expensive plan based on selectedCadence
   const mostExpensive =
     Array.isArray(data) && data.length
       ? data.reduce(
-          (prev, curr) => (curr.price > prev.price ? curr : prev),
-          data[0],
+          (prev, curr) =>
+            curr.price[selectedCadence] > prev.price[selectedCadence]
+              ? curr
+              : prev,
+          data[0]
         )
       : null;
 
@@ -75,38 +74,42 @@ const PricingScreen: React.FC = () => {
       >
         <Text style={styles.pageTitle}>Subscription Plans</Text>
 
-        {/* Render Plans */}
-        {Array.isArray(data) && data.length > 0
-          ? data.map((plan, idx) => (
+        {Array.isArray(data) && data.length > 0 ? (
+          data.map((plan, idx) => {
+            const isMostPopular = plan._id === mostExpensive?._id;
+
+            return (
               <View
                 key={plan._id}
                 style={[
                   styles.planCard,
                   plan.highlight && styles.planCardHighlight,
-                  idx === 0 ? { marginTop: scale(8) } : null,
+                  isMostPopular && { borderColor: '#2260B2', borderWidth: 3 },
                 ]}
               >
-                {/* Highlight Ribbon for Most Expensive */}
-                {plan._id === mostExpensive?._id && (
+                {/* Ribbon */}
+                {isMostPopular && (
                   <View style={styles.ribbon}>
                     <Text style={styles.ribbonText}>MOST POPULAR PLAN</Text>
                   </View>
                 )}
 
                 <View style={styles.innerCard}>
+                  {/* Title */}
                   <Text style={styles.planTitle}>{plan.name}</Text>
                   <Text style={styles.planSubtitle}>{plan.description}</Text>
 
+                  {/* Price */}
                   <View style={styles.priceRow}>
                     <Text style={styles.price}>
-                      ${plan.price?.[selectedCadence] ?? 0}
+                      ${plan.price[selectedCadence] ?? 0}
                     </Text>
                     <Text style={styles.cadence}>/{selectedCadence}</Text>
                   </View>
 
                   {/* Features */}
-                  <View style={{ marginTop: scale(8) }}>
-                    {plan.features?.map((f, i) => (
+                  <View style={{ marginTop: scale(12) }}>
+                    {plan.features.map((feature, i) => (
                       <View key={i} style={styles.featureRow}>
                         <Image
                           source={i === 0 ? CHECK : DOT}
@@ -121,24 +124,42 @@ const PricingScreen: React.FC = () => {
                             i === 0 && styles.featureTextBold,
                           ]}
                         >
-                          {f}
+                          {feature}
                         </Text>
                       </View>
                     ))}
                   </View>
 
-                  {/* CTA Button */}
-                  <TouchableOpacity style={styles.ctaBtn} activeOpacity={0.9}>
-                    <Text style={styles.ctaText}>Subscribe Now</Text>
+                  {/* Subscribe Button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.ctaBtn,
+                      isMostPopular && { backgroundColor: '#333333' },
+                    ]}
+                    activeOpacity={0.9}
+                  >
+                    <Text
+                      style={[
+                        styles.ctaText,
+                        isMostPopular && { color: '#fff' },
+                      ]}
+                    >
+                      Subscribe Now
+                    </Text>
                   </TouchableOpacity>
+
+                  {/* <Text >
+                    or <Text >contact sales</Text>
+                  </Text> */}
                 </View>
               </View>
-            ))
-          : !isLoading && (
-              <Text style={{ textAlign: 'center', marginTop: 20 }}>
-                No plans available.
-              </Text>
-            )}
+            );
+          })
+        ) : !isLoading ? (
+          <Text style={{ textAlign: 'center', marginTop: 20 }}>
+            No plans available.
+          </Text>
+        ) : null}
       </ScrollView>
     </View>
   );

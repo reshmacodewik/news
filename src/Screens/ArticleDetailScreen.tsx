@@ -14,6 +14,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../style/ArticleDetailStyles';
+import { getApiWithOutQuery } from '../Utils/api/common';
+import { useQuery } from '@tanstack/react-query';
+import { API_ARTICLES_LIST } from '../Utils/api/APIConstant';
+import BottomSheet from '../Components/BottomSheet';
 
 const HERO = require('../icons/news.png'); // hero image
 const BACK = require('../icons/back.png'); // left arrow
@@ -32,14 +36,30 @@ const CATEGORIES = [
   'Sports',
 ];
 
-type Props = { navigation: any };
+type Props = { navigation: any; route: { params: { id: string } } };
 
-const ArticleDetailScreen: React.FC<Props> = ({ navigation }) => {
+const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { id } = route.params;
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState('All');
   const [isVisible, setIsVisible] = useState(false);
   const [comment, setComment] = useState('');
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
+  const {
+    data: article,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['article', id],
+    queryFn: async () => {
+      const res = await getApiWithOutQuery({
+        url: `${API_ARTICLES_LIST}/${id}`,
+      });
+
+      return res.data;
+    },
+  });
+
   const comments = [
     {
       id: '1',
@@ -82,55 +102,56 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation }) => {
       >
         {/* Hero */}
         <ImageBackground
-          source={HERO}
+          source={article?.image ? { uri: article.image } : HERO} // fallback local image
           style={styles.hero}
           imageStyle={styles.heroImg}
         />
 
         {/* Headline & byline */}
         <View style={styles.headerBlock}>
-          <Text style={styles.headline}>
-            Global Trade Tensions Rise as Nations Debate New Tariff Policies
-          </Text>
+          <Text style={styles.headline}>{article?.title}</Text>
 
           <Text style={styles.byline}>
             <View
               style={{
                 flexDirection: 'row',
-                alignItems: 'flex-end',
+                alignItems: 'center',
                 justifyContent: 'space-between',
-                marginVertical: 8,
+               
               }}
             >
-              {/* Author */}
+              {/* Author (Left) */}
               <Text style={styles.byAuthor}>By Davis Lawder</Text>
 
-              {/* Spacer */}
-              <View style={{ width: 16 }} />
+              {/* Likes + Comments (Right) */}
+              <View style={{ flexDirection: 'row',marginLeft:'40%' }}>
+                {/* Likes */}
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginRight: 16,
+                  }}
+                >
+                  <Image
+                    source={require('../icons/heart.png')}
+                    style={styles.chatIcon}
+                  />
+                  <Text style={styles.likeCount}>37.5k</Text>
+                </TouchableOpacity>
 
-              {/* Likes */}
-              <TouchableOpacity
-                style={{ flexDirection: 'row', alignItems: 'center' }}
-               
-              >
-                <Image
-                  source={require('../icons/heart.png')}
-                  style={styles.chatIcon}
-                />
-                <Text style={styles.likeCount}>37.5k</Text>
-              </TouchableOpacity>
-
-              {/* Comments */}
-               <TouchableOpacity
-                style={{ flexDirection: 'row', alignItems: 'center' }}
-                onPress={() => setIsVisible(true)}
-              >
-                <Image
-                  source={require('../icons/comment1.png')}
-                  style={styles.chatIcon}
-                />
-                <Text style={styles.likeCount}>120</Text>
-              </TouchableOpacity>
+                {/* Comments */}
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center' }}
+                  onPress={() => setIsVisible(true)}
+                >
+                  <Image
+                    source={require('../icons/comment1.png')}
+                    style={styles.chatIcon}
+                  />
+                  <Text style={styles.likeCount}>120</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </Text>
           <Text style={styles.dateline}>September 13, 2025 4:16 AM</Text>
@@ -138,18 +159,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation }) => {
 
         {/* First paragraphs */}
         <Text style={styles.body}>
-          New York, Sept. 12, 2025 — International markets experienced
-          uncertainty today as world leaders gathered to discuss potential
-          tariffs on countries accused of unfair trading practices. The
-          proposal, raised during a global summit, aims to curb the import of
-          discounted commodities and ensure fair competition across industries.
-        </Text>
-
-        <Text style={styles.body}>
-          According to sources close to the talks, several nations are
-          considering coordinated action to address concerns about energy
-          imports from countries facing international sanctions and supply
-          constraints.
+          {article?.description?.replace(/<[^>]+>/g, '') || ''}
         </Text>
 
         {/* Interaction strip */}
@@ -175,18 +185,6 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation }) => {
         {/* <View style={styles.smallIndicator} /> */}
 
         {/* Remaining paragraphs */}
-        <Text style={styles.body}>
-          Analysts predict that the coming weeks will be crucial as discussions
-          continue. A final decision is expected before the end of the month,
-          with potential implications for industries ranging from energy to
-          technology.
-        </Text>
-
-        <Text style={styles.body}>
-          Local businesses and consumers are advised to monitor developments
-          closely, as any changes could impact fuel costs, trade relations, and
-          overall economic stability.
-        </Text>
 
         {/* Quote block */}
         <View style={styles.quoteWrap}>
@@ -199,51 +197,96 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation }) => {
           </Text>
         </View>
       </ScrollView>
-      <Modal
-        visible={isVisible}
-        onRequestClose={() => setIsVisible(false)}
-        style={{ justifyContent: 'flex-end', margin: 0 }}
-      >
-        <View style={styles.sheet}>
-          {/* Drag handle */}
-          <View style={styles.handle} />
+      <BottomSheet visible={isVisible} onClose={() => setIsVisible(false)}>
+        <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>
+          Comments
+        </Text>
 
-          <Text style={styles.heading}>Comments</Text>
-
-          {/* Input */}
-          <TextInput
-            style={styles.input}
-            placeholder="Add a comment"
-            value={comment}
-            onChangeText={setComment}
-          />
-          <TouchableOpacity style={styles.commentBtn}>
-            <Text style={{ color: '#fff', fontWeight: '600' }}>Comment</Text>
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          {/* Comment List */}
-          <FlatList
-            data={comments}
-            keyExtractor={item => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.commentBox}>
+        {/* Input */}
+        <TextInput
+          placeholder="Add a comment"
+          value={comment}
+          onChangeText={setComment}
+          style={{
+            height: scale(55),
+            borderWidth: 1,
+            borderColor: '#E5E7EB',
+            borderRadius: 8,
+            paddingHorizontal: 5,
+            marginBottom: 12,
+            backgroundColor: '#F0F6FF',
+          }}
+        />
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#0A1F44',
+            height: scale(40),
+            borderRadius: 8,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 12,
+          }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>Comment</Text>
+        </TouchableOpacity>
+        <View
+          style={{
+            borderWidth: 1,
+            borderColor: '#E5E7EB',
+            paddingHorizontal: 12,
+            marginBottom: 16,
+          }}
+        />
+        {/* Comment list */}
+        <FlatList
+          data={comments}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: insets.bottom }}
+          renderItem={({ item }) => (
+            <View
+              style={{
+                marginBottom: 16,
+                padding: 12,
+                borderWidth: 1,
+                borderRadius: 10,
+                borderColor: '#E5E7EB',
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginBottom: 4,
+                }}
+              >
                 <Image
                   source={{ uri: 'https://i.pravatar.cc/100' }}
-                  style={styles.avatar}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    marginRight: 8,
+                  }}
                 />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.username}>{item.user}</Text>
-                  <Text style={styles.time}>{item.time}</Text>
-                  
+                  <Text style={{ fontWeight: '600', fontSize: 14 }}>
+                    {item.user}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#6B7280' }}>
+                    {item.time}
+                  </Text>
                 </View>
-                <Text style={styles.text}>{item.text}</Text>
               </View>
-            )}
-          />
-        </View>
-      </Modal>
+              <Text style={{ fontSize: 14, lineHeight: 20, color: '#111' }}>
+                {item.text}
+              </Text>
+
+              {/* Likes / Replies */}
+            </View>
+          )}
+        />
+      </BottomSheet>
     </View>
   );
 };

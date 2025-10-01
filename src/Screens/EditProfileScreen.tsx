@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiPost, getApiWithOutQuery } from '../Utils/api/common';
 import { API_EDIT_PROFILE, API_GET_PROFILE} from '../Utils/api/APIConstant';
-import { navigate } from '../Navigators/utils';
+import { goBackNavigation, navigate } from '../Navigators/utils';
 import styles from '../style/EditProfileStyles';
 
 const BACK_ARROW = require('../icons/back.png');
@@ -32,7 +32,8 @@ const EditProfileScreen = () => {
     queryKey: ['profile-info'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
-      return res.data;
+   console.log('Profile data:', res.data);
+          return res.data ?? {};
     },
   });
 
@@ -58,7 +59,7 @@ const EditProfileScreen = () => {
     onSuccess: (data) => {
       console.log('Profile updated successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['profile-info'] });
-      navigate('Home'); // go back after saving
+        goBackNavigation(); // go back after saving
     },
     onError: (error) => {
       console.log('Failed to update profile', error);

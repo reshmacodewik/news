@@ -32,7 +32,7 @@ const PrivacyPolicyScreen: React.FC = () => {
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_PRIVACY_POLICY });
       // Ensure query always returns an object
-      console.log("-------",res.data)
+      console.log("-------",res?.data)
       return res?.data ?? { sections: [], slug: '', updatedAt: '' };
     },
   });

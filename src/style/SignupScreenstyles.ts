@@ -39,9 +39,10 @@ export const styles = StyleSheet.create({
   subtitleText: {
     fontSize: 14,
     color: '#BFDBFE',
-    lineHeight: 24,
+    lineHeight: 18,
     paddingHorizontal: 0,
     fontWeight: '400',
+     marginBottom: '8%',
   },
   formContainer: {
     flex: 1,

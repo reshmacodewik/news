@@ -12,6 +12,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../../style/TrendingStyles';
+import { useQuery } from '@tanstack/react-query';
+import { getApiWithOutQuery } from '../../Utils/api/common';
+import { API_ARTICLES_LIST, API_CATEGORIES } from '../../Utils/api/APIConstant';
+import ShowToast from '../../Utils/ShowToast';
+import { navigate } from '../../Navigators/utils';
+import { useAuth } from '../Auth/AuthContext';
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
 // ── assets (replace with your own) ─────────────────────────
@@ -61,11 +67,58 @@ const BREAKING: Card[] = [
 ];
 
 const TrendingScreen: React.FC = () => {
+  const { session } = useAuth();
   const insets = useSafeAreaInsets();
-  const [active, setActive] = useState('All');
+  const [activeTab, setActiveTab] = useState('all');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
 
   const rows = useMemo(() => makeRows(12), []);
+  const handleArticlePress = (id: string) => {
+    if (!session?.accessToken) {
+      ShowToast('Please login to read this article', 'error');
+      navigate('Login' as never);
+      return;
+    }
+    navigate('ArticleDetail' as never, { id } as never); // ✅ pass article id
+  };
+  // const {
+  //   data: articles,
+  //   isLoading,
+  //   isError,
+  //   error,
+  // } = useQuery({
+  //   queryKey: ['articles'],
+  //   queryFn: async () => {
+  //     const res = await getApiWithOutQuery({ url: API_ARTICLES_LIST });
+  //     return res.data?.articles ?? []; // safe fallback
+  //   },
+  // });
+  const { data: categoryData = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await getApiWithOutQuery({ url: API_CATEGORIES });
+      return (
+        res.data?.categories?.filter((c: any) => c.status === 'active') ?? []
+      );
+    },
+  });
 
+  // Tabs array including "All"
+   const tabs = [{ _id: 'all', title: 'All' }, ...categoryData];
+
+  // Fetch articles based on category
+  const { data: articles = [] } = useQuery({
+    queryKey: ['articles', categoryId],
+    queryFn: async () => {
+      const url =
+        categoryId && categoryId !== 'all'
+          ? `http://192.168.1.36:9991/api/users/articles-by-category?categoryId=${categoryId}`
+          : API_ARTICLES_LIST;
+      const res = await getApiWithOutQuery({ url });
+      return res.data?.articles ?? res.data?.data ?? [];
+    },
+    enabled: !!tabs.length, // wait for categories to load
+  });
   return (
     <View style={styles.container}>
       <View style={{ height: insets.top }} />
@@ -78,30 +131,25 @@ const TrendingScreen: React.FC = () => {
 
       {/* Category tabs */}
       <View style={styles.tabsWrap}>
+        // Add a pseudo-category for "All"
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {CATEGORIES.map(c => {
-            const isActive = active === c;
-            return (
-              <TouchableOpacity
-                key={c}
-                onPress={() => setActive(c)}
-                style={styles.tabBtn}
-                activeOpacity={0.8}
-              >
-                <Text
-                  style={[styles.tabText, isActive && styles.tabTextActive]}
-                >
-                  {c}
-                </Text>
-                <View
-                  style={[
-                    styles.tabBar,
-                    isActive ? styles.tabBarActive : styles.tabBarGhost,
-                  ]}
-                />
-              </TouchableOpacity>
-            );
-          })}
+          {tabs.map(c => {
+          const isActive = activeTab === c._id;
+          return (
+            <TouchableOpacity
+              key={c._id}
+              onPress={() => {
+                setActiveTab(c._id);
+                setCategoryId(c._id === 'all' ? null : c._id);
+              }}
+              style={styles.tabBtn}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{c.title}</Text>
+              <View style={[styles.tabBar, isActive ? styles.tabBarActive : styles.tabBarGhost]} />
+            </TouchableOpacity>
+          );
+        })}
         </ScrollView>
       </View>
 
@@ -137,32 +185,41 @@ const TrendingScreen: React.FC = () => {
           All Trending News
         </Text>
         <FlatList
-          data={rows}
-          keyExtractor={i => i.id}
+          data={articles}
+          keyExtractor={i => i._id}
           scrollEnabled={false} // we’re inside a ScrollView
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.rowCard} activeOpacity={0.9}>
+            <TouchableOpacity
+              style={styles.rowCard}
+              activeOpacity={0.9}
+              onPress={() => handleArticlePress(item._id)} // ✅ no need to pass id
+            >
               <View style={styles.rowLeft}>
                 <Text style={styles.rowTitle} numberOfLines={2}>
                   {item.title}
+                </Text>
+                <Text
+                  style={styles.metaText}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {item.description.replace(/<[^>]+>/g, '')}
                 </Text>
                 <View style={styles.metaRow}>
                   <Image
                     source={require('../../icons/comment.png')}
                     style={styles.metaIconImg}
                   />
-                  <Text style={styles.metaText}>
-                    {item.comments.toLocaleString()}
-                  </Text>
+                  <Text style={styles.metaText}>227K</Text>
                   <View style={{ width: 10 }} /> {/* small spacer */}
                   <Image
                     source={require('../../icons/eye.png')}
                     style={styles.metaIconImg}
                   />
-                  <Text style={styles.metaText}>{item.views}</Text>
+                  <Text style={styles.metaText}>20</Text>
                 </View>
               </View>
-              <Image source={item.thumb} style={styles.rowThumb} />
+              <Image source={{ uri: item.image }} style={styles.rowThumb} />
             </TouchableOpacity>
           )}
           ListFooterComponent={<View style={{ height: scale(8) }} />}
