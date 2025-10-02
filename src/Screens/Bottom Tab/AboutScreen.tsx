@@ -20,17 +20,23 @@ const AVATAR = require('../../icons/user.png');
 const AboutScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
 
-  // Fetch About Us content from API
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['about-us'],
-    queryFn: async () => {
+const { data, isLoading, isError } = useQuery({
+  queryKey: ['about-us'],
+  queryFn: async () => {
+    try {
       const res = await getApiWithOutQuery({
         url: API_ABOUT_US,
       });
-      console.log('About Us Data:', res.data);
-      return res.data; // 👈 returns { _id, slug, description, ... }
-    },
-  });
+      if (res?.data) {
+        return res.data;
+      }
+      return {}; // return empty object instead of undefined
+    } catch (error) {
+      console.error('About Us API error:', error);
+      return {}; // fallback so query data is never undefined
+    }
+  },
+});
 
   return (
     <View style={styles.container}>

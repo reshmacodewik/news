@@ -21,8 +21,6 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Load session from AsyncStorage
   useEffect(() => {
     const loadSession = async () => {
       try {

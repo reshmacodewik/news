@@ -19,27 +19,18 @@ import { useAuth } from '../Auth/AuthContext';
 import ShowToast from '../../Utils/ShowToast';
 import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../../Utils/api/common';
-import { API_ARTICLES_LIST, API_CATEGORIES } from '../../Utils/api/APIConstant';
+import {  API_CATEGORIES } from '../../Utils/api/APIConstant';
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
-
-const { width } = Dimensions.get('window');
+import HtmlRenderer from '../../Components/HtmlRenderer';
+const { width } = Dimensions.get("window");
 // ---- assets ----
 const BG = require('../../icons/bg.png');
 const LOGO = require('../../icons/headerlogo.png');
 const AVATAR = require('../../icons/user.png');
-const COMMENT = require('../../icons/comment.png');
-const EYE = require('../../icons/eye.png');
 
 // helper: supports local assets OR URLs (future-proof)
 const toSrc = (img: ImageSourcePropType | string) =>
   typeof img === 'string' ? { uri: img } : img;
-type Row = {
-  id: string;
-  title: string;
-  thumb: any;
-  comments: number;
-  views: string;
-};
 
 const TRENDING = [
   {
@@ -76,62 +67,32 @@ type Article = {
   createdAt?: string;
 };
 
-const THUMBS = [
-  require('../../icons/news1.png'),
-  require('../../icons/news3.png'),
-  require('../../icons/news2.png'),
-];
-
-const makeArticles = (prefix: string, count = 8): Article[] =>
-  Array.from({ length: count }).map((_, i) => ({
-    _id: `${prefix}-${i + 1}`,
-    title:
-      i % 2 === 0
-        ? 'Opposition Demands Transparency And Recents'
-        : 'Central Bank Signals Pause On Rates',
-    description: 'This is a dummy article description',
-    image: Image.resolveAssetSource(THUMBS[i % THUMBS.length]).uri, // convert local image
-    articleCategoryId: { _id: 'cat1', title: 'General' },
-    status: 'active',
-    articleType: 'mock',
-    createdAt: new Date().toISOString(),
-  }));
-
 const HomeScreen: React.FC = () => {
   const { session } = useAuth();
   const [activeSlide, setActiveSlide] = useState(0);
-  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>('Top News');
+  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>();
   const listRef = useRef<FlatList<Article>>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
-
-  const dataByTab = useMemo(
-    () => ({
-      'Top News': makeArticles('top'),
-      'Latest News': makeArticles('latest'),
-      Trending: makeArticles('trend'),
-      'For You': makeArticles('foryou'),
-    }),
-    [],
-  );
 
   const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / width);
     if (index !== activeSlide) setActiveSlide(index);
   };
   // const { session, loading } = useAuth();
-  const {
-    data: articles,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ['articles'],
-    queryFn: async () => {
-      const res = await getApiWithOutQuery({ url: API_ARTICLES_LIST });
-      console.log('Articles API response ===>', res.data.articles);
-      return res.data?.articles ?? []; // safe fallback
-    },
-  });
+  // const {
+  //   data: articles,
+  //   isLoading,
+  //   isError,
+  //   error,
+  // } = useQuery({
+  //   queryKey: ['articles'],
+  //   queryFn: async () => {
+  //     const res = await getApiWithOutQuery({ url: API_ARTICLES_LIST });
+  //     console.log('Articles API response ===>', res.data.articles);
+  //     return res.data?.articles ?? []; // safe fallback
+  //   },
+  // });
+  
   const {
     data: categoryData,
     isLoading: isCatLoading,
@@ -147,6 +108,7 @@ const HomeScreen: React.FC = () => {
       );
     },
   });
+
   useEffect(() => {
     if (categoryData && categoryData.length > 0 && !activeTab) {
       setActiveTab(categoryData[0].title);
@@ -154,21 +116,20 @@ const HomeScreen: React.FC = () => {
     }
   }, [categoryData]);
 
-  // 2️⃣ Fetch articles for selected category
+
   const { data: articleData = [] } = useQuery({
     queryKey: ['articles', categoryId],
     queryFn: async () => {
       if (!categoryId) return [];
       const res = await getApiWithOutQuery({
-        url: `http://192.168.1.36:9991/api/users/articles-by-category?categoryId=${categoryId}`,
+        url: `/users/articles-by-category?categoryId=${categoryId}`,
       });
       return res.data?.data ?? [];
     },
-    enabled: !!categoryId, // only fetch if categoryId exists
+    enabled: !!categoryId, 
   });
 
   const handleAvatarPress = () => {
-   
     if (!session?.accessToken) {
       console.log('User not logged in → Login');
       navigate('Login' as never);
@@ -184,7 +145,7 @@ const HomeScreen: React.FC = () => {
       navigate('Login' as never);
       return;
     }
-    navigate('ArticleDetail' as never, { id } as never); 
+    navigate('ArticleDetail' as never, { id } as never);
   };
 
   return (
@@ -269,7 +230,7 @@ const HomeScreen: React.FC = () => {
         {/* Tabs */}
         <View style={styles.tabsRow}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {(categoryData || []).map(cat => {
+            {(categoryData || []).map((cat:any) => {
               const active = cat.title === activeTab;
               return (
                 <TouchableOpacity
@@ -299,31 +260,25 @@ const HomeScreen: React.FC = () => {
           ref={listRef}
           data={articleData}
           keyExtractor={i => i._id}
-          scrollEnabled={false} // we’re inside a ScrollView
+          scrollEnabled={false} 
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.rowCard}
               activeOpacity={0.9}
-              onPress={() => handleArticlePress(item._id)} // ✅ no need to pass id
+              onPress={() => handleArticlePress(item._id)} 
             >
               <View style={styles.rowLeft}>
                 <Text style={styles.rowTitle} numberOfLines={2}>
                   {item.title}
                 </Text>
-                <Text
-                  style={styles.metaText}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  {item.description.replace(/<[^>]+>/g, '')}
-                </Text>
+                  <HtmlRenderer html={item.description} limit={60} />
                 <View style={styles.metaRow}>
                   <Image
                     source={require('../../icons/comment.png')}
                     style={styles.metaIconImg}
                   />
                   <Text style={styles.metaText}>227K</Text>
-                  <View style={{ width: 10 }} /> {/* small spacer */}
+                  <View style={{ width: 10 }} /> 
                   <Image
                     source={require('../../icons/eye.png')}
                     style={styles.metaIconImg}

@@ -26,13 +26,10 @@ const PrivacyPolicyScreen: React.FC = () => {
     navigate('Home');
   };
 
-  // Fetch CMS content safely
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['cms-privacy-policy'], // Corrected query key
+    queryKey: ['cms-privacy-policy'], 
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_PRIVACY_POLICY });
-      // Ensure query always returns an object
-      console.log("-------",res?.data)
       return res?.data ?? { sections: [], slug: '', updatedAt: '' };
     },
   });

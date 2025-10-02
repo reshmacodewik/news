@@ -33,13 +33,8 @@ const LoginScreen = () => {
             user: res.data?.user,
           };
           signIn(session);
-
-          console.log('Saved session:', session);
           await AsyncStorage.setItem('userSession', JSON.stringify(session));
-
           ShowToast(res?.message, 'success');
-
-          // Navigate after session is saved
           navigate('Home' as never);
         } else {
           ShowToast(res?.message || 'Login Failed', 'error');

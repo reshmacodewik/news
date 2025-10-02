@@ -22,6 +22,7 @@ import {
 import ShowToast from '../../Utils/ShowToast';
 import DeviceInfo from 'react-native-device-info';
 import { useAuth } from '../Auth/AuthContext';
+import { getToken } from '../../libs/auth';
 
 // ---- Assets ----
 const LOGO = require('../../icons/logoblack.png');
@@ -64,13 +65,13 @@ const MoreScreen: React.FC = () => {
   const version = DeviceInfo.getVersion();
   const buildNumber = DeviceInfo.getBuildNumber();
   const inset = useSafeAreaInsets();
+  const { signOut , session } = useAuth();
+  console.log(session?.accessToken ,"token-------------");
 
-  // BottomSheet state
   const [sheet, setSheet] = useState<'none' | 'newPassword'>('none');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const { signOut } = useAuth();
-  // Open / close bottom sheet
+
   const openNewPassword = () => setSheet('newPassword');
   const close = () => setSheet('none');
 

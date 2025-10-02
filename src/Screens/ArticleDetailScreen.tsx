@@ -21,27 +21,12 @@ import BottomSheet from '../Components/BottomSheet';
 
 const HERO = require('../icons/news.png'); // hero image
 const BACK = require('../icons/back.png'); // left arrow
-// const LIKE   = require('../../icons/heart.png');
-// const CHAT   = require('../../icons/chat.png');
-// const SHARE  = require('../../icons/share.png');
-// const SAVE   = require('../../icons/bookmark.png');
-
-const CATEGORIES = [
-  'All',
-  'World',
-  'Business',
-  'Politics',
-  'Tech',
-  'Health',
-  'Sports',
-];
 
 type Props = { navigation: any; route: { params: { id: string } } };
 
 const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { id } = route.params;
   const insets = useSafeAreaInsets();
-  const [tab, setTab] = useState('All');
   const [isVisible, setIsVisible] = useState(false);
   const [comment, setComment] = useState('');
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
