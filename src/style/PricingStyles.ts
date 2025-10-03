@@ -7,8 +7,8 @@ export const scale = (n: number) => (width / BASE_W) * n;
 const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  scroll: { flex: 1, backgroundColor: '#FFFFFF',marginBottom: scale(25) },
+  container: { flex: 1, backgroundColor: '#e3e9ee' },
+  scroll: { flex: 1, backgroundColor: '#e3e9ee',marginBottom: scale(25) },
 
   // Top bar
   topBar: {

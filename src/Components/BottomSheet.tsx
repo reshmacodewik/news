@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: '#FFFFFF',
+  backgroundColor: '#e3e9ee',
   borderTopLeftRadius: 18,
   borderTopRightRadius: 18,
   paddingHorizontal: 16,
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
 },
 
   handle: {
-    alignSelf: 'center', width: 52, height: 4, borderRadius: 999, backgroundColor: '#E5E7EB', marginBottom: 12,
+    alignSelf: 'center', width: 52, height: 4, borderRadius: 999, backgroundColor: '#D1D5DB', marginBottom: 12,
   },
 });
 

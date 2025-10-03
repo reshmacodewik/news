@@ -19,10 +19,15 @@ import { useAuth } from '../Auth/AuthContext';
 import ShowToast from '../../Utils/ShowToast';
 import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../../Utils/api/common';
-import {  API_CATEGORIES } from '../../Utils/api/APIConstant';
+import {
+  API_ARTICLES_CATEGORIES,
+  API_ARTICLES_LIST,
+  API_CATEGORIES,
+  API_GET_ARTICLES_BY_TYPE,
+} from '../../Utils/api/APIConstant';
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 import HtmlRenderer from '../../Components/HtmlRenderer';
-const { width } = Dimensions.get("window");
+const { width } = Dimensions.get('window');
 // ---- assets ----
 const BG = require('../../icons/bg.png');
 const LOGO = require('../../icons/headerlogo.png');
@@ -73,7 +78,10 @@ const HomeScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>();
   const listRef = useRef<FlatList<Article>>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
-
+  const [breakingNews, setBreakingNews] = useState<Article[]>([]);
+  const [topNews, setTopNews] = useState<Article[]>([]);
+  const [latestNews, setLatestNews] = useState<Article[]>([]);
+  const [trendingNews, setTrendingNews] = useState<Article[]>([]);
   const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / width);
     if (index !== activeSlide) setActiveSlide(index);
@@ -92,7 +100,7 @@ const HomeScreen: React.FC = () => {
   //     return res.data?.articles ?? []; // safe fallback
   //   },
   // });
-  
+
   const {
     data: categoryData,
     isLoading: isCatLoading,
@@ -116,18 +124,39 @@ const HomeScreen: React.FC = () => {
     }
   }, [categoryData]);
 
-
   const { data: articleData = [] } = useQuery({
     queryKey: ['articles', categoryId],
     queryFn: async () => {
       if (!categoryId) return [];
       const res = await getApiWithOutQuery({
-        url: `/users/articles-by-category?categoryId=${categoryId}`,
+        url: `${API_ARTICLES_CATEGORIES}?categoryId=${categoryId}`,
       });
-      return res.data?.data ?? [];
+      return res.data?.articles ?? [];
     },
-    enabled: !!categoryId, 
+    enabled: !!categoryId,
   });
+
+  const newsTypes = [
+    { type: '/breaking', setter: setBreakingNews },
+    { type: '/top-news', setter: setTopNews },
+    { type: '/latest', setter: setLatestNews },
+    { type: '/trending', setter: setTrendingNews },
+  ];
+
+  const getData = async (type: string, setter: (data: any) => void) => {
+    try {
+      const res = await getApiWithOutQuery({
+        url: API_GET_ARTICLES_BY_TYPE + type,
+      });
+      if (res?.data) setter(res.data);
+    } catch (error) {
+      console.log(`Error fetching ${type}:`, error);
+    }
+  };
+
+  useEffect(() => {
+    newsTypes.forEach(({ type, setter }) => getData(type, setter));
+  }, []);
 
   const handleAvatarPress = () => {
     if (!session?.accessToken) {
@@ -181,18 +210,19 @@ const HomeScreen: React.FC = () => {
             <Text style={styles.trendingTitle}>Trending news</Text>
             <TouchableOpacity
               hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
+              onPress={() => navigate('Trending' as never)}
             >
               <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
           </View>
 
           <FlatList
-            data={TRENDING}
-            keyExtractor={item => item.id}
+            data={trendingNews}
+            keyExtractor={item => item._id}
             horizontal
             showsHorizontalScrollIndicator={false}
             pagingEnabled
-            snapToInterval={width}
+            snapToInterval={width} // width of one item
             decelerationRate="fast"
             onMomentumScrollEnd={onMomentumEnd}
             renderItem={({ item }) => (
@@ -212,9 +242,9 @@ const HomeScreen: React.FC = () => {
             )}
           />
 
-          {/* dots */}
+          {/* dynamic dots */}
           <View style={styles.dotsRow}>
-            {TRENDING.map((_, i) => (
+            {trendingNews.map((_, i) => (
               <View
                 key={i}
                 style={[styles.dot, i === activeSlide && styles.dotActive]}
@@ -230,7 +260,7 @@ const HomeScreen: React.FC = () => {
         {/* Tabs */}
         <View style={styles.tabsRow}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {(categoryData || []).map((cat:any) => {
+            {(categoryData || []).map((cat: any) => {
               const active = cat.title === activeTab;
               return (
                 <TouchableOpacity
@@ -260,25 +290,25 @@ const HomeScreen: React.FC = () => {
           ref={listRef}
           data={articleData}
           keyExtractor={i => i._id}
-          scrollEnabled={false} 
+          scrollEnabled={false}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.rowCard}
               activeOpacity={0.9}
-              onPress={() => handleArticlePress(item._id)} 
+              onPress={() => handleArticlePress(item._id)}
             >
               <View style={styles.rowLeft}>
                 <Text style={styles.rowTitle} numberOfLines={2}>
                   {item.title}
                 </Text>
-                  <HtmlRenderer html={item.description} limit={60} />
+                <HtmlRenderer html={item.description} limit={60} />
                 <View style={styles.metaRow}>
                   <Image
                     source={require('../../icons/comment.png')}
                     style={styles.metaIconImg}
                   />
                   <Text style={styles.metaText}>227K</Text>
-                  <View style={{ width: 10 }} /> 
+                  <View style={{ width: 10 }} />
                   <Image
                     source={require('../../icons/eye.png')}
                     style={styles.metaIconImg}

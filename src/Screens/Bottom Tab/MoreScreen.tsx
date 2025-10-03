@@ -22,7 +22,6 @@ import {
 import ShowToast from '../../Utils/ShowToast';
 import DeviceInfo from 'react-native-device-info';
 import { useAuth } from '../Auth/AuthContext';
-import { getToken } from '../../libs/auth';
 
 // ---- Assets ----
 const LOGO = require('../../icons/logoblack.png');
@@ -65,8 +64,7 @@ const MoreScreen: React.FC = () => {
   const version = DeviceInfo.getVersion();
   const buildNumber = DeviceInfo.getBuildNumber();
   const inset = useSafeAreaInsets();
-  const { signOut , session } = useAuth();
-  console.log(session?.accessToken ,"token-------------");
+  const { signOut, session } = useAuth();
 
   const [sheet, setSheet] = useState<'none' | 'newPassword'>('none');
   const [newPassword, setNewPassword] = useState('');
@@ -76,13 +74,16 @@ const MoreScreen: React.FC = () => {
   const close = () => setSheet('none');
 
   // Get profile data
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ['profile-info'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
-      return res?.data ?? {};
+      console.log('raw profile response:', res?.data);
+      return res?.data;
     },
   });
+
+  console.log(profile, 'profile-------------------------');
 
   // Reset password API
   const resetPassword = useMutation({
@@ -118,11 +119,12 @@ const MoreScreen: React.FC = () => {
 
   // Contact email
   const onEmail = () => Linking.openURL('mailto:support@arcalisnews.com');
+
   const handleLogout = async () => {
     try {
       await signOut(); // clears session in AsyncStorage and state
       ShowToast('Logged out successfully');
-      navigate('Login' as never); // redirect to login screen
+      navigate('Home' as never); // redirect to login screen
     } catch (err) {
       console.log('Logout error:', err);
       ShowToast('Failed to logout. Try again.');
@@ -148,36 +150,58 @@ const MoreScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Profile card */}
-        <View style={styles.profileCard}>
+        <View
+          style={[
+            styles.profileCard,
+            !session?.accessToken && { opacity: 0.4 },
+          ]}
+        >
           <View style={styles.profileLeft}>
             <View style={styles.bigAvatarWrap}>
               <Image
-                source={AVATAR_BG}
+                source={profile?.photo ? { uri: profile.photo } : AVATAR_BG}
                 style={styles.bigAvatar}
                 resizeMode="cover"
               />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.name}>{profile?.name}</Text>
+              <Text style={styles.name}>
+                {session?.accessToken ? profile?.name : 'Guest User'}
+              </Text>
               <View style={styles.line}>
                 <Image source={MAIL} style={styles.smallIcon} />
-                <Text style={styles.lineText}>{profile?.email}</Text>
+                <Text style={styles.lineText}>
+                  {session?.accessToken ? profile?.email : 'Login to see email'}
+                </Text>
               </View>
               <View style={styles.line}>
                 <Image source={PHONE} style={styles.smallIcon} />
-                <Text style={styles.lineText}>{profile?.phoneNumber}</Text>
+                <Text style={styles.lineText}>
+                  {session?.accessToken
+                    ? profile?.phoneNumber
+                    : 'Login to see phone'}
+                </Text>
               </View>
             </View>
           </View>
 
-          <TouchableOpacity
-            style={styles.editBtn}
-            activeOpacity={0.9}
-            onPress={() => navigate('EditProfile' as never)}
-          >
-            <Image source={EDIT} style={styles.editIcon} />
-            <Text style={styles.editText}>Edit Profile</Text>
-          </TouchableOpacity>
+          {session?.accessToken ? (
+            <TouchableOpacity
+              style={styles.editBtn}
+              activeOpacity={0.9}
+              onPress={() => navigate('EditProfile' as never)}
+            >
+              <Image source={EDIT} style={styles.editIcon} />
+              <Text style={styles.editText}>Edit Profile</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.loginBtn}
+              onPress={() => navigate('Login' as never)}
+            >
+              <Text style={styles.editText}>Login</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Others header */}
@@ -186,8 +210,16 @@ const MoreScreen: React.FC = () => {
         {/* Group 1 */}
         <View style={styles.cardGroup}>
           <Row icon={LOCK} label="Change Password" onPress={openNewPassword} />
-          <Row icon={PLAN} label="Subscription Plan" onPress={() => {}} />
-          <Row icon={ABOUT} label="About Us" onPress={() => {}} />
+          <Row
+            icon={PLAN}
+            label="Subscription Plan"
+            onPress={() => navigate('Premium' as never)}
+          />
+          <Row
+            icon={ABOUT}
+            label="About Us"
+            onPress={() => navigate('Fast News' as never)}
+          />
         </View>
 
         {/* Group 2 */}
@@ -238,7 +270,7 @@ const MoreScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.logoutRow}
           activeOpacity={0.85}
-          onPress={handleLogout}
+          onPress={() => handleLogout()}
         >
           <Image source={LOGOUT} style={styles.logoutIcon} />
           <Text style={styles.logoutText}>Logout</Text>

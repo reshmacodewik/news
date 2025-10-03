@@ -26,18 +26,21 @@ const LoginScreen = () => {
     onSubmit: async values => {
       try {
         const res = await apiPost({ url: API_LOGIN, values });
-
         if (res?.success) {
           const session: AuthSession = {
             accessToken: res.data.token,
-            user: res.data?.user,
+            user: {
+              id: res.data.id,
+              name: res.data.name,
+              email: res.data.email,
+            },
           };
           signIn(session);
           await AsyncStorage.setItem('userSession', JSON.stringify(session));
           ShowToast(res?.message, 'success');
           navigate('Home' as never);
         } else {
-          ShowToast(res?.message || 'Login Failed', 'error');
+          formik.setFieldError('password', res?.error);
         }
       } catch (e: any) {
         ShowToast(e?.message || 'Something went wrong', 'error');
@@ -99,7 +102,7 @@ const LoginScreen = () => {
               <Text style={styles.inputLabel}>Password</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="at least 8 characters"
+                placeholder="Enter a password"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.password}
                 onChangeText={formik.handleChange('password')}
@@ -125,7 +128,7 @@ const LoginScreen = () => {
             {/* Sign In Button */}
             <TouchableOpacity
               style={styles.signInButton}
-              onPress={formik.handleSubmit as any}
+              onPress={() => formik.handleSubmit()}
             >
               <Text style={styles.signInButtonText}>Sign in</Text>
             </TouchableOpacity>

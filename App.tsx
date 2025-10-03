@@ -4,13 +4,13 @@ import { StatusBar, useColorScheme, StyleSheet } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Toast from 'react-native-toast-message';
 
 import ApplicationNavigator from "./src/Navigators/Index";
 import { AuthProvider } from "./src/Screens/Auth/AuthContext";
  // <-- import AuthProvider
 
 const queryClient = new QueryClient();
-
 function App() {
   const isDarkMode = useColorScheme() === "dark";
 
@@ -22,6 +22,7 @@ function App() {
             <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
             <ApplicationNavigator />
           </AuthProvider>
+          <Toast />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

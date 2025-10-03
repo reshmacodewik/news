@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,18 @@ import {
   TouchableOpacity,
   Dimensions,
   StatusBar,
+  ImageSourcePropType,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../../style/TrendingStyles';
 import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../../Utils/api/common';
-import { API_ARTICLES_LIST, API_CATEGORIES } from '../../Utils/api/APIConstant';
+import {
+  API_ARTICLES_CATEGORIES,
+  API_ARTICLES_LIST,
+  API_CATEGORIES,
+  API_GET_ARTICLES_BY_TYPE,
+} from '../../Utils/api/APIConstant';
 import ShowToast from '../../Utils/ShowToast';
 import { navigate } from '../../Navigators/utils';
 import { useAuth } from '../Auth/AuthContext';
@@ -50,7 +56,19 @@ type Row = {
   comments: number;
   views: string;
 };
-
+type Article = {
+  _id: string;
+  title: string;
+  description: string;
+  image: string;
+  articleCategoryId?: {
+    _id: string;
+    title: string;
+  };
+  status?: string;
+  articleType?: string;
+  createdAt?: string;
+};
 const makeRows = (count = 10): Row[] =>
   Array.from({ length: count }).map((_, i) => ({
     id: `r-${i + 1}`,
@@ -65,13 +83,17 @@ const BREAKING: Card[] = [
   { id: 'b2', title: 'Higher Fuel Price Predicted', image: BIG2 },
   { id: 'b3', title: 'Markets Steady As Policy Shifts', image: BIG3 },
 ];
-
+const toSrc = (img: ImageSourcePropType | string) =>
+  typeof img === 'string' ? { uri: img } : img;
 const TrendingScreen: React.FC = () => {
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('all');
   const [categoryId, setCategoryId] = useState<string | null>(null);
-
+  const [breakingNews, setBreakingNews] = useState<Article[]>([]);
+  const [topNews, setTopNews] = useState<Article[]>([]);
+  const [latestNews, setLatestNews] = useState<Article[]>([]);
+  const [trendingNews, setTrendingNews] = useState<Article[]>([]);
   const rows = useMemo(() => makeRows(12), []);
   const handleArticlePress = (id: string) => {
     if (!session?.accessToken) {
@@ -81,18 +103,27 @@ const TrendingScreen: React.FC = () => {
     }
     navigate('ArticleDetail' as never, { id } as never); // ✅ pass article id
   };
-  // const {
-  //   data: articles,
-  //   isLoading,
-  //   isError,
-  //   error,
-  // } = useQuery({
-  //   queryKey: ['articles'],
-  //   queryFn: async () => {
-  //     const res = await getApiWithOutQuery({ url: API_ARTICLES_LIST });
-  //     return res.data?.articles ?? []; // safe fallback
-  //   },
-  // });
+  const getdata = async (type: string) => {
+    try {
+      const res = await getApiWithOutQuery({
+        url: API_GET_ARTICLES_BY_TYPE + type,
+      });
+      if (res?.data) {
+        if (type === '/breaking') setBreakingNews(res.data);
+        if (type === '/top-news') setTopNews(res.data);
+        if (type === '/latest') setLatestNews(res.data);
+        if (type === '/trending') setTrendingNews(res.data);
+      }
+    } catch (error) {
+      console.log(`Error fetching ${type}:`, error);
+    }
+  };
+  useEffect(() => {
+    getdata('/breaking');
+    getdata('/top-news');
+    getdata('/latest');
+    getdata('/trending');
+  }, []);
   const { data: categoryData = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -104,7 +135,7 @@ const TrendingScreen: React.FC = () => {
   });
 
   // Tabs array including "All"
-   const tabs = [{ _id: 'all', title: 'All' }, ...categoryData];
+  const tabs = [{ _id: 'all', title: 'All' }, ...categoryData];
 
   // Fetch articles based on category
   const { data: articles = [] } = useQuery({
@@ -112,7 +143,7 @@ const TrendingScreen: React.FC = () => {
     queryFn: async () => {
       const url =
         categoryId && categoryId !== 'all'
-          ? `http://192.168.1.36:9991/api/users/articles-by-category?categoryId=${categoryId}`
+          ? `${API_ARTICLES_CATEGORIES}?categoryId=${categoryId}`
           : API_ARTICLES_LIST;
       const res = await getApiWithOutQuery({ url });
       return res.data?.articles ?? res.data?.data ?? [];
@@ -121,65 +152,86 @@ const TrendingScreen: React.FC = () => {
   });
   return (
     <View style={styles.container}>
-      <View style={{ height: insets.top }} />
-      <View style={styles.topBar}>
-        <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-        <View style={styles.avatarWrap}>
-          <Image source={AVATAR} style={styles.avatar} />
-        </View>
-      </View>
-
-      {/* Category tabs */}
-      <View style={styles.tabsWrap}>
-        // Add a pseudo-category for "All"
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {tabs.map(c => {
-          const isActive = activeTab === c._id;
-          return (
-            <TouchableOpacity
-              key={c._id}
-              onPress={() => {
-                setActiveTab(c._id);
-                setCategoryId(c._id === 'all' ? null : c._id);
-              }}
-              style={styles.tabBtn}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{c.title}</Text>
-              <View style={[styles.tabBar, isActive ? styles.tabBarActive : styles.tabBarGhost]} />
-            </TouchableOpacity>
-          );
-        })}
-        </ScrollView>
-      </View>
-
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + scale(24) }}
       >
-        {/* Breaking News */}
-        <Text style={styles.sectionTitle}>Breaking News</Text>
-        <FlatList
-          data={BREAKING}
-          keyExtractor={i => i.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: scale(16) }}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.breakCard}>
-              <ImageBackground
-                source={item.image}
-                style={styles.breakImage}
-                imageStyle={styles.breakImageRadius}
-              />
-              <Text style={styles.breakCaption} numberOfLines={2}>
-                {item.title}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
+        <View
+          style={{
+            backgroundColor: '#e3e9ee',
+            borderBottomLeftRadius: scale(18),
+            borderBottomRightRadius: scale(15),
+            paddingBottom: scale(10),
+          }}
+        >
+          <View style={{ height: insets.top }} />
 
+          <View style={styles.topBar}>
+            <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+            <View style={styles.avatarWrap}>
+              <TouchableOpacity style={styles.avatarWrap} onPress={() => navigate('EditProfile' as never)}>
+              <Image source={AVATAR} style={styles.avatar}  />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+           <View style={styles.tabsWrap}>
+          // Add a pseudo-category for "All"
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {tabs.map(c => {
+              const isActive = activeTab === c._id;
+              return (
+                <TouchableOpacity
+                  key={c._id}
+                  onPress={() => {
+                    setActiveTab(c._id);
+                    setCategoryId(c._id === 'all' ? null : c._id);
+                  }}
+                  style={styles.tabBtn}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[styles.tabText, isActive && styles.tabTextActive]}
+                  >
+                    {c.title}
+                  </Text>
+                  <View
+                    style={[
+                      styles.tabBar,
+                      isActive ? styles.tabBarActive : styles.tabBarGhost,
+                    ]}
+                  />
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+          {/* Breaking News */}
+          <Text style={styles.sectionTitle}>Breaking News</Text>
+          <FlatList
+            data={breakingNews}
+            keyExtractor={i => i._id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: scale(16) }}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.breakCard}>
+                <ImageBackground
+                    source={toSrc(item.image)}
+                  style={styles.breakImage}
+                  imageStyle={styles.breakImageRadius}
+                />
+                <Text style={styles.breakCaption} numberOfLines={2}>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+
+     
+       
         {/* All Trending News */}
         <Text style={[styles.sectionTitle, { marginTop: scale(18) }]}>
           All Trending News

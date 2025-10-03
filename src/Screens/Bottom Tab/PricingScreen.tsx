@@ -38,7 +38,6 @@ const PricingScreen: React.FC = () => {
     queryKey: ['subscription-plans'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_SUBSCRIPTION_PLANS });
-      console.log('Subscription Plans:', res.data);
       return res.data as Plan[];
     },
   });

@@ -27,9 +27,11 @@ const { data, isLoading, isError } = useQuery({
       const res = await getApiWithOutQuery({
         url: API_ABOUT_US,
       });
+    
       if (res?.data) {
         return res.data;
       }
+      console.log(res.data, 'res');
       return {}; // return empty object instead of undefined
     } catch (error) {
       console.error('About Us API error:', error);

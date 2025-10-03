@@ -5,16 +5,16 @@ import NoAuthenticatedStackNavigation from './Stack/NoAuthenticatedStackNavigati
 import { navigationRef } from '../../Utils/navigationRef';
 import AuthenticatedStackNavigation from './Stack/AuthenticatedStackNavigation';
 import NoInternetConnection from '../../Components/NoInternetConnection';
-import { getAccessToken } from '../../storage/mmkvPersister';
+import { useAuth } from '../../Screens/Auth/AuthContext';
 
 const AppRootNavigator = () => {
+  const { session } = useAuth();
   const isOffline = useCheckInternetConnection();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = await getAccessToken();
-      setIsAuthenticated(!!token);
+      setIsAuthenticated(!!session?.accessToken);
     };
     checkAuth();
   }, []);

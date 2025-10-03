@@ -18,7 +18,9 @@ const AuthContext = createContext<AuthContextType>({
   signOut: () => {},
 });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -45,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     setSession(null);
     await AsyncStorage.removeItem('userSession');
+
   };
 
   return (

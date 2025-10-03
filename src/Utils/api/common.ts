@@ -26,17 +26,20 @@ interface postParams {
 
 export const getApiWithOutQuery = async ({
   url,
+  headers,
 }: {
   url: string;
   headers?: Record<string, string>;
 }): Promise<any> => {
   try {
-    const res = await defaultAxios.get(url);
+    const res = await defaultAxios.get(url, { headers });
     return res.data;
+   
   } catch (err: any) {
-    return err?.response?.data;
+    throw err;
   }
 };
+
 // export const getApiWithOutQueryWithToken = async ({
 //   url,
 // }: ApiParams & { token: string }): Promise<any> => {

@@ -6,7 +6,7 @@ export const scale = (n: number) => (width / BASE_W) * n;
 const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1, backgroundColor: '#e3e9ee' },
 
   // Top bar
   topBar: {
@@ -76,7 +76,7 @@ export const styles = StyleSheet.create({
     width: Math.min(width * 0.78, scale(300)),
     borderRadius: scale(16),
     marginRight: scale(14),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     overflow: 'hidden',
   },
   breakImage: {

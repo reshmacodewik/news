@@ -12,4 +12,5 @@ export const API_SUBSCRIPTION_PLANS: string = "/users/subscriptions";
 export const API_ARTICLES_LIST: string = "/users/articles";
 export const API_ARTICLE_TYPE: string = "/users/article/type";
 export const API_CATEGORIES: string = "/users/categories";
-export const API_ARTICLES_CATEGORIES: string = "/users/articles/articles-by-category";
+export const API_ARTICLES_CATEGORIES: string = "/users/articles-by-category";
+export const API_GET_ARTICLES_BY_TYPE: string = "/users/articles/type";

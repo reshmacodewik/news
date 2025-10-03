@@ -30,7 +30,7 @@ const EditProfileScreen = () => {
   // Fetch profile
   const {
     data: profileData,
-    isLoading,
+  
     isError,
   } = useQuery({
     queryKey: ['profile-info'],
@@ -101,18 +101,8 @@ const EditProfileScreen = () => {
     updateProfile(payload);
   };
 
-  if (isLoading)
-    return (
-      <Text style={{ flex: 1, textAlign: 'center', marginTop: 50 }}>
-        Loading profile...
-      </Text>
-    );
-  if (isError)
-    return (
-      <Text style={{ flex: 1, textAlign: 'center', marginTop: 50 }}>
-        Failed to load profile
-      </Text>
-    );
+ 
+
 
   return (
     <View style={styles.container}>

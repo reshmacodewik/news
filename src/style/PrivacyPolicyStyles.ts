@@ -7,7 +7,7 @@ const f = (size: number) => scale(size);
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#e3e9ee',
   },
 
   // Top Navigation
@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: scale(16),
     borderBottomWidth:1,
-    borderColor:'#ECEFF3',
+    borderColor:'#E1E1E1',
 
   },
 

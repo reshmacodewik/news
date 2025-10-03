@@ -6,8 +6,8 @@ export const scale = (n: number) => (width / BASE_W) * n;
 const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  scroll: { flex: 1, backgroundColor: '#F7F7FA' },
+  container: { flex: 1, backgroundColor: '#e3e9ee' },
+  scroll: { flex: 1, backgroundColor: '#e3e9ee' },
 
   // Top bar
   topBar: {
@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#e3e9ee',
     borderBottomColor: '#ECEFF3',
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
@@ -79,6 +79,19 @@ export const styles = StyleSheet.create({
     marginTop: scale(12),
     alignSelf: 'stretch',
     backgroundColor: '#EAF2FF',
+    borderRadius: scale(10),
+    height: scale(40),
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E1E1E1',
+    justifyContent: 'center',
+    gap: scale(8),
+  },
+  loginBtn: {
+    marginTop: scale(12),
+    alignSelf: 'stretch',
+    backgroundColor: '#FFFFFF',
     borderRadius: scale(10),
     height: scale(40),
     flexDirection: 'row',

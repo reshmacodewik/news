@@ -87,7 +87,7 @@ export const styles = StyleSheet.create({
       
       marginTop:-100,
       marginHorizontal: scale(16),
-      backgroundColor: 'white',
+      backgroundColor: '#e3e9ee',
       borderRadius: scale(20),
       paddingHorizontal: scale(20),
       paddingTop: scale(24),

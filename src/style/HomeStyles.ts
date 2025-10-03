@@ -8,7 +8,7 @@ const f = (n: number) =>
   Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1, backgroundColor: '#e3e9ee' },
 
   // ===== Header / Hero =====
   header: {
@@ -226,17 +226,18 @@ export const styles = StyleSheet.create({
       borderRadius: scale(14),
     },
     rowLeft: { flex: 1, paddingRight: scale(10) },
-    rowTitle: { fontSize: 17, fontWeight: '500', color: '#0F172A' },
+    rowTitle: { fontSize: 18, fontWeight: '500', color: '#0F172A',marginTop: scale(-30) },
     rowThumb: {
-      width: scale(110),
-      height: scale(86),
-      borderRadius: scale(12),
+      width: scale(135),
+      height: scale(97),
+      borderRadius: scale(10),
     },
     metaRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: scale(5),
       marginTop: scale(8),
+      marginBottom: scale(-20),
     },
     metaIconImg: {
       width: scale(20), // or 16 if you prefer
