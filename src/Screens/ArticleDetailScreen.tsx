@@ -10,6 +10,7 @@ import {
   Dimensions,
   TextInput,
   FlatList,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../style/ArticleDetailStyles';
@@ -66,18 +67,30 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       return res.data; // <-- inner { article, counlike, comments }
     },
   });
-const formatDateTime = (value: string | number | Date) => {
-  const d = new Date(value);
-  const months = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
-  ];
-  const h24 = d.getHours();
-  const h12 = h24 % 12 || 12;
-  const min = String(d.getMinutes()).padStart(2, "0");
-  const ampm = h24 >= 12 ? "PM" : "AM";
-  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${h12}:${min} ${ampm}`;
-};
+  const formatDateTime = (value: string | number | Date) => {
+    const d = new Date(value);
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    const h24 = d.getHours();
+    const h12 = h24 % 12 || 12;
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const ampm = h24 >= 12 ? 'PM' : 'AM';
+    return `${
+      months[d.getMonth()]
+    } ${d.getDate()}, ${d.getFullYear()} ${h12}:${min} ${ampm}`;
+  };
 
   const article = payload?.article;
   const likeCount = payload?.counlike ?? 0;
@@ -303,7 +316,6 @@ const formatDateTime = (value: string | number | Date) => {
             justifyContent: 'center',
             alignItems: 'center',
             marginBottom: 12,
-        
           }}
           onPress={handleAddComment}
         >
@@ -319,7 +331,15 @@ const formatDateTime = (value: string | number | Date) => {
             marginBottom: 16,
           }}
         />
-
+        <View style={styles.filterWrap}>
+          <Pressable style={styles.pillBtn}>
+            <Text style={styles.pillText}>Latest</Text>
+            <Text style={styles.caret}>▾</Text>
+            {/* Or use an image:
+    <Image source={require('../../icons/caret-down.png')} style={{ width: 10, height: 6, marginLeft: 6 }} />
+    */}
+          </Pressable>
+        </View>
         <FlatList
           data={commentData ?? []}
           keyExtractor={item => item._id}

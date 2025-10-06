@@ -168,7 +168,34 @@ export const styles = StyleSheet.create({
     backgroundColor: '#ECEFF3',
     marginTop: scale(10),
   },
-
+ filterWrap: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  pillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',       // keeps it compact like the screenshot
+    paddingHorizontal: 20,
+    paddingVertical: 0,
+    borderRadius: 999,
+    backgroundColor:'#FFFFFF00',
+    borderWidth: 1,
+    borderColor: '#000',
+    // subtle shadow (iOS + Android)
+    
+  },
+  pillText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1F1F1F',
+    marginRight: 6,
+  },
+  caret: {
+    fontSize: 25,
+    color: '#1F1F1F',
+    marginTop: 1,
+  },
   /* Quote block */
   quoteWrap: {
     marginHorizontal: scale(16),

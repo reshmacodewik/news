@@ -127,17 +127,17 @@ const HomeScreen: React.FC = () => {
     }
   }, [categoryData]);
 
-  const { data: articleData = [] } = useQuery({
-    queryKey: ['articles', categoryId],
-    queryFn: async () => {
-      if (!categoryId) return [];
-      const res = await getApiWithOutQuery({
-        url: `${API_ARTICLES_CATEGORIES}?categoryId=${categoryId}`,
-      });
-      return res.data?.articles ?? [];
-    },
-    enabled: !!categoryId,
-  });
+  // const { data: articleData = [] } = useQuery({
+  //   queryKey: ['articles', categoryId],
+  //   queryFn: async () => {
+  //     if (!categoryId) return [];
+  //     const res = await getApiWithOutQuery({
+  //       url: `${API_ARTICLES_CATEGORIES}?categoryId=${categoryId}`,
+  //     });
+  //     return res.data?.articles ?? [];
+  //   },
+  //   enabled: !!categoryId,
+  // });
 
   const newsTypes = [
     { type: '/breaking', setter: setBreakingNews },
