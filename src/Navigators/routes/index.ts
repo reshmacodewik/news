@@ -7,6 +7,7 @@ import BottomTab from '../Navigation/BottomTab/BottomTab';
 import ArticleDetailScreen from '../../Screens/ArticleDetailScreen';
 import PrivacyPolicyScreen from '../../Screens/PrivacyPolicyScreen';
 import EditProfileScreen from '../../Screens/EditProfileScreen';
+import TermsAndConditionsScreen from '../../Screens/Terms&Conditions';
 
 export const notAuthenticatedRoutes = [
   {
@@ -50,7 +51,13 @@ export const notAuthenticatedRoutes = [
     headerHeading: 'EditProfile',
     component: EditProfileScreen,
     headerShown: false,
-  }
+  },
+  {
+    routeName: SCREEN_NAMES.termsAndConditions,
+    headerHeading: 'TermsAndConditions',
+    component: TermsAndConditionsScreen,
+    headerShown: false,
+  },
   
 ];
 

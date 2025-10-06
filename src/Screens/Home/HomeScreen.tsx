@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -59,6 +59,8 @@ const TABS = ['Top News', 'Latest News', 'Trending', 'For You'] as const;
 
 // Use local thumbs
 type Article = {
+  commentCount: ReactNode;
+  viewCount: ReactNode;
   _id: string;
   title: string;
   description: string;
@@ -81,25 +83,26 @@ const HomeScreen: React.FC = () => {
   const [breakingNews, setBreakingNews] = useState<Article[]>([]);
   const [topNews, setTopNews] = useState<Article[]>([]);
   const [latestNews, setLatestNews] = useState<Article[]>([]);
+
   const [trendingNews, setTrendingNews] = useState<Article[]>([]);
   const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / width);
     if (index !== activeSlide) setActiveSlide(index);
   };
   // const { session, loading } = useAuth();
-  // const {
-  //   data: articles,
-  //   isLoading,
-  //   isError,
-  //   error,
-  // } = useQuery({
-  //   queryKey: ['articles'],
-  //   queryFn: async () => {
-  //     const res = await getApiWithOutQuery({ url: API_ARTICLES_LIST });
-  //     console.log('Articles API response ===>', res.data.articles);
-  //     return res.data?.articles ?? []; // safe fallback
-  //   },
-  // });
+  const {
+    data: allArticles = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['articles'],
+    queryFn: async () => {
+      const res = await getApiWithOutQuery({ url: API_ARTICLES_LIST });
+      console.log('Articles API response ===>', res.data.articles);
+      return res.data?.articles ?? []; // safe fallback
+    },
+  });
 
   const {
     data: categoryData,
@@ -142,6 +145,20 @@ const HomeScreen: React.FC = () => {
     { type: '/latest', setter: setLatestNews },
     { type: '/trending', setter: setTrendingNews },
   ];
+  const TABS = [
+    { label: 'Top News', type: 'top-news' },
+    { label: 'Latest News', type: 'latest' },
+    { label: 'Trending', type: 'trending' },
+    { label: 'Breaking', type: 'breaking' },
+  ];
+  const [selectedType, setSelectedType] = useState(TABS[0].type);
+  const tabArticles = useMemo(
+    () =>
+      allArticles.filter(
+        (a: { articleType: string }) => a.articleType === selectedType,
+      ),
+    [allArticles, selectedType],
+  );
 
   const getData = async (type: string, setter: (data: any) => void) => {
     try {
@@ -226,19 +243,21 @@ const HomeScreen: React.FC = () => {
             decelerationRate="fast"
             onMomentumScrollEnd={onMomentumEnd}
             renderItem={({ item }) => (
-              <View style={styles.slideWrap}>
-                <ImageBackground
-                  source={toSrc(item.image)}
-                  style={styles.slideCard}
-                  imageStyle={styles.slideImage}
-                >
-                  {/* dark overlay */}
-                  <View style={styles.slideOverlay} />
-                  <Text style={styles.slideCaption} numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                </ImageBackground>
-              </View>
+              <TouchableOpacity onPress={() => handleArticlePress(item._id)}>
+                <View style={styles.slideWrap}>
+                  <ImageBackground
+                    source={toSrc(item.image)}
+                    style={styles.slideCard}
+                    imageStyle={styles.slideImage}
+                  >
+                    {/* dark overlay */}
+                    <View style={styles.slideOverlay} />
+                    <Text style={styles.slideCaption} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+                  </ImageBackground>
+                </View>
+              </TouchableOpacity>
             )}
           />
 
@@ -260,21 +279,18 @@ const HomeScreen: React.FC = () => {
         {/* Tabs */}
         <View style={styles.tabsRow}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {(categoryData || []).map((cat: any) => {
-              const active = cat.title === activeTab;
+            {TABS.map(tab => {
+              const active = tab.type === selectedType;
               return (
                 <TouchableOpacity
-                  key={cat._id}
-                  onPress={() => {
-                    setActiveTab(cat.title);
-                    setCategoryId(cat._id);
-                  }}
+                  key={tab.type}
+                  onPress={() => setSelectedType(tab.type)}
                   style={styles.tabBtn}
                 >
                   <Text
                     style={[styles.tabText, active && styles.tabTextActive]}
                   >
-                    {cat.title}
+                    {tab.label}
                   </Text>
                   {active ? (
                     <View style={styles.tabIndicator} />
@@ -287,9 +303,8 @@ const HomeScreen: React.FC = () => {
           </ScrollView>
         </View>
         <FlatList
-          ref={listRef}
-          data={articleData}
-          keyExtractor={i => i._id}
+          data={tabArticles}
+          keyExtractor={item => item._id}
           scrollEnabled={false}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -307,13 +322,13 @@ const HomeScreen: React.FC = () => {
                     source={require('../../icons/comment.png')}
                     style={styles.metaIconImg}
                   />
-                  <Text style={styles.metaText}>227K</Text>
+                  <Text style={styles.metaText}>{item.commentCount}</Text>
                   <View style={{ width: 10 }} />
                   <Image
                     source={require('../../icons/eye.png')}
                     style={styles.metaIconImg}
                   />
-                  <Text style={styles.metaText}>20</Text>
+                  <Text style={styles.metaText}>{item.viewCount}+</Text>
                 </View>
               </View>
               <Image source={{ uri: item.image }} style={styles.rowThumb} />

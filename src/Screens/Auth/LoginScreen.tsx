@@ -23,7 +23,7 @@ const LoginScreen = () => {
   const formik = useFormik({
     initialValues: { email: '', password: '' },
     validationSchema: loginSchema,
-    onSubmit: async values => {
+    onSubmit: async (values, { setSubmitting }) => {
       try {
         const res = await apiPost({ url: API_LOGIN, values });
         if (res?.success) {
@@ -44,6 +44,8 @@ const LoginScreen = () => {
         }
       } catch (e: any) {
         ShowToast(e?.message || 'Something went wrong', 'error');
+      } finally {
+        setSubmitting(false); // <-- important!
       }
     },
   });
@@ -91,7 +93,7 @@ const LoginScreen = () => {
                 autoCapitalize="none"
               />
               {formik.touched.email && formik.errors.email && (
-                <Text style={{ color: 'red', fontSize: 12 }}>
+                <Text style={{ color: 'red', fontSize: 12,marginLeft: 10 }}>
                   {formik.errors.email}
                 </Text>
               )}
@@ -111,7 +113,7 @@ const LoginScreen = () => {
                 autoCapitalize="none"
               />
               {formik.touched.password && formik.errors.password && (
-                <Text style={{ color: 'red', fontSize: 12 }}>
+                <Text style={{ color: 'red', fontSize: 12,marginLeft: 10 }}>
                   {formik.errors.password}
                 </Text>
               )}

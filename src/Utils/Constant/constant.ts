@@ -12,7 +12,7 @@ export const SCREEN_NAMES = {
   subscription: 'Premium',
   more: 'More',
   editProfile: 'EditProfile',
- 
+  termsAndConditions: 'TermsAndConditions',
 } as const;
 
 export type RootStackParamList = {

@@ -11,22 +11,20 @@ export const HEADER_H = height * 0.45; // Adjust header height to be 45% of scre
 export const SHEET_OVERLAP = scale(50);
 
 export const styles = StyleSheet.create({
-  container: { 
-    flex: 1 , 
- 
+  container: {
+    flex: 1,
   },
 
   // ----- Header (no absolute) -----
   header: {
     width: '100%',
     height: HEADER_H,
-    backgroundColor: 'blue',
-    zIndex:0,
-    position:'relative'
+
+    zIndex: 0,
+    position: 'relative',
   },
   headerOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Darkening overlay
   },
   topBar: {
     paddingHorizontal: scale(18),
@@ -34,12 +32,11 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  
   },
-  logo: { 
-    width: scale(170), 
-    height: scale(34), 
-    resizeMode: 'contain' 
+  logo: {
+    width: scale(170),
+    height: scale(34),
+    resizeMode: 'contain',
   },
   avatarWrap: {
     width: scale(40),
@@ -48,16 +45,14 @@ export const styles = StyleSheet.create({
     backgroundColor: '#F1F5FF',
     alignItems: 'center',
     justifyContent: 'center',
-   
   },
-  avatar: { 
-    width: '100%', 
-    height: '100%' 
+  avatar: {
+    width: '100%',
+    height: '100%',
   },
-  
+
   // Watermark logo in center of header
   watermarkContainer: {
-   
     top: 0,
     left: 0,
     right: 0,
@@ -74,9 +69,9 @@ export const styles = StyleSheet.create({
   },
 
   // ----- Content -----
-  scroll: { 
-    position:'relative',
-    overflow:"visible",
+  scroll: {
+    position: 'relative',
+    overflow: 'visible',
     flex: 1,
   },
   scrollContent: {
@@ -84,14 +79,13 @@ export const styles = StyleSheet.create({
     paddingTop: SHEET_OVERLAP,
   },
   sheet: {
-      
-      marginTop:-100,
-      marginHorizontal: scale(16),
-      backgroundColor: '#e3e9ee',
-      borderRadius: scale(20),
-      paddingHorizontal: scale(20),
-      paddingTop: scale(24),
-      paddingBottom: scale(24),
+    marginTop: -100,
+    marginHorizontal: scale(16),
+    backgroundColor: '#e3e9ee',
+    borderRadius: scale(20),
+    paddingHorizontal: scale(20),
+    paddingTop: scale(24),
+    paddingBottom: scale(24),
   },
 
   h1: {

@@ -10,6 +10,10 @@ export const signupSchema = Yup.object()
     password: Yup.string()
       .min(6, 'Password must be at least 6 characters')
       .required('Password is required'),
+       agreeTerms: Yup.boolean()
+    .oneOf([true], "You must agree to the Terms & Conditions"),
+      subscribeNews: Yup.boolean()
+    .oneOf([true], "You must agree to receive newsletters"),
     
   });
 

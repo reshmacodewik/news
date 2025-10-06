@@ -96,7 +96,7 @@ const SignupScreen = () => {
                 onBlur={formik.handleBlur("name")}
               />
               {formik.touched.name && formik.errors.name && (
-                <Text style={{ color: "red", fontSize: 12 }}>
+              <Text style={{ color: "red", fontSize: 12,marginLeft: 10 }}>
                   {formik.errors.name}
                 </Text>
               )}
@@ -116,7 +116,7 @@ const SignupScreen = () => {
                 autoCapitalize="none"
               />
               {formik.touched.email && formik.errors.email && (
-                <Text style={{ color: "red", fontSize: 12 }}>
+               <Text style={{ color: "red", fontSize: 12,marginLeft: 10 }}>
                   {formik.errors.email}
                 </Text>
               )}
@@ -135,7 +135,7 @@ const SignupScreen = () => {
                 secureTextEntry
               />
               {formik.touched.password && formik.errors.password && (
-                <Text style={{ color: "red", fontSize: 12 }}>
+                <Text style={{ color: "red", fontSize: 12,marginLeft: 10 }}>
                   {formik.errors.password}
                 </Text>
               )}
@@ -166,7 +166,7 @@ const SignupScreen = () => {
               </Text>
             </TouchableOpacity>
             {formik.touched.agreeTerms && formik.errors.agreeTerms && (
-              <Text style={{ color: "red", fontSize: 12 }}>
+              <Text style={{ color: "red", fontSize: 12,marginLeft: 40 }}>
                 {formik.errors.agreeTerms}
               </Text>
             )}
@@ -195,6 +195,11 @@ const SignupScreen = () => {
                 I want to receive newsletters, updates, and personalized news.
               </Text>
             </TouchableOpacity>
+            {formik.touched.subscribeNews && formik.errors.subscribeNews && (
+              <Text style={{ color: "red", fontSize: 12,marginLeft: 35,marginBottom: 10 }}>
+                {formik.errors.subscribeNews}
+              </Text>
+            )}
 
             {/* CTA */}
             <TouchableOpacity
@@ -203,7 +208,7 @@ const SignupScreen = () => {
                 !formik.values.agreeTerms && { opacity: 0.6 },
               ]}
               onPress={formik.handleSubmit as any}
-              disabled={!formik.values.agreeTerms || formik.isSubmitting}
+              disabled={!formik.values.agreeTerms || !formik.values.subscribeNews || formik.isSubmitting}
               activeOpacity={0.9}
             >
               <Text style={styles.signInButtonText}>Sign Up</Text>

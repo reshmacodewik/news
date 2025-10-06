@@ -8,60 +8,162 @@ import {
   TouchableOpacity,
   StatusBar,
   Dimensions,
-  Modal,
   TextInput,
   FlatList,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../style/ArticleDetailStyles';
-import { getApiWithOutQuery } from '../Utils/api/common';
-import { useQuery } from '@tanstack/react-query';
-import { API_ARTICLES_LIST } from '../Utils/api/APIConstant';
+import { apiPost, getApiWithOutQuery } from '../Utils/api/common';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  API_ADD_COMMENT,
+  API_ARTICLES_LIST,
+  API_COMMENTS_LIST,
+  API_LIKES,
+} from '../Utils/api/APIConstant';
 import BottomSheet from '../Components/BottomSheet';
 
-const HERO = require('../icons/news.png'); // hero image
-const BACK = require('../icons/back.png'); // left arrow
+const HERO = require('../icons/news.png');
+const BACK = require('../icons/back.png');
 
 type Props = { navigation: any; route: { params: { id: string } } };
+
+type Article = {
+  createdBy: any;
+  _id: string;
+  title: string;
+  description: string;
+  image?: string;
+  createdAt?: string;
+};
+
+type ArticleResponse = {
+  article: Article;
+  counlike: number;
+  comments: number;
+};
 
 const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { id } = route.params;
   const insets = useSafeAreaInsets();
   const [isVisible, setIsVisible] = useState(false);
-  const [comment, setComment] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const [isFav, setIsFav] = useState(false);
+  const [localLikeCount, setLocalLikeCount] = useState(0);
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
+
+  // ✅ Fetch and return the *inner* data
   const {
-    data: article,
+    data: payload,
     isLoading,
     isError,
   } = useQuery({
     queryKey: ['article', id],
-    queryFn: async () => {
+    queryFn: async (): Promise<ArticleResponse> => {
       const res = await getApiWithOutQuery({
         url: `${API_ARTICLES_LIST}/${id}`,
       });
+      return res.data; // <-- inner { article, counlike, comments }
+    },
+  });
+const formatDateTime = (value: string | number | Date) => {
+  const d = new Date(value);
+  const months = [
+    "January","February","March","April","May","June",
+    "July","August","September","October","November","December"
+  ];
+  const h24 = d.getHours();
+  const h12 = h24 % 12 || 12;
+  const min = String(d.getMinutes()).padStart(2, "0");
+  const ampm = h24 >= 12 ? "PM" : "AM";
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${h12}:${min} ${ampm}`;
+};
 
-      return res.data;
+  const article = payload?.article;
+  const likeCount = payload?.counlike ?? 0;
+  const commentsCount = payload?.comments ?? 0;
+
+  const { data: commentData, refetch: refetchComments } = useQuery({
+    queryKey: ['comments', id],
+    queryFn: async () => {
+      const res = await getApiWithOutQuery({
+        url: `${API_COMMENTS_LIST}/${id}`,
+      });
+      return res.data.comments as Array<{
+        _id: string;
+        name: string;
+        content: string;
+        createdAt: string;
+        photo?: string;
+      }>;
     },
   });
 
-  const comments = [
-    {
-      id: '1',
-      user: 'Discover Chateeze Premium',
-      time: '3 days ago',
-      text: 'New York, Sept. 12, 2025 – International markets experienced uncertainty today as world leaders gathered...',
-      likes: 245,
-      replies: 56,
+  const { mutate: AddComment, isPending: commenting } = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await apiPost({ url: API_ADD_COMMENT, values: payload });
+      return res.data;
     },
-  ];
+    onSuccess: () => {
+      setCommentText('');
+      refetchComments();
+    },
+    onError: err => console.log('Failed to add comment', err),
+  });
+
+  const handleAddComment = () => {
+    if (!commentText.trim()) return;
+    AddComment({ articleId: id, content: commentText });
+  };
+  React.useEffect(() => {
+    setLocalLikeCount(likeCount);
+  }, [likeCount /*, payload?.userHasLiked*/]);
+
+  // mutation (toggle like)
+  const { mutate: toggleLike, isPending: likePending } = useMutation({
+    mutationFn: async (like: boolean) => {
+      const res = await apiPost({
+        url: API_LIKES,
+        values: { articleId: id, like },
+      });
+      return res.data;
+    },
+    onError: (_err, likeJustSet) => {
+      setIsFav(!likeJustSet);
+      setLocalLikeCount(c => c + (likeJustSet ? -1 : +1));
+    },
+  });
+
+  // press handler
+  const handleToggleFav = () => {
+    const next = !isFav;
+    setIsFav(next);
+    setLocalLikeCount(c => c + (next ? 1 : -1));
+    toggleLike(next);
+  };
+  const getTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 30) return `${diffInDays} days ago`;
+    const diffInMonths = Math.floor(diffInDays / 30);
+    if (diffInMonths < 12) return `${diffInMonths} months ago`;
+    const diffInYears = Math.floor(diffInMonths / 12);
+    return `${diffInYears} years ago`;
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" translucent />
-      {/* Safe top spacer */}
       <View style={{ height: insets.top }} />
 
-      {/* ---------- App Bar ---------- */}
+      {/* App Bar */}
       <View style={styles.appBar}>
         <TouchableOpacity
           onPress={() => navigation.goBack?.()}
@@ -74,12 +176,8 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           Aecalis News
         </Text>
         <View style={{ width: scale(24) }} />
-        {/* balance for centered title */}
       </View>
 
-      {/* ---------- Horizontal categories (scrollable) ---------- */}
-
-      {/* ---------- Content ---------- */}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{ paddingBottom: insets.bottom + scale(28) }}
@@ -87,91 +185,85 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       >
         {/* Hero */}
         <ImageBackground
-          source={article?.image ? { uri: article.image } : HERO} // fallback local image
+          source={article?.image ? { uri: article.image } : HERO}
           style={styles.hero}
           imageStyle={styles.heroImg}
         />
 
-        {/* Headline & byline */}
+        {/* Headline & meta */}
         <View style={styles.headerBlock}>
-          <Text style={styles.headline}>{article?.title}</Text>
+          <Text style={styles.headline}>
+            {article?.title ?? (isLoading ? 'Loading…' : '—')}
+          </Text>
 
-          <Text style={styles.byline}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-               
-              }}
-            >
-              {/* Author (Left) */}
-              <Text style={styles.byAuthor}>By Davis Lawder</Text>
-
-              {/* Likes + Comments (Right) */}
-              <View style={{ flexDirection: 'row',marginLeft:'40%' }}>
-                {/* Likes */}
+          {/* ✅ Use a View, not a View inside Text */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Text style={styles.byAuthor}>
+              {article?.createdBy
+                ? `By ${article?.createdBy?.firstName || ''} ${
+                    article?.createdBy?.lastName || ''
+                  }`
+                : 'By Unknown'}
+            </Text>
+            {/* Likes + Comments */}
+            <View style={{ flexDirection: 'row' }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginRight: 16,
+                }}
+              >
                 <TouchableOpacity
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    marginRight: 16,
-                  }}
+                  style={{ flexDirection: 'row', alignItems: 'center' }}
+                  onPress={handleToggleFav}
+                  disabled={likePending}
                 >
                   <Image
                     source={require('../icons/heart.png')}
-                    style={styles.chatIcon}
+                    style={[
+                      styles.chatIcon,
+                      { tintColor: isFav ? '#E11D48' : '#6B7280' },
+                    ]} // red when liked
                   />
-                  <Text style={styles.likeCount}>37.5k</Text>
-                </TouchableOpacity>
-
-                {/* Comments */}
-                <TouchableOpacity
-                  style={{ flexDirection: 'row', alignItems: 'center' }}
-                  onPress={() => setIsVisible(true)}
-                >
-                  <Image
-                    source={require('../icons/comment1.png')}
-                    style={styles.chatIcon}
-                  />
-                  <Text style={styles.likeCount}>120</Text>
+                  <Text style={styles.likeCount}>{localLikeCount}</Text>
                 </TouchableOpacity>
               </View>
+
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center' }}
+                onPress={() => setIsVisible(true)}
+              >
+                <Image
+                  source={require('../icons/comment1.png')}
+                  style={styles.chatIcon}
+                />
+                <Text style={styles.likeCount}>
+                  {commentData ? commentData.length : commentsCount}
+                </Text>
+              </TouchableOpacity>
             </View>
+          </View>
+
+          <Text style={styles.dateline}>
+            {article?.createdAt
+              ? formatDateTime(article.createdAt)
+              : 'September 13, 2025 4:16 AM'}
           </Text>
-          <Text style={styles.dateline}>September 13, 2025 4:16 AM</Text>
         </View>
 
-        {/* First paragraphs */}
+        {/* Body */}
         <Text style={styles.body}>
-          {article?.description?.replace(/<[^>]+>/g, '') || ''}
+          {(article?.description ?? '').replace(/<[^>]+>/g, '')}
         </Text>
 
-        {/* Interaction strip */}
-        {/* <View style={styles.actionStrip}>
-          <TouchableOpacity style={styles.stat}>
-            <Image source={LIKE} style={styles.statIcon} />
-            <Text style={styles.statText}>37.6K</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.stat}>
-            <Image source={CHAT} style={styles.statIcon} />
-            <Text style={styles.statText}>159</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.stat}>
-            <Image source={SHARE} style={styles.statIcon} />
-            <Text style={styles.statText}>920</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.stat}>
-            <Image source={SAVE} style={styles.statIcon} />
-          </TouchableOpacity>
-        </View> */}
-
-        {/* Divider bar */}
-        {/* <View style={styles.smallIndicator} /> */}
-
-        {/* Remaining paragraphs */}
-
-        {/* Quote block */}
+        {/* Quote */}
         <View style={styles.quoteWrap}>
           <View style={styles.quoteBar} />
           <Text style={styles.quoteText}>
@@ -182,20 +274,21 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Comments BottomSheet */}
       <BottomSheet visible={isVisible} onClose={() => setIsVisible(false)}>
         <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>
           Comments
         </Text>
 
-        {/* Input */}
         <TextInput
           placeholder="Add a comment"
-          value={comment}
-          onChangeText={setComment}
+          value={commentText}
+          onChangeText={setCommentText}
           style={{
             height: scale(55),
             borderWidth: 1,
-            borderColor: '#E5E7EB',
+            borderColor: '#000',
             borderRadius: 8,
             paddingHorizontal: 5,
             marginBottom: 12,
@@ -210,22 +303,26 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             justifyContent: 'center',
             alignItems: 'center',
             marginBottom: 12,
+        
           }}
+          onPress={handleAddComment}
         >
-          <Text style={{ color: '#fff', fontWeight: '600' }}>Comment</Text>
+          <Text style={{ color: '#fff', fontWeight: '600' }}>
+            {commenting ? 'Posting...' : 'Comment'}
+          </Text>
         </TouchableOpacity>
+
         <View
           style={{
             borderWidth: 1,
-            borderColor: '#E5E7EB',
-            paddingHorizontal: 12,
+            borderColor: '#E1E1E1',
             marginBottom: 16,
           }}
         />
-        {/* Comment list */}
+
         <FlatList
-          data={comments}
-          keyExtractor={item => item.id}
+          data={commentData ?? []}
+          keyExtractor={item => item._id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: insets.bottom }}
           renderItem={({ item }) => (
@@ -235,7 +332,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 padding: 12,
                 borderWidth: 1,
                 borderRadius: 10,
-                borderColor: '#E5E7EB',
+                borderColor: '#000',
               }}
             >
               <View
@@ -246,7 +343,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 }}
               >
                 <Image
-                  source={{ uri: 'https://i.pravatar.cc/100' }}
+                  source={{ uri: item.photo || 'https://i.pravatar.cc/100' }}
                   style={{
                     width: 36,
                     height: 36,
@@ -256,20 +353,23 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontWeight: '600', fontSize: 14 }}>
-                    {item.user}
+                    {item.name}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#6B7280' }}>
-                    {item.time}
+                    {getTimeAgo(item.createdAt)}
                   </Text>
                 </View>
               </View>
               <Text style={{ fontSize: 14, lineHeight: 20, color: '#111' }}>
-                {item.text}
+                {item.content}
               </Text>
-
-              {/* Likes / Replies */}
             </View>
           )}
+          ListEmptyComponent={
+            <Text style={{ textAlign: 'center', color: '#6B7280' }}>
+              {isLoading ? 'Loading comments…' : 'No comments yet'}
+            </Text>
+          }
         />
       </BottomSheet>
     </View>

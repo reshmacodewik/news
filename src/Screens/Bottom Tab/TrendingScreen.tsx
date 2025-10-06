@@ -136,6 +136,10 @@ const TrendingScreen: React.FC = () => {
 
   // Tabs array including "All"
   const tabs = [{ _id: 'all', title: 'All' }, ...categoryData];
+  const activeTabTitle = useMemo(() => {
+    const tab = tabs.find(t => t._id === activeTab);
+    return tab ? tab.title : 'All News';
+  }, [activeTab, tabs]);
 
   // Fetch articles based on category
   const { data: articles = [] } = useQuery({
@@ -170,43 +174,46 @@ const TrendingScreen: React.FC = () => {
           <View style={styles.topBar}>
             <Image source={LOGO} style={styles.logo} resizeMode="contain" />
             <View style={styles.avatarWrap}>
-              <TouchableOpacity style={styles.avatarWrap} onPress={() => navigate('EditProfile' as never)}>
-              <Image source={AVATAR} style={styles.avatar}  />
+              <TouchableOpacity
+                style={styles.avatarWrap}
+                onPress={() => navigate('EditProfile' as never)}
+              >
+                <Image source={AVATAR} style={styles.avatar} />
               </TouchableOpacity>
             </View>
           </View>
 
-           <View style={styles.tabsWrap}>
-          // Add a pseudo-category for "All"
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {tabs.map(c => {
-              const isActive = activeTab === c._id;
-              return (
-                <TouchableOpacity
-                  key={c._id}
-                  onPress={() => {
-                    setActiveTab(c._id);
-                    setCategoryId(c._id === 'all' ? null : c._id);
-                  }}
-                  style={styles.tabBtn}
-                  activeOpacity={0.8}
-                >
-                  <Text
-                    style={[styles.tabText, isActive && styles.tabTextActive]}
+          <View style={styles.tabsWrap}>
+            // Add a pseudo-category for "All"
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {tabs.map(c => {
+                const isActive = activeTab === c._id;
+                return (
+                  <TouchableOpacity
+                    key={c._id}
+                    onPress={() => {
+                      setActiveTab(c._id);
+                      setCategoryId(c._id === 'all' ? null : c._id);
+                    }}
+                    style={styles.tabBtn}
+                    activeOpacity={0.8}
                   >
-                    {c.title}
-                  </Text>
-                  <View
-                    style={[
-                      styles.tabBar,
-                      isActive ? styles.tabBarActive : styles.tabBarGhost,
-                    ]}
-                  />
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
+                    <Text
+                      style={[styles.tabText, isActive && styles.tabTextActive]}
+                    >
+                      {c.title}
+                    </Text>
+                    <View
+                      style={[
+                        styles.tabBar,
+                        isActive ? styles.tabBarActive : styles.tabBarGhost,
+                      ]}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
           {/* Breaking News */}
           <Text style={styles.sectionTitle}>Breaking News</Text>
           <FlatList
@@ -218,7 +225,7 @@ const TrendingScreen: React.FC = () => {
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.breakCard}>
                 <ImageBackground
-                    source={toSrc(item.image)}
+                  source={toSrc(item.image)}
                   style={styles.breakImage}
                   imageStyle={styles.breakImageRadius}
                 />
@@ -230,11 +237,9 @@ const TrendingScreen: React.FC = () => {
           />
         </View>
 
-     
-       
         {/* All Trending News */}
         <Text style={[styles.sectionTitle, { marginTop: scale(18) }]}>
-          All Trending News
+          {activeTabTitle} News
         </Text>
         <FlatList
           data={articles}
@@ -262,13 +267,13 @@ const TrendingScreen: React.FC = () => {
                     source={require('../../icons/comment.png')}
                     style={styles.metaIconImg}
                   />
-                  <Text style={styles.metaText}>227K</Text>
+                  <Text style={styles.metaText}>{item.commentCount}</Text>
                   <View style={{ width: 10 }} /> {/* small spacer */}
                   <Image
                     source={require('../../icons/eye.png')}
                     style={styles.metaIconImg}
                   />
-                  <Text style={styles.metaText}>20</Text>
+                  <Text style={styles.metaText}>{item.viewCount}+</Text>
                 </View>
               </View>
               <Image source={{ uri: item.image }} style={styles.rowThumb} />

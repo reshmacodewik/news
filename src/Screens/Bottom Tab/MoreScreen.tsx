@@ -229,7 +229,7 @@ const MoreScreen: React.FC = () => {
             label="Privacy Policy"
             onPress={() => navigate('PrivacyPolicy' as never)}
           />
-          <Row icon={TERMS} label="Terms of Usage & Conditions" />
+          <Row icon={TERMS} label="Terms of Usage & Conditions" onPress={() => navigate('TermsAndConditions' as never)} />
         </View>
 
         {/* Contact + Version */}
