@@ -15,8 +15,12 @@ import { useFormik } from "formik";
 import { API_REGISTER } from "../../Utils/api/APIConstant";
 import ShowToast from "../../Utils/ShowToast";
 import { navigate } from "../../Navigators/utils";
+import { AuthSession, useAuth } from "./AuthContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SignupScreen = () => {
+  const { signIn } = useAuth();
+
   const formik = useFormik({
     initialValues: {
       name: "",
@@ -39,20 +43,32 @@ const SignupScreen = () => {
         });
 
         if (res?.success) {
-          ShowToast(res?.message, "success");
-          navigate("Login" as never);
+          const session: AuthSession = {
+            accessToken: res.data.token,
+            user: {
+              id: res.data.id,
+              name: res.data.name,
+              email: res.data.email,
+            },
+          };
+
+          // Save session in context and AsyncStorage
+          signIn(session);
+          await AsyncStorage.setItem("userSession", JSON.stringify(session));
+
+          ShowToast(res.message || "Registered successfully", "success");
+          navigate("Home" as never);
         } else {
-          ShowToast(res?.error || "Register Failed", "error");
+          ShowToast(res?.message || "Registration failed", "error");
         }
       } catch (error: any) {
-        console.log("Register error:", error);
-        ShowToast(error?.error || "Something went wrong", "error");
+        console.log("Signup error:", error);
+        ShowToast(error?.message || "Something went wrong", "error");
       } finally {
         setSubmitting(false);
       }
     },
   });
-
   return (
     <View style={styles.container}>
       <ScrollView
@@ -89,7 +105,7 @@ const SignupScreen = () => {
               <Text style={styles.inputLabel}>Name</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="Name"
+                placeholder="name"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.name}
                 onChangeText={formik.handleChange("name")}
@@ -107,7 +123,7 @@ const SignupScreen = () => {
               <Text style={styles.inputLabel}>Email</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="Example@email.com"
+                placeholder="example@email.com"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.email}
                 onChangeText={formik.handleChange("email")}
@@ -127,7 +143,7 @@ const SignupScreen = () => {
               <Text style={styles.inputLabel}>Password</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="at least 8 characters"
+                placeholder="enter the password"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.password}
                 onChangeText={formik.handleChange("password")}
@@ -166,7 +182,7 @@ const SignupScreen = () => {
               </Text>
             </TouchableOpacity>
             {formik.touched.agreeTerms && formik.errors.agreeTerms && (
-              <Text style={{ color: "red", fontSize: 12,marginLeft: 40 }}>
+              <Text style={{ color: "red", fontSize: 12,marginBottom: 10}}>
                 {formik.errors.agreeTerms}
               </Text>
             )}
@@ -196,7 +212,7 @@ const SignupScreen = () => {
               </Text>
             </TouchableOpacity>
             {formik.touched.subscribeNews && formik.errors.subscribeNews && (
-              <Text style={{ color: "red", fontSize: 12,marginLeft: 35,marginBottom: 10 }}>
+              <Text style={{ color: "red", fontSize: 12,marginBottom: 10 }}>
                 {formik.errors.subscribeNews}
               </Text>
             )}
@@ -222,7 +238,7 @@ const SignupScreen = () => {
                   style={styles.signUpLink}
                   onPress={() => navigate("Login" as never)}
                 >
-                  Login
+                  Log in
                 </Text>
               </Text>
             </View>

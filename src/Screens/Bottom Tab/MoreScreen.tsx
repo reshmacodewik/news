@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,9 @@ import {
   Linking,
   Dimensions,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../../style/MoreStyles';
@@ -16,12 +19,14 @@ import { navigate } from '../../Navigators/utils';
 import { apiPost, getApiWithOutQuery } from '../../Utils/api/common';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
+  API_CHANGE_PASSWORD,
   API_GET_PROFILE,
   API_RESET_PASSWORD,
 } from '../../Utils/api/APIConstant';
 import ShowToast from '../../Utils/ShowToast';
 import DeviceInfo from 'react-native-device-info';
 import { useAuth } from '../Auth/AuthContext';
+import { useIsFocused } from '@react-navigation/native';
 
 // ---- Assets ----
 const LOGO = require('../../icons/logoblack.png');
@@ -47,18 +52,29 @@ const Row = ({
   label,
   right = true,
   onPress,
+  style,
 }: {
   icon: any;
   label: string;
   right?: boolean;
   onPress?: () => void;
+  style?: any;
 }) => (
-  <TouchableOpacity style={styles.row} activeOpacity={0.85} onPress={onPress}>
+  <TouchableOpacity
+    style={[styles.row, style]}
+    onPress={onPress} // ✅ ADD THIS LINE
+    activeOpacity={0.8}
+  >
     <Image source={icon} style={styles.rowIcon} />
     <Text style={styles.rowLabel}>{label}</Text>
     {right && <Image source={CHEVRON} style={styles.chevron} />}
   </TouchableOpacity>
 );
+
+const handleRowPress = (label: string) => {
+  console.log(`Row with label ${label} pressed`);
+  // Your row press logic
+};
 
 const MoreScreen: React.FC = () => {
   const version = DeviceInfo.getVersion();
@@ -69,33 +85,44 @@ const MoreScreen: React.FC = () => {
   const [sheet, setSheet] = useState<'none' | 'newPassword'>('none');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
+  const confirmRef = React.useRef<TextInput>(null);
+  const isFocused = useIsFocused();
   const openNewPassword = () => setSheet('newPassword');
-  const close = () => setSheet('none');
+  const close = () => {
+    setSheet('none');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
+  useEffect(() => {
+    if (!isFocused) {
+      setSheet('none');
+      setNewPassword('');
+      setConfirmPassword('');
+    }
+  }, [isFocused]);
 
   // Get profile data
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile-info'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
-      console.log('raw profile response:', res?.data);
       return res?.data;
     },
   });
-
-  console.log(profile, 'profile-------------------------');
 
   // Reset password API
   const resetPassword = useMutation({
     mutationFn: async () => {
       const res = await apiPost({
-        url: API_RESET_PASSWORD,
+        url: API_CHANGE_PASSWORD,
         values: { newPassword, confirmPassword },
       });
       return res.data;
     },
     onSuccess: () => {
       ShowToast('Password reset successfully');
+      Keyboard.dismiss(); // hide keyboard
       setSheet('none');
       setNewPassword('');
       setConfirmPassword('');
@@ -151,10 +178,7 @@ const MoreScreen: React.FC = () => {
       >
         {/* Profile card */}
         <View
-          style={[
-            styles.profileCard,
-            !session?.accessToken && { opacity: 0.4 },
-          ]}
+          style={[styles.profileCard, !session?.accessToken && { opacity: 0.4 }]}
         >
           <View style={styles.profileLeft}>
             <View style={styles.bigAvatarWrap}>
@@ -172,14 +196,6 @@ const MoreScreen: React.FC = () => {
                 <Image source={MAIL} style={styles.smallIcon} />
                 <Text style={styles.lineText}>
                   {session?.accessToken ? profile?.email : 'Login to see email'}
-                </Text>
-              </View>
-              <View style={styles.line}>
-                <Image source={PHONE} style={styles.smallIcon} />
-                <Text style={styles.lineText}>
-                  {session?.accessToken
-                    ? profile?.phoneNumber
-                    : 'Login to see phone'}
                 </Text>
               </View>
             </View>
@@ -214,11 +230,13 @@ const MoreScreen: React.FC = () => {
             icon={PLAN}
             label="Subscription Plan"
             onPress={() => navigate('Premium' as never)}
+            style={{ marginTop: -12 }}
           />
           <Row
             icon={ABOUT}
             label="About Us"
             onPress={() => navigate('Fast News' as never)}
+            style={{ marginTop: -12 }}
           />
         </View>
 
@@ -229,7 +247,12 @@ const MoreScreen: React.FC = () => {
             label="Privacy Policy"
             onPress={() => navigate('PrivacyPolicy' as never)}
           />
-          <Row icon={TERMS} label="Terms of Usage & Conditions" onPress={() => navigate('TermsAndConditions' as never)} />
+          <Row
+            icon={TERMS}
+            label="Terms of Usage & Conditions"
+            onPress={() => navigate('TermsAndConditions' as never)}
+            style={{ marginTop: -12 }}
+          />
         </View>
 
         {/* Contact + Version */}
@@ -278,40 +301,57 @@ const MoreScreen: React.FC = () => {
 
         {/* BottomSheet for Reset Password */}
         <BottomSheet visible={sheet === 'newPassword'} onClose={close}>
-          <Text style={styles.sheetTitle}>Create New Password</Text>
-          <Text style={styles.sheetSub}>
-            This password should be different from the previous password.
-          </Text>
-
-          <Text style={styles.inputLabel}>New Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="New Password"
-            placeholderTextColor="#9CA3AF"
-            secureTextEntry
-            value={newPassword}
-            onChangeText={setNewPassword}
-          />
-
-          <Text style={styles.inputLabel}>Confirm Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm Password"
-            placeholderTextColor="#9CA3AF"
-            secureTextEntry
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          />
-
-          <TouchableOpacity
-            style={[styles.primaryBtn, { marginTop: 16 }]}
-            onPress={handleResetPassword}
-            disabled={resetPassword.isPending}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={100} // adjust if needed
+            style={{ flex: 1 }}
           >
-            <Text style={styles.primaryBtnText}>
-              {resetPassword.isPending ? 'Resetting...' : 'Reset Password'}
-            </Text>
-          </TouchableOpacity>
+            <ScrollView
+              contentContainerStyle={{ paddingBottom: 40 }}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text style={styles.sheetTitle}>Create New Password</Text>
+              <Text style={styles.sheetSub}>
+                This password should be different from the previous password.
+              </Text>
+
+              <Text style={styles.inputLabel}>New Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="New Password"
+                placeholderTextColor="#9CA3AF"
+                secureTextEntry
+                value={newPassword}
+                onChangeText={setNewPassword}
+                returnKeyType="next"
+                onSubmitEditing={() => confirmRef.current?.focus()} // ✅ focus next input
+                blurOnSubmit={false}
+              />
+
+              <Text style={styles.inputLabel}>Confirm Password</Text>
+              <TextInput
+                ref={confirmRef}
+                style={styles.input}
+                placeholder="Confirm Password"
+                placeholderTextColor="#9CA3AF"
+                secureTextEntry
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                returnKeyType="done"
+                onSubmitEditing={handleResetPassword} // ✅ submit on enter
+              />
+
+              <TouchableOpacity
+                style={[styles.primaryBtn, { marginTop: 16 }]}
+                onPress={handleResetPassword}
+                disabled={resetPassword.isPending}
+              >
+                <Text style={styles.primaryBtnText}>
+                  {resetPassword.isPending ? 'Resetting...' : 'Reset Password'}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </BottomSheet>
       </ScrollView>
     </View>

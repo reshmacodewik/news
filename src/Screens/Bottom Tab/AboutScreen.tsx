@@ -6,6 +6,7 @@ import {
   ImageBackground,
   ScrollView,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -19,32 +20,38 @@ const AVATAR = require('../../icons/user.png');
 
 const AboutScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['about-us'],
+    queryFn: async () => {
+      try {
+        const res = await getApiWithOutQuery({
+          url: API_ABOUT_US,
+        });
 
-const { data, isLoading, isError } = useQuery({
-  queryKey: ['about-us'],
-  queryFn: async () => {
-    try {
-      const res = await getApiWithOutQuery({
-        url: API_ABOUT_US,
-      });
-    
-      if (res?.data) {
-        return res.data;
+        if (res?.data) {
+          return res.data;
+        }
+        console.log(res.data, 'res');
+        return {}; // return empty object instead of undefined
+      } catch (error) {
+        console.error('About Us API error:', error);
+        return {}; // fallback so query data is never undefined
       }
-      console.log(res.data, 'res');
-      return {}; // return empty object instead of undefined
-    } catch (error) {
-      console.error('About Us API error:', error);
-      return {}; // fallback so query data is never undefined
-    }
-  },
-});
+    },
+  });
 
   return (
     <View style={styles.container}>
       <StatusBar translucent barStyle="light-content" />
-
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom, // only safe area
+          flexGrow: 1, // allows content to push to bottom if needed
+        }}
+      >
         <ImageBackground
           source={BG}
           style={[styles.header, { paddingTop: insets.top }]}
@@ -60,6 +67,7 @@ const { data, isLoading, isError } = useQuery({
         </ImageBackground>
 
         {/* CONTENT */}
+
         <View style={styles.sheet}>
           <Text style={styles.h1}>About Us</Text>
           <Text style={styles.body}>

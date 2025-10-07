@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
     borderBottomColor: '#ECEFF3',
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  logo: { width: scale(160), height: scale(28) },
+  logo: { width: scale(155), height: scale(28) },
   avatarWrap: {
     width: scale(34),
     height: scale(34),

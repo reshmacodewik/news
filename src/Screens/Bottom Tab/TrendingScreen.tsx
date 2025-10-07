@@ -103,26 +103,30 @@ const TrendingScreen: React.FC = () => {
     }
     navigate('ArticleDetail' as never, { id } as never); // ✅ pass article id
   };
-  const getdata = async (type: string) => {
+ const getData = async (type: string, setter: (data: any) => void) => {
     try {
       const res = await getApiWithOutQuery({
         url: API_GET_ARTICLES_BY_TYPE + type,
       });
-      if (res?.data) {
-        if (type === '/breaking') setBreakingNews(res.data);
-        if (type === '/top-news') setTopNews(res.data);
-        if (type === '/latest') setLatestNews(res.data);
-        if (type === '/trending') setTrendingNews(res.data);
+      if (res?.data?.articles) {
+        setter(res.data.articles);
+      } else {
+        setter([]);
       }
-    } catch (error) {
-      console.log(`Error fetching ${type}:`, error);
+    } catch (err) {
+      console.log(`Error fetching ${type}:`, err);
+      setter([]);
     }
   };
+
   useEffect(() => {
-    getdata('/breaking');
-    getdata('/top-news');
-    getdata('/latest');
-    getdata('/trending');
+    const newsTypes = [
+      { type: '/breaking', setter: setBreakingNews },
+      { type: '/top-news', setter: setTopNews },
+      { type: '/latest', setter: setLatestNews },
+      { type: '/trending', setter: setTrendingNews },
+    ];
+    newsTypes.forEach(({ type, setter }) => getData(type, setter));
   }, []);
   const { data: categoryData = [] } = useQuery({
     queryKey: ['categories'],
@@ -156,132 +160,138 @@ const TrendingScreen: React.FC = () => {
   });
   return (
     <View style={styles.container}>
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + scale(24) }}
+      <View
+        style={{
+          backgroundColor: '#e3e9ee',
+          borderBottomLeftRadius: scale(18),
+          borderBottomRightRadius: scale(15),
+          paddingBottom: scale(10),
+        }}
       >
-        <View
-          style={{
-            backgroundColor: '#e3e9ee',
-            borderBottomLeftRadius: scale(18),
-            borderBottomRightRadius: scale(15),
-            paddingBottom: scale(10),
-          }}
-        >
-          <View style={{ height: insets.top }} />
+        <View style={{ height: insets.top }} />
 
-          <View style={styles.topBar}>
-            <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-            <View style={styles.avatarWrap}>
-              <TouchableOpacity
-                style={styles.avatarWrap}
-                onPress={() => navigate('EditProfile' as never)}
-              >
-                <Image source={AVATAR} style={styles.avatar} />
-              </TouchableOpacity>
-            </View>
+        <View style={styles.topBar}>
+          <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+          <View style={styles.avatarWrap}>
+            <TouchableOpacity
+              style={styles.avatarWrap}
+              onPress={() => navigate('EditProfile' as never)}
+            >
+              <Image source={AVATAR} style={styles.avatar} />
+            </TouchableOpacity>
           </View>
-
-          <View style={styles.tabsWrap}>
-            // Add a pseudo-category for "All"
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {tabs.map(c => {
-                const isActive = activeTab === c._id;
-                return (
-                  <TouchableOpacity
-                    key={c._id}
-                    onPress={() => {
-                      setActiveTab(c._id);
-                      setCategoryId(c._id === 'all' ? null : c._id);
-                    }}
-                    style={styles.tabBtn}
-                    activeOpacity={0.8}
-                  >
-                    <Text
-                      style={[styles.tabText, isActive && styles.tabTextActive]}
-                    >
-                      {c.title}
-                    </Text>
-                    <View
-                      style={[
-                        styles.tabBar,
-                        isActive ? styles.tabBarActive : styles.tabBarGhost,
-                      ]}
-                    />
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-          {/* Breaking News */}
-          <Text style={styles.sectionTitle}>Breaking News</Text>
-          <FlatList
-            data={breakingNews}
-            keyExtractor={i => i._id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: scale(16) }}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.breakCard}>
-                <ImageBackground
-                  source={toSrc(item.image)}
-                  style={styles.breakImage}
-                  imageStyle={styles.breakImageRadius}
-                />
-                <Text style={styles.breakCaption} numberOfLines={2}>
-                  {item.title}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
         </View>
 
-        {/* All Trending News */}
-        <Text style={[styles.sectionTitle, { marginTop: scale(18) }]}>
-          {activeTabTitle} News
-        </Text>
-        <FlatList
-          data={articles}
-          keyExtractor={i => i._id}
-          scrollEnabled={false} // we’re inside a ScrollView
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.rowCard}
-              activeOpacity={0.9}
-              onPress={() => handleArticlePress(item._id)} // ✅ no need to pass id
-            >
-              <View style={styles.rowLeft}>
-                <Text style={styles.rowTitle} numberOfLines={2}>
-                  {item.title}
-                </Text>
-                <Text
-                  style={styles.metaText}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
+        <View style={styles.tabsWrap}>
+          // Add a pseudo-category for "All"
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {tabs.map(c => {
+              const isActive = activeTab === c._id;
+              return (
+                <TouchableOpacity
+                  key={c._id}
+                  onPress={() => {
+                    setActiveTab(c._id);
+                    setCategoryId(c._id === 'all' ? null : c._id);
+                  }}
+                  style={styles.tabBtn}
+                  activeOpacity={0.8}
                 >
-                  {item.description.replace(/<[^>]+>/g, '')}
-                </Text>
-                <View style={styles.metaRow}>
-                  <Image
-                    source={require('../../icons/comment.png')}
-                    style={styles.metaIconImg}
+                  <Text
+                    style={[styles.tabText, isActive && styles.tabTextActive]}
+                  >
+                    {c.title}
+                  </Text>
+                  <View
+                    style={[
+                      styles.tabBar,
+                      isActive ? styles.tabBarActive : styles.tabBarGhost,
+                    ]}
                   />
-                  <Text style={styles.metaText}>{item.commentCount}</Text>
-                  <View style={{ width: 10 }} /> {/* small spacer */}
-                  <Image
-                    source={require('../../icons/eye.png')}
-                    style={styles.metaIconImg}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: insets.bottom + scale(50) }}
+        >
+          <View>
+            {/* Breaking News */}
+            <Text style={styles.sectionTitle}>Breaking News</Text>
+            <FlatList
+              data={breakingNews}
+              keyExtractor={i => i._id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: scale(16) }}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.breakCard}>
+                  <ImageBackground
+                    source={toSrc(item.image)}
+                    style={styles.breakImage}
+                    imageStyle={styles.breakImageRadius}
                   />
-                  <Text style={styles.metaText}>{item.viewCount}+</Text>
-                </View>
-              </View>
-              <Image source={{ uri: item.image }} style={styles.rowThumb} />
-            </TouchableOpacity>
-          )}
-          ListFooterComponent={<View style={{ height: scale(8) }} />}
-        />
-      </ScrollView>
+                  <Text style={styles.breakCaption} numberOfLines={2}>
+                    {item.title}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+
+            {/* All Trending News */}
+            <Text style={[styles.sectionTitle, { marginTop: scale(18) }]}>
+              {activeTabTitle} News
+            </Text>
+            <FlatList
+              data={articles} // trending or category articles
+              keyExtractor={i => i._id}
+              ListHeaderComponent={
+                <>
+
+                </>
+              }
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.rowCard}
+                  onPress={() => handleArticlePress(item._id)}
+                >
+                  <View style={styles.rowLeft}>
+                    <Text style={styles.rowTitle} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+                    <Text
+                      style={styles.metaText}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
+                      {item.description.replace(/<[^>]+>/g, '')}
+                    </Text>
+                    <View style={styles.metaRow}>
+                      <Image
+                        source={require('../../icons/comment.png')}
+                        style={styles.metaIconImg}
+                      />
+                      <Text style={styles.metaText}>{item.commentCount}</Text>
+                      <View style={{ width: 10 }} />
+                      <Image
+                        source={require('../../icons/eye.png')}
+                        style={styles.metaIconImg}
+                      />
+                      <Text style={styles.metaText}>{item.viewCount}+</Text>
+                    </View>
+                  </View>
+                  <Image source={{ uri: item.image }} style={styles.rowThumb} />
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={{
+                paddingBottom: insets.bottom + scale(20),
+              }}
+            />
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 };

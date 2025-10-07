@@ -91,9 +91,10 @@ const LoginScreen = () => {
                 onBlur={formik.handleBlur('email')}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                returnKeyType="next"
               />
               {formik.touched.email && formik.errors.email && (
-                <Text style={{ color: 'red', fontSize: 12,marginLeft: 10 }}>
+                <Text style={{ color: 'red', fontSize: 12, marginLeft: 10 }}>
                   {formik.errors.email}
                 </Text>
               )}
@@ -111,9 +112,10 @@ const LoginScreen = () => {
                 onBlur={formik.handleBlur('password')}
                 secureTextEntry
                 autoCapitalize="none"
+                returnKeyType="done"
               />
               {formik.touched.password && formik.errors.password && (
-                <Text style={{ color: 'red', fontSize: 12,marginLeft: 10 }}>
+                <Text style={{ color: 'red', fontSize: 12, marginLeft: 10 }}>
                   {formik.errors.password}
                 </Text>
               )}
@@ -122,7 +124,7 @@ const LoginScreen = () => {
             {/* Forgot Password Link */}
             <TouchableOpacity
               style={styles.forgotPasswordContainer}
-              onPress={() => console.log('Forgot Password pressed')}
+              onPress={() => navigate('ForgotPassword' as never)}
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>

@@ -71,7 +71,7 @@ const EditProfileScreen = () => {
   });
 
   const handleBackPress = () => {
-    navigate('Home');
+      goBackNavigation();
   };
 
   const pickImage = () => {
@@ -175,7 +175,7 @@ const EditProfileScreen = () => {
             style={styles.input}
           />
 
-          <Text style={styles.label}>Phone No</Text>
+          {/* <Text style={styles.label}>Phone No</Text>
           <TextInput
             value={phone}
             onChangeText={setPhone}
@@ -183,7 +183,7 @@ const EditProfileScreen = () => {
             placeholderTextColor="#8892a6"
             keyboardType="phone-pad"
             style={styles.input}
-          />
+          /> */}
         </View>
 
         {/* Save */}

@@ -33,14 +33,10 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  logo: {
-    width: scale(170),
-    height: scale(34),
-    resizeMode: 'contain',
-  },
+   logo: { width: scale(155), height: scale(28),resizeMode:'contain' },
   avatarWrap: {
-    width: scale(40),
-    height: scale(40),
+    width: scale(34),
+    height: scale(34),
     borderRadius: scale(20),
     backgroundColor: '#F1F5FF',
     alignItems: 'center',

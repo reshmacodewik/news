@@ -8,7 +8,7 @@ export const signupSchema = Yup.object()
     name: Yup.string().required(' Name is required'),
     email: Yup.string().email('Invalid email').required('Email is required'),
     password: Yup.string()
-      .min(6, 'Password must be at least 6 characters')
+      .min(8, 'Password must be at least 8 characters')
       .required('Password is required'),
        agreeTerms: Yup.boolean()
     .oneOf([true], "You must agree to the Terms & Conditions"),
@@ -20,8 +20,12 @@ export const signupSchema = Yup.object()
 export const loginSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('Email is required'),
   password: Yup.string()
-    .min(6, 'Password must be at least 6 characters')
+    .min(8, 'Password must be at least 8 characters')
     .required('Password is required'),
+});
+export const forgotPassword = Yup.object().shape({
+  email: Yup.string().email('Invalid email').required('Email is required'),
+ 
 });
 
 export const otpSchema = Yup.object().shape({
@@ -31,12 +35,10 @@ export const otpSchema = Yup.object().shape({
 });
 
 export const changepasswordSchema = Yup.object().shape({
-  currentPassword: Yup.string()
-    .min(6, 'Current password must be at least 6 characters')
-    .required('Current password is required'),
+  
 
   newPassword: Yup.string()
-    .min(6, 'New password must be at least 6 characters')
+    .min(8, 'New password must be at least 8 characters')
     .required('New password is required'),
 
   confirmPassword: Yup.string()

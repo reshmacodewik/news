@@ -25,6 +25,10 @@ export const styles = StyleSheet.create({
     paddingHorizontal: scale(16),
     justifyContent: 'space-between',
     marginTop: scale(25),
+    // borderBottomColor: '#E1E1E1',
+    // borderBottomWidth: StyleSheet.hairlineWidth,
+    // paddingBottom: scale(16),
+    
   },
   logo: { width: scale(155), height: scale(28) },
   avatarBtn: {

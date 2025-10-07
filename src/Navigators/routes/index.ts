@@ -8,6 +8,9 @@ import ArticleDetailScreen from '../../Screens/ArticleDetailScreen';
 import PrivacyPolicyScreen from '../../Screens/PrivacyPolicyScreen';
 import EditProfileScreen from '../../Screens/EditProfileScreen';
 import TermsAndConditionsScreen from '../../Screens/Terms&Conditions';
+import ForgotPasswordScreen from '../../Screens/Auth/ForgotPasswordScreen';
+import OTPScreen from '../../Screens/Auth/OTPScreen';
+import ResetPasswordScreen from '../../Screens/Auth/ResetPassword';
 
 export const notAuthenticatedRoutes = [
   {
@@ -58,6 +61,24 @@ export const notAuthenticatedRoutes = [
     component: TermsAndConditionsScreen,
     headerShown: false,
   },
+    {
+    routeName: SCREEN_NAMES.forgotPassword,
+    headerHeading: 'ForgotPassword',
+    component: ForgotPasswordScreen,
+    headerShown: false,
+  },
+  {
+    routeName: SCREEN_NAMES.otpScreen,
+    headerHeading: 'OTPScreen',
+    component: OTPScreen,
+    headerShown: false,
+  },
+{
+    routeName: SCREEN_NAMES.resetPassword,
+    headerHeading: 'ResetPassword',
+    component: ResetPasswordScreen,
+    headerShown: false,
+}
   
 ];
 

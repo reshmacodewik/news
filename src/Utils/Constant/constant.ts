@@ -13,24 +13,26 @@ export const SCREEN_NAMES = {
   more: 'More',
   editProfile: 'EditProfile',
   termsAndConditions: 'TermsAndConditions',
+  forgotPassword: 'ForgotPassword',
+  otpScreen: 'OTPScreen',
+  resetPassword: 'ResetPassword',
 } as const;
 
 export type RootStackParamList = {
   Home: undefined;
-  OtpVerified: undefined;
+  more: undefined;
   Login: undefined;
+  subscription: undefined;
   Signup: undefined;
-  Slot: undefined;
-  boatDetail: undefined;
-  myBooking: undefined;
-  account: undefined;
   editProfile: undefined;
   Register: undefined;
   'Forgot Password': undefined;
+  ForgotPassword: undefined;
+  OTPScreen: { email: string };  // OTPScreen expects the email parameter
+  ResetPassword: { email: string; otp: string }; 
   Profile: undefined;
   Help: undefined;
   FAQ: undefined;
   Reports: undefined;
-  'Contact Us': undefined;
-  'My Booking': undefined;
+
 };

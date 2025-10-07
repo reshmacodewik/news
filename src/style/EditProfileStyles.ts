@@ -1,5 +1,6 @@
 import { StyleSheet, Dimensions, Platform } from 'react-native';
 const AVATAR = 120;
+
 const { width } = Dimensions.get('window');
 const scale = (size: number) => (width / 375) * size;
 const f = (size: number) => scale(size);

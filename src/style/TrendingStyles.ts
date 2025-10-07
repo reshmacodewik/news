@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  logo: { width: scale(160), height: scale(28) },
+    logo: { width: scale(155), height: scale(28) },
   avatarWrap: {
     width: scale(34),
     height: scale(34),
@@ -60,7 +60,7 @@ export const styles = StyleSheet.create({
   tabBarGhost: { backgroundColor: 'transparent' },
 
   // Content
-  content: { flex: 1 },
+
 
   sectionTitle: {
     fontSize: 20,
