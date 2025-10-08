@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +9,6 @@ import {
   ImageBackground,
 } from 'react-native';
 import { styles } from '../../style/LoginScreenstyles';
-import React from 'react';
 import { navigate } from '../../Navigators/utils';
 import { useFormik } from 'formik';
 import { loginSchema } from '../../validation/signupSchema';
@@ -17,9 +17,18 @@ import { apiPost } from '../../Utils/api/common';
 import { API_LOGIN } from '../../Utils/api/APIConstant';
 import { AuthSession, useAuth } from './AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
 
 const LoginScreen = () => {
-  const { signIn } = useAuth();
+  const isFocused = useIsFocused();
+  const { signIn, session } = useAuth();
+
+  useEffect(() => {
+    if (isFocused && session) {
+      navigate('Home' as never);
+    }
+  }, [isFocused, session]);
+
   const formik = useFormik({
     initialValues: { email: '', password: '' },
     validationSchema: loginSchema,

@@ -47,6 +47,7 @@ type Article = {
   articleType?: string;
   articleCategoryId?: { title: string };
   createdAt?: string;
+  slug: string;
 };
 
 const HomeScreen: React.FC = () => {
@@ -126,18 +127,18 @@ const HomeScreen: React.FC = () => {
 
   // === ACTIONS ===
   const handleAvatarPress = () => {
-    if (!session?.accessToken) navigate('Login' as never);
+    if (!session?.accessToken) navigate('More' as never);
     else navigate('More' as never);
   };
+const handleArticlePress = (id: string, slug: string) => {
+  if (!session?.accessToken) {
+    ShowToast('Please login to read this article', 'error');
+    navigate('Login' as never);
+    return;
+  }
 
-  const handleArticlePress = (id: string) => {
-    if (!session?.accessToken) {
-      ShowToast('Please login to read this article', 'error');
-      navigate('Login' as never);
-      return;
-    }
-    navigate('ArticleDetail' as never, { id } as never);
-  };
+  navigate('ArticleDetail' as never, { id, slug } as never);
+};
 
   // === STATIC TAB TYPES ===
   const TABS = [
@@ -180,7 +181,7 @@ const HomeScreen: React.FC = () => {
             <Text style={styles.trendingTitle}>Trending news</Text>
             <TouchableOpacity
               hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
-              onPress={() => navigate('TrendingNews' as never)}
+              onPress={() => navigate('Trending' as never)}
             >
               <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
@@ -196,7 +197,7 @@ const HomeScreen: React.FC = () => {
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={onMomentumEnd}
             renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handleArticlePress(item._id)}>
+              <TouchableOpacity  onPress={() => handleArticlePress(item._id, item.slug)}>
                 <View style={[styles.slideWrap, { width }]}>
                   <ImageBackground
                     source={toSrc(item.image)}
@@ -267,7 +268,7 @@ const HomeScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.rowCard}
               activeOpacity={0.9}
-              onPress={() => handleArticlePress(item._id)}
+              onPress={() => handleArticlePress(item._id, item.slug)}
             >
               <View style={styles.rowLeft}>
                 <Text style={styles.rowTitle} numberOfLines={2}>

@@ -21,7 +21,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   API_CHANGE_PASSWORD,
   API_GET_PROFILE,
-  API_RESET_PASSWORD,
 } from '../../Utils/api/APIConstant';
 import ShowToast from '../../Utils/ShowToast';
 import DeviceInfo from 'react-native-device-info';
@@ -32,7 +31,6 @@ import { useIsFocused } from '@react-navigation/native';
 const LOGO = require('../../icons/logoblack.png');
 const AVATAR_BG = require('../../icons/user.png');
 const MAIL = require('../../icons/email.png');
-const PHONE = require('../../icons/phone.png');
 const EDIT = require('../../icons/edit.png');
 const LOCK = require('../../icons/password.png');
 const PLAN = require('../../icons/bell.png');
@@ -71,34 +69,30 @@ const Row = ({
   </TouchableOpacity>
 );
 
-const handleRowPress = (label: string) => {
-  console.log(`Row with label ${label} pressed`);
-  // Your row press logic
-};
-
 const MoreScreen: React.FC = () => {
   const version = DeviceInfo.getVersion();
   const buildNumber = DeviceInfo.getBuildNumber();
   const inset = useSafeAreaInsets();
   const { signOut, session } = useAuth();
-
   const [sheet, setSheet] = useState<'none' | 'newPassword'>('none');
+  const [visible, setVisible] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const confirmRef = React.useRef<TextInput>(null);
   const isFocused = useIsFocused();
-  const openNewPassword = () => setSheet('newPassword');
+  const openNewPassword = () => setVisible(true);
+
+  // Close the BottomSheet and reset inputs
   const close = () => {
-    setSheet('none');
+    setVisible(false);
     setNewPassword('');
     setConfirmPassword('');
   };
 
   useEffect(() => {
+    // Close the BottomSheet when the screen is not focused
     if (!isFocused) {
-      setSheet('none');
-      setNewPassword('');
-      setConfirmPassword('');
+      close();
     }
   }, [isFocused]);
 
@@ -177,9 +171,7 @@ const MoreScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Profile card */}
-        <View
-          style={[styles.profileCard, !session?.accessToken && { opacity: 0.4 }]}
-        >
+        <View style={[styles.profileCard]}>
           <View style={styles.profileLeft}>
             <View style={styles.bigAvatarWrap}>
               <Image
@@ -288,19 +280,19 @@ const MoreScreen: React.FC = () => {
             </View>
           </View>
         </View>
-
-        {/* Logout */}
-        <TouchableOpacity
-          style={styles.logoutRow}
-          activeOpacity={0.85}
-          onPress={() => handleLogout()}
-        >
-          <Image source={LOGOUT} style={styles.logoutIcon} />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        {session?.accessToken && (
+          <TouchableOpacity
+            style={styles.logoutRow}
+            activeOpacity={0.85}
+            onPress={() => handleLogout()}
+          >
+            <Image source={LOGOUT} style={styles.logoutIcon} />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        )}
 
         {/* BottomSheet for Reset Password */}
-        <BottomSheet visible={sheet === 'newPassword'} onClose={close}>
+        <BottomSheet visible={visible} onClose={close}>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={100} // adjust if needed

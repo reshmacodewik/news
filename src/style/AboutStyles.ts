@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
   },
   topBar: {
     paddingHorizontal: scale(18),
-    paddingTop: scale(10),
+    paddingTop: scale(5),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

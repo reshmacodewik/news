@@ -1,4 +1,5 @@
 // Navigation/BottomTab.tsx
+
 import React from 'react';
 import {
   View,
@@ -12,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SCREEN_NAMES } from '../../../Utils/Constant/constant';
 
 const Tab = createBottomTabNavigator();
-
 import { Image } from 'react-native';
 import HomeScreen from '../../../Screens/Home/HomeScreen';
 import AboutScreen from '../../../Screens/Bottom Tab/AboutScreen';

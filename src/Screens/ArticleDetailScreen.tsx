@@ -27,11 +27,12 @@ import BottomSheet from '../Components/BottomSheet';
 const HERO = require('../icons/news.png');
 const BACK = require('../icons/back.png');
 
-type Props = { navigation: any; route: { params: { id: string } } };
+type Props = { navigation: any; route: { params: { id: string; slug: string } } };
 
 type Article = {
   createdBy: any;
   _id: string;
+  slug: string;
   title: string;
   description: string;
   image?: string;
@@ -46,6 +47,7 @@ type ArticleResponse = {
 
 const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { id } = route.params;
+  const { slug } = route.params;
   const insets = useSafeAreaInsets();
   const [isVisible, setIsVisible] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -59,11 +61,12 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['article', id],
+    queryKey: ['article', slug],
     queryFn: async (): Promise<ArticleResponse> => {
       const res = await getApiWithOutQuery({
-        url: `${API_ARTICLES_LIST}/${id}`,
+        url: `${API_ARTICLES_LIST}/${slug}`,
       });
+      console.log('ArticleDetailScreen', res.data);
       return res.data; // <-- inner { article, counlike, comments }
     },
   });
@@ -137,8 +140,9 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     mutationFn: async (like: boolean) => {
       const res = await apiPost({
         url: API_LIKES,
-        values: { articleId: id, like },
+        values: { articleId: id },
       });
+      console.log('toggleLike', res.data);
       return res.data;
     },
     onError: (_err, likeJustSet) => {
@@ -239,11 +243,12 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                   disabled={likePending}
                 >
                   <Image
-                    source={require('../icons/heart.png')}
-                    style={[
-                      styles.chatIcon,
-                      { tintColor: isFav ? '#E11D48' : '#6B7280' },
-                    ]} // red when liked
+                    source={
+                      isFav
+                        ? require('../icons/heart_red.png') // your red heart image
+                        : require('../icons/heart.png') // your default/gray heart
+                    }
+                    style={styles.chatIcon}
                   />
                   <Text style={styles.likeCount}>{localLikeCount}</Text>
                 </TouchableOpacity>

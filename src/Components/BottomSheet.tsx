@@ -60,11 +60,11 @@ export default function BottomSheet({ visible, onClose, children }: Props) {
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setSheetHeight(SHEET_EXPANDED_H)
+      () => setSheetHeight(SHEET_EXPANDED_H),
     );
     const hideSub = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setSheetHeight(SHEET_MAX_H)
+      () => setSheetHeight(SHEET_MAX_H),
     );
 
     return () => {
@@ -85,10 +85,11 @@ export default function BottomSheet({ visible, onClose, children }: Props) {
           if (g.dy > SHEET_MAX_H * 0.25 || g.vy > 1.2) close(onClose);
           else open();
         },
-        onPanResponderGrant: () => translateY.setOffset((translateY as any)._value),
+        onPanResponderGrant: () =>
+          translateY.setOffset((translateY as any)._value),
         onPanResponderEnd: () => translateY.flattenOffset(),
       }),
-    [translateY]
+    [translateY],
   );
 
   if (!visible && (backdrop as any)._value === 0) return null;

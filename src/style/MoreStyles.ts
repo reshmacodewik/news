@@ -61,7 +61,7 @@ export const styles = StyleSheet.create({
   profileInfo: { flex: 1 },
   name: {
     fontSize: f(20),
-    fontWeight: '800',
+    fontWeight: '600',
     color: '#0F172A',
     marginBottom: scale(6),
   },
@@ -91,7 +91,7 @@ export const styles = StyleSheet.create({
   loginBtn: {
     marginTop: scale(12),
     alignSelf: 'stretch',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F0F6FF',
     borderRadius: scale(10),
     height: scale(40),
     flexDirection: 'row',

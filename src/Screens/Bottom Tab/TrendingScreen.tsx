@@ -38,16 +38,6 @@ const TH1 = require('../../icons/news.png');
 const TH2 = require('../../icons/news1.png');
 const TH3 = require('../../icons/news2.png');
 
-const CATEGORIES = [
-  'All',
-  'Business',
-  'Marketing',
-  'Games',
-  'Politics',
-  'Tech',
-  'Health',
-];
-
 type Card = { id: string; title: string; image: any };
 type Row = {
   id: string;
@@ -61,6 +51,7 @@ type Article = {
   title: string;
   description: string;
   image: string;
+  slug: string;
   articleCategoryId?: {
     _id: string;
     title: string;
@@ -95,15 +86,17 @@ const TrendingScreen: React.FC = () => {
   const [latestNews, setLatestNews] = useState<Article[]>([]);
   const [trendingNews, setTrendingNews] = useState<Article[]>([]);
   const rows = useMemo(() => makeRows(12), []);
-  const handleArticlePress = (id: string) => {
+  const handleArticlePress = (id: string, slug: string) => {
     if (!session?.accessToken) {
       ShowToast('Please login to read this article', 'error');
       navigate('Login' as never);
       return;
     }
-    navigate('ArticleDetail' as never, { id } as never); // ✅ pass article id
+
+    navigate('ArticleDetail' as never, { id, slug } as never);
   };
- const getData = async (type: string, setter: (data: any) => void) => {
+
+  const getData = async (type: string, setter: (data: any) => void) => {
     try {
       const res = await getApiWithOutQuery({
         url: API_GET_ARTICLES_BY_TYPE + type,
@@ -247,15 +240,11 @@ const TrendingScreen: React.FC = () => {
             <FlatList
               data={articles} // trending or category articles
               keyExtractor={i => i._id}
-              ListHeaderComponent={
-                <>
-
-                </>
-              }
+              ListHeaderComponent={<></>}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.rowCard}
-                  onPress={() => handleArticlePress(item._id)}
+                  onPress={() => handleArticlePress(item._id, item.slug)}
                 >
                   <View style={styles.rowLeft}>
                     <Text style={styles.rowTitle} numberOfLines={2}>
