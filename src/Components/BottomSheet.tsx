@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 
 const { height } = Dimensions.get('window');
-const SHEET_MAX_H = Math.round(height * 0.46); // base height
-const SHEET_EXPANDED_H = Math.round(height * 0.85); // expanded height when keyboard is open
+const SHEET_MAX_H = Math.round(height * 0.48); // base height
+const SHEET_EXPANDED_H = Math.round(height * 0.74); // expanded height when keyboard is open
 const BACKDROP_OPACITY = 0.35;
 
 type Props = {

@@ -368,7 +368,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 }}
               >
                 <Image
-                  source={{ uri: item.photo || 'https://i.pravatar.cc/100' }}
+                  source={{ uri: item.photo  }}
                   style={{
                     width: 36,
                     height: 36,

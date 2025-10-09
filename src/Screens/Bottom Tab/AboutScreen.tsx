@@ -13,12 +13,14 @@ import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../../Utils/api/common';
 import { styles } from '../../style/AboutStyles';
 import { API_ABOUT_US } from '../../Utils/api/APIConstant';
+import Header from '../../Components/Header';
 
 const BG = require('../../icons/backgroundnew.png');
 const LOGO = require('../../icons/headerlogo.png');
 const AVATAR = require('../../icons/user.png');
 
 const AboutScreen: React.FC = () => {
+  const TAB_BAR_HEIGHT = 72; // adjust to your tab's height
   const insets = useSafeAreaInsets();
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
   const { data, isLoading, isError } = useQuery({
@@ -44,13 +46,14 @@ const AboutScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar translucent barStyle="light-content" />
+
       <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: insets.bottom, // only safe area
-          flexGrow: 1, // allows content to push to bottom if needed
+          paddingBottom: insets.bottom + TAB_BAR_HEIGHT, // ✅ enough room below
         }}
+        scrollIndicatorInsets={{ bottom: insets.bottom + TAB_BAR_HEIGHT }} // nicer indicator position
       >
         <ImageBackground
           source={BG}
@@ -58,22 +61,30 @@ const AboutScreen: React.FC = () => {
           resizeMode="cover"
         >
           <View style={styles.headerOverlay} />
-          <View style={styles.topBar}>
-            <Image source={LOGO} style={styles.logo} />
-            <View style={styles.avatarWrap}>
-              <Image source={AVATAR} style={styles.avatar} />
-            </View>
-          </View>
+          <Header
+            logoSource={LOGO}
+            avatarSource={AVATAR}
+            guestRoute="More"
+            profileEndpoint="/profile"
+            authRoute="More"
+          />
         </ImageBackground>
-
-        {/* CONTENT */}
 
         <View style={styles.sheet}>
           <Text style={styles.h1}>About Us</Text>
           <Text style={styles.body}>
-            {data?.description || 'No content available.'}
+            {(
+              data?.data?.description ??
+              data?.description ??
+              'No content available.'
+            )
+              // normalize line breaks just in case
+              .replace(/\r\n/g, '\n')}
           </Text>
         </View>
+
+        {/* Optional explicit spacer if you prefer */}
+        {/* <View style={{ height: insets.bottom + TAB_BAR_HEIGHT }} /> */}
       </ScrollView>
     </View>
   );

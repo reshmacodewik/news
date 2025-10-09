@@ -26,6 +26,7 @@ import ShowToast from '../../Utils/ShowToast';
 import DeviceInfo from 'react-native-device-info';
 import { useAuth } from '../Auth/AuthContext';
 import { useIsFocused } from '@react-navigation/native';
+import Header from '../../Components/Header';
 
 // ---- Assets ----
 const LOGO = require('../../icons/logoblack.png');
@@ -41,7 +42,7 @@ const CHAT = require('../../icons/chat.png');
 const LAYERS = require('../../icons/verison.png');
 const LOGOUT = require('../../icons/logout.png');
 const CHEVRON = require('../../icons/arrow.png');
-
+const AVATAR = require('../../icons/user.png');
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
 // Reusable Row Component
@@ -158,12 +159,12 @@ const MoreScreen: React.FC = () => {
       <View style={{ height: inset.top }} />
 
       {/* Top bar */}
-      <View style={styles.topBar}>
-        <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-        <View style={styles.avatarWrap}>
-          <Image source={AVATAR_BG} style={styles.avatar} resizeMode="cover" />
-        </View>
-      </View>
+      <Header
+        logoSource={LOGO}
+        avatarSource={AVATAR}
+        guestRoute="More"
+        authRoute="More"
+      />
 
       <ScrollView
         style={styles.scroll}

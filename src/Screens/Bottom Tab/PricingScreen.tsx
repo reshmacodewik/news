@@ -14,6 +14,7 @@ import { WebView } from 'react-native-webview';
 import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../../Utils/api/common';
 import { API_SUBSCRIPTION_PLANS } from '../../Utils/api/APIConstant';
+import Header from '../../Components/Header';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -58,41 +59,40 @@ const PricingScreen: React.FC = () => {
 
   // Dummy backend URL
 
- const handleSubscribe = async (planId: string) => {
-  try {
-    const res = await fetch("https://codewik.lemonsqueezy.com/buy/a38e537b-a5de-4411-9944-62741f44b607", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        variantId: planId,                // or map plan → variantId
-        email: "user@example.com",
-        userId: "abc123"
-      })
-    });
-    const json = await res.json();
-    if (!res.ok || !json?.url) throw new Error(json?.error || "No checkout URL");
-    setCheckoutUrl(json.url);
-  } catch (e) {
-    console.log("Error creating checkout:", e);
-  }
-};
-
+  const handleSubscribe = async (planId: string) => {
+    try {
+      const res = await fetch(
+        'https://codewik.lemonsqueezy.com/buy/a38e537b-a5de-4411-9944-62741f44b607',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            variantId: planId, // or map plan → variantId
+            email: 'user@example.com',
+            userId: 'abc123',
+          }),
+        },
+      );
+      const json = await res.json();
+      if (!res.ok || !json?.url)
+        throw new Error(json?.error || 'No checkout URL');
+      setCheckoutUrl(json.url);
+    } catch (e) {
+      console.log('Error creating checkout:', e);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      // <View style={{ height: insets.top }} />
-      // {/* Top Bar */}
-      //{' '}
-      <View style={styles.topBar}>
-        // <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-        //{' '}
-        <View style={styles.avatarWrap}>
-          // <Image source={AVATAR} style={styles.avatar} />
-          //{' '}
-        </View>
-        //{' '}
-      </View>
-      //{' '}
+      <View style={{ height: insets.top }} />
+      <Header
+        logoSource={LOGO}
+        avatarSource={AVATAR}
+        profileEndpoint="/profile"
+        guestRoute="More"
+        authRoute="More"
+      />
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{ paddingBottom: insets.bottom + scale(28) }}

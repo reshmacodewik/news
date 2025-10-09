@@ -25,6 +25,7 @@ import {
   API_GET_ARTICLES_BY_TYPE,
 } from '../../Utils/api/APIConstant';
 import HtmlRenderer from '../../Components/HtmlRenderer';
+import Header from '../../Components/Header';
 
 const { width } = Dimensions.get('window');
 
@@ -130,15 +131,15 @@ const HomeScreen: React.FC = () => {
     if (!session?.accessToken) navigate('More' as never);
     else navigate('More' as never);
   };
-const handleArticlePress = (id: string, slug: string) => {
-  if (!session?.accessToken) {
-    ShowToast('Please login to read this article', 'error');
-    navigate('Login' as never);
-    return;
-  }
+  const handleArticlePress = (id: string, slug: string) => {
+    if (!session?.accessToken) {
+      ShowToast('Please login to read this article', 'error');
+      navigate('Login' as never);
+      return;
+    }
 
-  navigate('ArticleDetail' as never, { id, slug } as never);
-};
+    navigate('ArticleDetail' as never, { id, slug } as never);
+  };
 
   // === STATIC TAB TYPES ===
   const TABS = [
@@ -157,16 +158,13 @@ const handleArticlePress = (id: string, slug: string) => {
       >
         {/* HEADER */}
         <ImageBackground source={BG} style={styles.header} resizeMode="cover">
-          <View style={styles.topBar}>
-            <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-            <TouchableOpacity
-              style={styles.avatarBtn}
-              onPress={handleAvatarPress}
-            >
-              <Image source={AVATAR} style={styles.avatar} />
-            </TouchableOpacity>
-          </View>
-
+          <Header
+            logoSource={LOGO}
+            avatarSource={AVATAR}
+            guestRoute="More"
+            authRoute="More"
+            profileEndpoint="/profile"
+          />
           <View style={styles.welcomeBlock}>
             <Text style={styles.welcomeHeading}>
               Welcome back, {session?.user?.name ?? 'Reader'}
@@ -197,7 +195,9 @@ const handleArticlePress = (id: string, slug: string) => {
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={onMomentumEnd}
             renderItem={({ item }) => (
-              <TouchableOpacity  onPress={() => handleArticlePress(item._id, item.slug)}>
+              <TouchableOpacity
+                onPress={() => handleArticlePress(item._id, item.slug)}
+              >
                 <View style={[styles.slideWrap, { width }]}>
                   <ImageBackground
                     source={toSrc(item.image)}

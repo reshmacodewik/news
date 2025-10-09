@@ -50,8 +50,6 @@ export const styles = StyleSheet.create({
 
   /* Scroll content */
   scroll: { flex: 1 },
-
-  /* Hero */
   hero: {
     height: Math.min(height * 0.25, scale(220)),
     width: '100%',
@@ -84,8 +82,8 @@ export const styles = StyleSheet.create({
   },
 
   chatIcon: {
-    width: 16,
-    height: 16,
+    width: 22,
+    height: 22,
     marginRight: 4,
   },
 
@@ -141,8 +139,6 @@ export const styles = StyleSheet.create({
     color: '#111827',
     marginTop: scale(12),
   },
-
-  /* Action strip */
   actionStrip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -175,15 +171,13 @@ export const styles = StyleSheet.create({
   pillBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',       // keeps it compact like the screenshot
+    alignSelf: 'flex-start',       
     paddingHorizontal: 20,
     paddingVertical: 0,
     borderRadius: 999,
     backgroundColor:'#FFFFFF00',
     borderWidth: 1,
     borderColor: '#000',
-    // subtle shadow (iOS + Android)
-    
   },
   pillText: {
     fontSize: 16,

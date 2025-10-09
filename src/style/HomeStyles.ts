@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
   // ===== Header / Hero =====
   header: {
     width: '100%',
-    paddingTop: scale(16),
+    paddingTop: scale(40),
     paddingBottom: scale(16),
     borderBottomLeftRadius: scale(20),
     borderBottomRightRadius: scale(20),
@@ -44,7 +44,7 @@ export const styles = StyleSheet.create({
 
   welcomeBlock: {
     paddingHorizontal: scale(16),
-    marginTop: scale(30),
+    marginTop: scale(20),
   },
   welcomeHeading: {
     color: '#FFFFFF',
