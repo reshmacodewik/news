@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Image,
@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useAuth } from '../Screens/Auth/AuthContext';
 import { navigate } from '../Navigators/utils';
-import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../Utils/api/common';
 import { API_GET_PROFILE } from '../Utils/api/APIConstant';
 
@@ -18,10 +17,7 @@ const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
 type HeaderProps = {
   logoSource: ImageSourcePropType;
-  /** Fallback avatar image (local require) */
   avatarSource: ImageSourcePropType;
-  /** Optional override for the profile endpoint */
-  profileEndpoint?: string;
   barStyle?: 'light-content' | 'dark-content';
   guestRoute?: string;
   authRoute?: string;
@@ -32,7 +28,6 @@ type HeaderProps = {
 const Header: React.FC<HeaderProps> = ({
   logoSource,
   avatarSource,
-  profileEndpoint,
   barStyle = 'dark-content',
   guestRoute = 'More',
   authRoute = 'More',
@@ -41,26 +36,22 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { session } = useAuth();
   const [avatarErrored, setAvatarErrored] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
-  const endpoint =  API_GET_PROFILE;
-
-  // Fetch profile only when logged in
-  const { data: profile } = useQuery({
-    queryKey: ['profile-info'],
-    queryFn: async () => {
-      const res = await getApiWithOutQuery({ url: endpoint });
-      return res?.data?.data ?? res?.data ?? {};
-    },
-    enabled: Boolean(session?.accessToken),
-    staleTime: 60_000,
-  });
-
-  const resolvedAvatarSource = useMemo(() => {
-    if (avatarErrored) return avatarSource;
-    const photo: string | undefined = profile?.photo;
-    if (photo && /^https?:\/\//i.test(photo)) return { uri: photo };
-    return avatarSource;
-  }, [profile?.photo, avatarErrored, avatarSource]);
+  // Fetch profile photo if authenticated
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (session?.accessToken) {
+        try {
+          const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
+          if (res?.data?.photo) setProfilePhoto(res.data.photo);
+        } catch (err) {
+          console.log('Failed to fetch profile', err);
+        }
+      }
+    };
+    fetchProfile();
+  }, [session?.accessToken]);
 
   const handleAvatarPress = () => {
     const route = session?.accessToken ? authRoute : guestRoute;
@@ -73,7 +64,11 @@ const Header: React.FC<HeaderProps> = ({
       <View style={styles.topBar}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {leftSlot ?? (
-            <Image source={logoSource} style={styles.logo} resizeMode="contain" />
+            <Image
+              source={logoSource}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           )}
         </View>
 
@@ -85,7 +80,7 @@ const Header: React.FC<HeaderProps> = ({
             activeOpacity={0.8}
           >
             <Image
-              source={resolvedAvatarSource as any}
+              source={profilePhoto ? { uri: profilePhoto } : {}}
               style={styles.avatar}
               onError={() => setAvatarErrored(true)}
             />
@@ -103,7 +98,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: scale(20),
     borderBottomRightRadius: scale(20),
     overflow: 'hidden',
- 
+    paddingTop: scale(10),
   },
   topBar: {
     flexDirection: 'row',
@@ -114,7 +109,6 @@ const styles = StyleSheet.create({
   rightRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    
   },
   logo: { width: scale(155), height: scale(28) },
   avatarBtn: {

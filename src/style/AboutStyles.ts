@@ -19,7 +19,6 @@ export const styles = StyleSheet.create({
   header: {
     width: '100%',
     height: HEADER_H,
-
     zIndex: 0,
     position: 'relative',
   },

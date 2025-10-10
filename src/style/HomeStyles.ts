@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
   // ===== Header / Hero =====
   header: {
     width: '100%',
-    paddingTop: scale(40),
+    paddingTop: scale(45),
     paddingBottom: scale(16),
     borderBottomLeftRadius: scale(20),
     borderBottomRightRadius: scale(20),
@@ -226,6 +226,7 @@ export const styles = StyleSheet.create({
       marginHorizontal: scale(16),
       marginBottom: scale(12),
       padding: scale(12),
+      marginTop: scale(5),
       backgroundColor: '#EEF5FF', // light blue like mock
       borderRadius: scale(14),
     },

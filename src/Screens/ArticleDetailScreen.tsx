@@ -27,7 +27,10 @@ import BottomSheet from '../Components/BottomSheet';
 const HERO = require('../icons/news.png');
 const BACK = require('../icons/back.png');
 
-type Props = { navigation: any; route: { params: { id: string; slug: string } } };
+type Props = {
+  navigation: any;
+  route: { params: { id: string; slug: string } };
+};
 
 type Article = {
   createdBy: any;
@@ -53,9 +56,13 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const [commentText, setCommentText] = useState('');
   const [isFav, setIsFav] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
+    const [sortOrder, setSortOrder] = useState<"latest" | "oldest">("latest");
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
-
-  // ✅ Fetch and return the *inner* data
+   const handleSortChange = () => {
+    const newOrder = sortOrder === "latest" ? "oldest" : "latest";
+    setSortOrder(newOrder);
+    
+  };
   const {
     data: payload,
     isLoading,
@@ -67,7 +74,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         url: `${API_ARTICLES_LIST}/${slug}`,
       });
       console.log('ArticleDetailScreen', res.data);
-      return res.data; // <-- inner { article, counlike, comments }
+      return res.data;
     },
   });
   const formatDateTime = (value: string | number | Date) => {
@@ -103,9 +110,9 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     queryKey: ['comments', id],
     queryFn: async () => {
       const res = await getApiWithOutQuery({
-        url: `${API_COMMENTS_LIST}/${id}`,
+        url: `${API_COMMENTS_LIST}/${id}?sortOrder=desc`, // ✅ add sortOrder=desc
       });
-      return res.data.comments as Array<{
+      return (res.data.comments ?? []) as Array<{
         _id: string;
         name: string;
         content: string;
@@ -113,6 +120,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         photo?: string;
       }>;
     },
+    staleTime: 60_000, // optional: cache for 1 min
   });
 
   const { mutate: AddComment, isPending: commenting } = useMutation({
@@ -309,6 +317,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             borderColor: '#000',
             borderRadius: 8,
             paddingHorizontal: 5,
+            color:'#000',
             marginBottom: 12,
             backgroundColor: '#F0F6FF',
           }}
@@ -337,12 +346,11 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           }}
         />
         <View style={styles.filterWrap}>
-          <Pressable style={styles.pillBtn}>
-            <Text style={styles.pillText}>Latest</Text>
+          <Pressable style={styles.pillBtn} onPress={handleSortChange}>
+            <Text style={styles.pillText}>
+              {sortOrder === 'latest' ? 'Latest' : 'Oldest'}
+            </Text>
             <Text style={styles.caret}>▾</Text>
-            {/* Or use an image:
-    <Image source={require('../../icons/caret-down.png')} style={{ width: 10, height: 6, marginLeft: 6 }} />
-    */}
           </Pressable>
         </View>
         <FlatList
@@ -368,7 +376,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 }}
               >
                 <Image
-                  source={{ uri: item.photo  }}
+                  source={{ uri: item.photo }}
                   style={{
                     width: 36,
                     height: 36,

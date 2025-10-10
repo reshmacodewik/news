@@ -88,7 +88,6 @@ const PricingScreen: React.FC = () => {
       <Header
         logoSource={LOGO}
         avatarSource={AVATAR}
-        profileEndpoint="/profile"
         guestRoute="More"
         authRoute="More"
       />

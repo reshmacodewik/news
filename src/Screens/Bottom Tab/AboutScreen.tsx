@@ -45,8 +45,6 @@ const AboutScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar translucent barStyle="light-content" />
-
       <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -65,7 +63,6 @@ const AboutScreen: React.FC = () => {
             logoSource={LOGO}
             avatarSource={AVATAR}
             guestRoute="More"
-            profileEndpoint="/profile"
             authRoute="More"
           />
         </ImageBackground>

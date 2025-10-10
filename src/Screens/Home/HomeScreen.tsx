@@ -161,9 +161,8 @@ const HomeScreen: React.FC = () => {
           <Header
             logoSource={LOGO}
             avatarSource={AVATAR}
-            guestRoute="More"
-            authRoute="More"
-            profileEndpoint="/profile"
+            barStyle="light-content"
+           
           />
           <View style={styles.welcomeBlock}>
             <Text style={styles.welcomeHeading}>
