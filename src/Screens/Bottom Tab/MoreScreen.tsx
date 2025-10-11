@@ -27,7 +27,8 @@ import DeviceInfo from 'react-native-device-info';
 import { useAuth } from '../Auth/AuthContext';
 import { useIsFocused } from '@react-navigation/native';
 import Header from '../../Components/Header';
-
+import { Formik } from 'formik';
+import * as Yup from 'yup';
 // ---- Assets ----
 const LOGO = require('../../icons/logoblack.png');
 const AVATAR_BG = require('../../icons/user.png');
@@ -81,7 +82,13 @@ const MoreScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const confirmRef = React.useRef<TextInput>(null);
   const isFocused = useIsFocused();
-  const openNewPassword = () => setVisible(true);
+  const openNewPassword = () => {
+    if (!session?.accessToken) {
+      ShowToast('Please login to change password');
+      return;
+    }
+    setVisible(true);
+  };
 
   // Close the BottomSheet and reset inputs
   const close = () => {
@@ -107,39 +114,33 @@ const MoreScreen: React.FC = () => {
   });
 
   // Reset password API
-  const resetPassword = useMutation({
-    mutationFn: async () => {
-      const res = await apiPost({
-        url: API_CHANGE_PASSWORD,
-        values: { newPassword, confirmPassword },
-      });
-      return res.data;
-    },
-    onSuccess: () => {
-      ShowToast('Password reset successfully');
-      Keyboard.dismiss(); // hide keyboard
-      setSheet('none');
-      setNewPassword('');
-      setConfirmPassword('');
-    },
-    onError: err => {
-      console.log('Reset password error', err);
-      ShowToast('Failed to reset password');
-    },
-  });
+ const resetPassword = useMutation({
+  mutationFn: async (values: { newPassword: string; confirmPassword: string }) => {
+    const res = await apiPost({
+      url: API_CHANGE_PASSWORD,
+      values,
+    });
+    return res.data;
+  },
+  onSuccess: () => {
+    ShowToast('Password reset successfully');
+    Keyboard.dismiss();
+    setVisible(false);
+  },
+  onError: err => {
+    console.log('Reset password error', err);
+    ShowToast('Failed to reset password');
+  },
+});
+const PasswordSchema = Yup.object().shape({
+  newPassword: Yup.string()
+    .min(8, 'Password must be at least 8 characters')
+    .required('New password is required'),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('newPassword')], 'Passwords must match')
+    .required('Confirm password is required'),
+});
 
-  // Handler
-  const handleResetPassword = () => {
-    if (!newPassword || !confirmPassword) {
-      return ShowToast('Please enter all fields');
-    }
-    if (newPassword !== confirmPassword) {
-      return ShowToast('Passwords do not match');
-    }
-    resetPassword.mutate();
-  };
-
-  // Contact email
   const onEmail = () => Linking.openURL('mailto:support@arcalisnews.com');
 
   const handleLogout = async () => {
@@ -296,54 +297,84 @@ const MoreScreen: React.FC = () => {
         <BottomSheet visible={visible} onClose={close}>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={100} // adjust if needed
+            keyboardVerticalOffset={100}
             style={{ flex: 1 }}
           >
-            <ScrollView
-              contentContainerStyle={{ paddingBottom: 40 }}
-              keyboardShouldPersistTaps="handled"
+            <Formik
+              initialValues={{ newPassword: '', confirmPassword: '' }}
+              validationSchema={PasswordSchema}
+              onSubmit={values => {
+                resetPassword.mutate(values); // pass values directly
+              }}
             >
-              <Text style={styles.sheetTitle}>Create New Password</Text>
-              <Text style={styles.sheetSub}>
-                This password should be different from the previous password.
-              </Text>
+              {({
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                values,
+                errors,
+                touched,
+              }) => (
+                <ScrollView
+                  contentContainerStyle={{ paddingBottom: 40 }}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <Text style={styles.sheetTitle}>Create New Password</Text>
+                  <Text style={styles.sheetSub}>
+                    This password should be different from the previous
+                    password.
+                  </Text>
 
-              <Text style={styles.inputLabel}>New Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="New Password"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry
-                value={newPassword}
-                onChangeText={setNewPassword}
-                returnKeyType="next"
-                onSubmitEditing={() => confirmRef.current?.focus()} // ✅ focus next input
-                blurOnSubmit={false}
-              />
+                  <Text style={styles.inputLabel}>New Password</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="New Password"
+                    placeholderTextColor="#9CA3AF"
+                    secureTextEntry
+                    value={values.newPassword}
+                    onChangeText={handleChange('newPassword')}
+                    onBlur={handleBlur('newPassword')}
+                    returnKeyType="next"
+                    onSubmitEditing={() => confirmRef.current?.focus()}
+                    blurOnSubmit={false}
+                  />
+                  {errors.newPassword && touched.newPassword && (
+                    <Text style={styles.errorText}>{errors.newPassword}</Text>
+                  )}
 
-              <Text style={styles.inputLabel}>Confirm Password</Text>
-              <TextInput
-                ref={confirmRef}
-                style={styles.input}
-                placeholder="Confirm Password"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                returnKeyType="done"
-                onSubmitEditing={handleResetPassword} // ✅ submit on enter
-              />
+                  <Text style={styles.inputLabel}>Confirm Password</Text>
+                  <TextInput
+                    ref={confirmRef}
+                    style={styles.input}
+                    placeholder="Confirm Password"
+                    placeholderTextColor="#9CA3AF"
+                    secureTextEntry
+                    value={values.confirmPassword}
+                    onChangeText={handleChange('confirmPassword')}
+                    onBlur={handleBlur('confirmPassword')}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSubmit}
+                  />
+                  {errors.confirmPassword && touched.confirmPassword && (
+                    <Text style={styles.errorText}>
+                      {errors.confirmPassword}
+                    </Text>
+                  )}
 
-              <TouchableOpacity
-                style={[styles.primaryBtn, { marginTop: 16 }]}
-                onPress={handleResetPassword}
-                disabled={resetPassword.isPending}
-              >
-                <Text style={styles.primaryBtnText}>
-                  {resetPassword.isPending ? 'Resetting...' : 'Reset Password'}
-                </Text>
-              </TouchableOpacity>
-            </ScrollView>
+                  <TouchableOpacity
+                    style={[styles.primaryBtn, { marginTop: 16 }]}
+                    onPress={handleSubmit as any}
+                    disabled={resetPassword.isPending}
+                  >
+                    <Text style={styles.primaryBtnText}>
+                      {resetPassword.isPending
+                        ? 'Resetting...'
+                        : 'Reset Password'}
+                    </Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              )}
+            </Formik>
           </KeyboardAvoidingView>
         </BottomSheet>
       </ScrollView>

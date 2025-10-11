@@ -11,6 +11,7 @@ import TermsAndConditionsScreen from '../../Screens/Terms&Conditions';
 import ForgotPasswordScreen from '../../Screens/Auth/ForgotPasswordScreen';
 import OTPScreen from '../../Screens/Auth/OTPScreen';
 import ResetPasswordScreen from '../../Screens/Auth/ResetPassword';
+import PaymentSuccess from '../../Screens/PaymentSuccess';
 
 export const notAuthenticatedRoutes = [
   {
@@ -77,6 +78,12 @@ export const notAuthenticatedRoutes = [
     routeName: SCREEN_NAMES.resetPassword,
     headerHeading: 'ResetPassword',
     component: ResetPasswordScreen,
+    headerShown: false,
+},
+{
+    routeName: SCREEN_NAMES.paymentsuccess,
+    headerHeading: 'PaymentSuccess',
+    component: PaymentSuccess,
     headerShown: false,
 }
   

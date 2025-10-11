@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../Utils/api/common';
 import { styles } from '../style/AboutStyles';
 import { API_TERMS_AND_CONDITIONS } from '../Utils/api/APIConstant';
+import Header from '../Components/Header';
 
 
 const BG = require('../icons/backgroundnew.png');
@@ -52,12 +53,11 @@ const { data, isLoading, isError } = useQuery({
           resizeMode="cover"
         >
           <View style={styles.headerOverlay} />
-          <View style={styles.topBar}>
-            <Image source={LOGO} style={styles.logo} />
-            <View style={styles.avatarWrap}>
-              <Image source={AVATAR} style={styles.avatar} />
-            </View>
-          </View>
+         <Header
+            logoSource={LOGO}
+            avatarSource={AVATAR}
+            
+          />
         </ImageBackground>
 
         {/* CONTENT */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Image,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Dimensions,
   ImageSourcePropType,
+  ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../Screens/Auth/AuthContext';
 import { navigate } from '../Navigators/utils';
@@ -37,16 +38,28 @@ const Header: React.FC<HeaderProps> = ({
   const { session } = useAuth();
   const [avatarErrored, setAvatarErrored] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // Default avatar if no profile photo is available
+  const AVATAR = require('../icons/user.png');
+  
   // Fetch profile photo if authenticated
   useEffect(() => {
     const fetchProfile = async () => {
       if (session?.accessToken) {
+        setIsLoading(true); // Start loading
         try {
           const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
-          if (res?.data?.photo) setProfilePhoto(res.data.photo);
+          if (res?.data?.photo) {
+            setProfilePhoto(res.data.photo);
+          } else {
+            setProfilePhoto(null);
+          }
         } catch (err) {
           console.log('Failed to fetch profile', err);
+          setProfilePhoto(null);
+        } finally {
+          setIsLoading(false); // End loading
         }
       }
     };
@@ -57,6 +70,9 @@ const Header: React.FC<HeaderProps> = ({
     const route = session?.accessToken ? authRoute : guestRoute;
     navigate(route as never);
   };
+
+  // If avatar image fails, use default avatar
+  const avatarSourceUri = profilePhoto && !avatarErrored ? { uri: profilePhoto } : AVATAR;
 
   return (
     <View style={styles.header}>
@@ -79,11 +95,16 @@ const Header: React.FC<HeaderProps> = ({
             onPress={handleAvatarPress}
             activeOpacity={0.8}
           >
-            <Image
-              source={profilePhoto ? { uri: profilePhoto } : {}}
-              style={styles.avatar}
-              onError={() => setAvatarErrored(true)}
-            />
+            {isLoading ? (
+              // Show a loading spinner while fetching the profile image
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <Image
+                source={avatarSourceUri}
+                style={styles.avatar}
+                onError={() => setAvatarErrored(true)} // Mark as errored if the image fails
+              />
+            )}
           </TouchableOpacity>
         </View>
       </View>

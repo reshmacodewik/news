@@ -7,14 +7,19 @@ import {
   Modal,
   Image,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { styles } from '../../style/PricingStyles';
 import { WebView } from 'react-native-webview';
 import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../../Utils/api/common';
 import { API_SUBSCRIPTION_PLANS } from '../../Utils/api/APIConstant';
 import Header from '../../Components/Header';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { navigate } from '../../Navigators/utils';
+import { styles } from '../../style/PricingStyles';
+import { useAuth } from '../Auth/AuthContext';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -23,6 +28,7 @@ const LOGO = require('../../icons/logoblack.png');
 const AVATAR = require('../../icons/user.png');
 const CHECK = require('../../icons/checkBlue.png');
 const DOT = require('../../icons/dot.png');
+
 type Plan = {
   _id: string;
   name: string;
@@ -32,10 +38,18 @@ type Plan = {
   highlight?: boolean;
 };
 
+const SUCCESS_URL_KEYWORD = 'thank-you'; // replace with your Lemon Squeezy success redirect
+const CANCEL_URL_KEYWORD = 'cancel'; // optional
+
 const PricingScreen: React.FC = () => {
   const selectedCadence: 'monthly' | 'yearly' = 'monthly';
   const insets = useSafeAreaInsets();
-  const { data, isLoading, isError } = useQuery({
+ const {  session } = useAuth();
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  // Fetch subscription plans
+  const { data, isLoading } = useQuery({
     queryKey: ['subscription-plans'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_SUBSCRIPTION_PLANS });
@@ -43,7 +57,6 @@ const PricingScreen: React.FC = () => {
     },
   });
 
-  // Compute most expensive plan based on selectedCadence
   const mostExpensive =
     Array.isArray(data) && data.length
       ? data.reduce(
@@ -55,30 +68,55 @@ const PricingScreen: React.FC = () => {
         )
       : null;
 
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
-
-  // Dummy backend URL
-
+  // Handle subscription click
   const handleSubscribe = async (planId: string) => {
     try {
+      setLoadingPlan(planId);
+
+      const billingCycle = selectedCadence;
+      //const sessionData = await AsyncStorage.getItem('userSession');
+      const userId = session?.user?.id;
+        console.log('userId:', userId);
+
+      //   Alert.alert('Debug subscription fields:', {
+      //   planId,
+      //   billingCycle,
+      //   userId,
+      // });
+
+      if (!planId || !billingCycle || !userId) {
+        Alert.alert('Error', 'Missing required fields for subscription');
+        return;
+      }
+
+      const bodyData = { planId, userId, billingCycle };
+
       const res = await fetch(
-        'https://codewik.lemonsqueezy.com/buy/a38e537b-a5de-4411-9944-62741f44b607',
+        'http://192.168.1.36:9991/api/billing/create-checkout',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            variantId: planId, // or map plan → variantId
-            email: 'user@example.com',
-            userId: 'abc123',
-          }),
+          body: JSON.stringify(bodyData),
         },
       );
+
       const json = await res.json();
-      if (!res.ok || !json?.url)
-        throw new Error(json?.error || 'No checkout URL');
-      setCheckoutUrl(json.url);
+      console.log('Checkout API response:', json);
+
+      if (!res.ok || !json?.data?.checkoutUrl) {
+        throw new Error(json?.error || 'Failed to create checkout');
+      }
+
+      const url = json.data.checkoutUrl;
+      console.log('Opening WebView checkout URL:', url);
+
+      // Open inside WebView
+      setCheckoutUrl(url);
     } catch (e) {
-      console.log('Error creating checkout:', e);
+      console.error('Error creating checkout:', e);
+      Alert.alert('Error', 'Failed to create checkout.');
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
@@ -100,18 +138,18 @@ const PricingScreen: React.FC = () => {
         <Text style={styles.pageTitle}>Subscription Plans</Text>
 
         {Array.isArray(data) && data.length > 0 ? (
-          data.map((plan, idx) => {
+          data.map(plan => {
             const isMostPopular = plan._id === mostExpensive?._id;
 
             return (
               <View
+                key={plan._id}
                 style={[
                   styles.planCard,
                   plan.highlight && styles.planCardHighlight,
                   isMostPopular && { borderColor: '#2260B2', borderWidth: 3 },
                 ]}
               >
-                {/* Ribbon */}
                 {isMostPopular && (
                   <View style={styles.ribbon}>
                     <Text style={styles.ribbonText}>MOST POPULAR PLAN</Text>
@@ -119,11 +157,9 @@ const PricingScreen: React.FC = () => {
                 )}
 
                 <View style={styles.innerCard}>
-                  {/* Title */}
                   <Text style={styles.planTitle}>{plan.name}</Text>
                   <Text style={styles.planSubtitle}>{plan.description}</Text>
 
-                  {/* Price */}
                   <View style={styles.priceRow}>
                     <Text style={styles.price}>
                       ${plan.price[selectedCadence] ?? 0}
@@ -131,10 +167,9 @@ const PricingScreen: React.FC = () => {
                     <Text style={styles.cadence}>/{selectedCadence}</Text>
                   </View>
 
-                  {/* Features */}
                   <View style={{ marginTop: scale(12) }}>
                     {plan.features.map((feature, i) => (
-                      <View style={styles.featureRow}>
+                      <View key={i} style={styles.featureRow}>
                         <Image
                           source={i === 0 ? CHECK : DOT}
                           style={[
@@ -154,13 +189,14 @@ const PricingScreen: React.FC = () => {
                     ))}
                   </View>
 
-                  {/* Subscribe Button */}
                   <TouchableOpacity
                     style={[
                       styles.ctaBtn,
                       isMostPopular && { backgroundColor: '#333333' },
+                      loadingPlan === plan._id && { opacity: 0.6 },
                     ]}
                     activeOpacity={0.9}
+                    disabled={loadingPlan === plan._id}
                     onPress={() => handleSubscribe(plan._id)}
                   >
                     <Text
@@ -169,13 +205,11 @@ const PricingScreen: React.FC = () => {
                         isMostPopular && { color: '#fff' },
                       ]}
                     >
-                      Subscribe Now
+                      {loadingPlan === plan._id
+                        ? 'Processing...'
+                        : 'Subscribe Now'}
                     </Text>
                   </TouchableOpacity>
-
-                  {/* <Text >
-                    or <Text >contact sales</Text>
-                  </Text> */}
                 </View>
               </View>
             );
@@ -185,6 +219,8 @@ const PricingScreen: React.FC = () => {
             No plans available.
           </Text>
         ) : null}
+
+        {/* WebView Modal */}
         <Modal
           visible={!!checkoutUrl}
           animationType="slide"
@@ -197,16 +233,47 @@ const PricingScreen: React.FC = () => {
             <Text style={{ color: '#fff' }}>Close</Text>
           </TouchableOpacity>
 
-          {checkoutUrl ? (
+          {checkoutUrl && (
             <WebView
               source={{ uri: checkoutUrl }}
-              startInLoadingState
               originWhitelist={['*']}
               javaScriptEnabled
               domStorageEnabled
-              setSupportMultipleWindows={false} // avoid external windows on Android
+              startInLoadingState
+              setSupportMultipleWindows={false}
+              onNavigationStateChange={navState => {
+                console.log('WebView URL:', navState.url);
+
+                if (navState.url.includes(SUCCESS_URL_KEYWORD)) {
+                  setCheckoutUrl(null);
+                  navigate('PaymentSuccess' as never);
+                } else if (navState.url.includes(CANCEL_URL_KEYWORD)) {
+                  setCheckoutUrl(null);
+                  Alert.alert('Payment canceled', 'Please try again.');
+                }
+              }}
+              onError={syntheticEvent => {
+                const { nativeEvent } = syntheticEvent;
+                console.warn('WebView error: ', nativeEvent);
+              }}
+              onHttpError={syntheticEvent => {
+                const { nativeEvent } = syntheticEvent;
+                console.warn('WebView HTTP error: ', nativeEvent);
+              }}
+              renderLoading={() => (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <ActivityIndicator size="large" color="#2260B2" />
+                  <Text style={{ marginTop: 8 }}>Loading...</Text>
+                </View>
+              )}
             />
-          ) : null}
+          )}
         </Modal>
       </ScrollView>
     </View>

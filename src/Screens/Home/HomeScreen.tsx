@@ -65,12 +65,13 @@ const HomeScreen: React.FC = () => {
   const listRef = useRef<FlatList<Article>>(null);
 
   // === FETCH MAIN ARTICLES ===
-  const { data: allArticles = [] } = useQuery({
+  const { data: allArticles = [], refetch } = useQuery({
     queryKey: ['articles'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_ARTICLES_LIST });
       return res.data?.articles ?? [];
     },
+    // refetchInterval: 1000,
   });
 
   // === FETCH CATEGORIES ===
@@ -126,11 +127,6 @@ const HomeScreen: React.FC = () => {
     setActiveSlide(index);
   };
 
-  // === ACTIONS ===
-  const handleAvatarPress = () => {
-    if (!session?.accessToken) navigate('More' as never);
-    else navigate('More' as never);
-  };
   const handleArticlePress = (id: string, slug: string) => {
     if (!session?.accessToken) {
       ShowToast('Please login to read this article', 'error');
@@ -155,14 +151,15 @@ const HomeScreen: React.FC = () => {
         style={styles.content}
         contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
+         
       >
         {/* HEADER */}
         <ImageBackground source={BG} style={styles.header} resizeMode="cover">
           <Header
             logoSource={LOGO}
             avatarSource={AVATAR}
-            barStyle="light-content"
-           
+            guestRoute="More"
+            authRoute="More"
           />
           <View style={styles.welcomeBlock}>
             <Text style={styles.welcomeHeading}>
@@ -270,10 +267,10 @@ const HomeScreen: React.FC = () => {
               onPress={() => handleArticlePress(item._id, item.slug)}
             >
               <View style={styles.rowLeft}>
-                <Text style={styles.rowTitle} numberOfLines={2}>
+                <Text style={styles.rowTitle} numberOfLines={3}>
                   {item.title}
                 </Text>
-                <HtmlRenderer html={item.description} limit={60} />
+                {/* <HtmlRenderer html={item.description} limit={60} /> */}
                 <View style={styles.metaRow}>
                   <Image
                     source={require('../../icons/comment.png')}

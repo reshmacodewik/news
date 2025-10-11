@@ -56,12 +56,11 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const [commentText, setCommentText] = useState('');
   const [isFav, setIsFav] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
-    const [sortOrder, setSortOrder] = useState<"latest" | "oldest">("latest");
+  const [sortOrder, setSortOrder] = useState<'latest' | 'oldest'>('latest');
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
-   const handleSortChange = () => {
-    const newOrder = sortOrder === "latest" ? "oldest" : "latest";
+  const handleSortChange = () => {
+    const newOrder = sortOrder === 'latest' ? 'oldest' : 'latest';
     setSortOrder(newOrder);
-    
   };
   const {
     data: payload,
@@ -120,7 +119,9 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         photo?: string;
       }>;
     },
-    staleTime: 60_000, // optional: cache for 1 min
+    staleTime: 0, // Always consider data stale
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const { mutate: AddComment, isPending: commenting } = useMutation({
@@ -309,6 +310,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
         <TextInput
           placeholder="Add a comment"
+          placeholderTextColor="#000"
           value={commentText}
           onChangeText={setCommentText}
           style={{
@@ -317,7 +319,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             borderColor: '#000',
             borderRadius: 8,
             paddingHorizontal: 5,
-            color:'#000',
+            color: '#000',
             marginBottom: 12,
             backgroundColor: '#F0F6FF',
           }}

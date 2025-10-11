@@ -76,7 +76,9 @@ const TrendingScreen: React.FC = () => {
       const res = await getApiWithOutQuery({
         url: API_ARTICLES_CATEGORIES.replace('/articles', '') || '/categories',
       });
-      return res.data?.categories?.filter((c: any) => c.status === 'active') ?? [];
+      return (
+        res.data?.categories?.filter((c: any) => c.status === 'active') ?? []
+      );
     },
   });
 
@@ -103,17 +105,18 @@ const TrendingScreen: React.FC = () => {
       const url =
         activeTab === 'all'
           ? `${API_ARTICLES_LIST}?limit=20`
-          : `${API_ARTICLES_LIST}?categoryId=${categoryId}&limit=20`;
+          : `${API_ARTICLES_CATEGORIES}?categoryId=${activeTab}&limit=20`;
+
       const res = await getApiWithOutQuery({ url });
       const data = res?.data?.data ?? res?.data ?? {};
-      setArticles(data.articles ?? []);
+      setArticles(res.data.articles ?? []);
     } catch (err) {
       setArticles([]);
+      console.log('Error fetching articles for tab:', activeTab, err);
     } finally {
       setLoading(false);
     }
-  }, [activeTab, categoryId]);
-
+  }, [activeTab]);
   useEffect(() => {
     fetchArticles();
   }, [fetchArticles]);
@@ -150,10 +153,7 @@ const TrendingScreen: React.FC = () => {
             return (
               <TouchableOpacity
                 key={c._id}
-                onPress={() => {
-                  setActiveTab(c._id);
-                  setCategoryId(c._id === 'all' ? null : c._id);
-                }}
+                onPress={() => setActiveTab(c._id)}
                 style={styles.tabBtn}
                 activeOpacity={0.8}
               >
@@ -179,7 +179,7 @@ const TrendingScreen: React.FC = () => {
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + scale(20),
+          paddingBottom: insets.bottom + scale(80),
         }}
       >
         {/* Breaking News */}
@@ -193,7 +193,12 @@ const TrendingScreen: React.FC = () => {
           contentContainerStyle={{ paddingHorizontal: scale(16) }}
         >
           {breakingNews.map(item => (
-            <TouchableOpacity key={item._id} style={styles.breakCard} activeOpacity={0.8}  onPress={() => handleArticlePress(item._id, item.slug)}>
+            <TouchableOpacity
+              key={item._id}
+              style={styles.breakCard}
+              activeOpacity={0.8}
+              onPress={() => handleArticlePress(item._id, item.slug)}
+            >
               <ImageBackground
                 source={toSrc(item.image)}
                 style={styles.breakImage}
@@ -227,7 +232,7 @@ const TrendingScreen: React.FC = () => {
                 </Text>
                 <Text
                   style={styles.metaText}
-                  numberOfLines={2}
+                  numberOfLines={1}
                   ellipsizeMode="tail"
                 >
                   {(item.description || '').replace(/<[^>]+>/g, '')}

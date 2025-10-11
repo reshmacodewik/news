@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../Utils/api/common';
 import { styles } from '../style/PrivacyPolicyStyles';
-import { navigate } from '../Navigators/utils';
+import { goBackNavigation, navigate } from '../Navigators/utils';
 import { API_PRIVACY_POLICY } from '../Utils/api/APIConstant';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
@@ -23,7 +23,7 @@ const PrivacyPolicyScreen: React.FC = () => {
   const [lastUpdate, setLastUpdate] = useState('');
 
   const handleBackPress = () => {
-    navigate('Home');
+    goBackNavigation();
   };
 
   const { data, isLoading, isError } = useQuery({

@@ -14,7 +14,7 @@ import { signupSchema } from "../../validation/signupSchema";
 import { useFormik } from "formik";
 import { API_REGISTER } from "../../Utils/api/APIConstant";
 import ShowToast from "../../Utils/ShowToast";
-import { navigate } from "../../Navigators/utils";
+import { goBackNavigation, navigate } from "../../Navigators/utils";
 import { AuthSession, useAuth } from "./AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -236,7 +236,7 @@ const SignupScreen = () => {
                 Already have an account?{" "}
                 <Text
                   style={styles.signUpLink}
-                  onPress={() => navigate("Login" as never)}
+                  onPress={() => goBackNavigation()}
                 >
                   Log in
                 </Text>

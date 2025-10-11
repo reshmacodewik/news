@@ -65,6 +65,7 @@ const LoginScreen = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+         scrollEnabled={false}
       >
         <ImageBackground
           source={require('../../icons/background.png')}

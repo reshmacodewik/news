@@ -16,6 +16,7 @@ export const SCREEN_NAMES = {
   forgotPassword: 'ForgotPassword',
   otpScreen: 'OTPScreen',
   resetPassword: 'ResetPassword',
+  paymentsuccess: 'PaymentSuccess',
 } as const;
 
 export type RootStackParamList = {
@@ -28,11 +29,10 @@ export type RootStackParamList = {
   Register: undefined;
   'Forgot Password': undefined;
   ForgotPassword: undefined;
-  OTPScreen: { email: string };  // OTPScreen expects the email parameter
-  ResetPassword: { email: string; otp: string }; 
+  OTPScreen: { email: string }; // OTPScreen expects the email parameter
+  ResetPassword: { email: string; otp: string };
   Profile: undefined;
   Help: undefined;
   FAQ: undefined;
   Reports: undefined;
-
 };

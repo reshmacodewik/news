@@ -8,9 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		1F6D174416D2D289A0AF8C2D /* libPods-news.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 33CB1DFA033624CF7F012A59 /* libPods-news.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		9AE2CE2E76B718708507EB43 /* libPods-ArcalisNews.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A22E1D8DD48145DB679CE8F /* libPods-ArcalisNews.a */; };
 		DA94C3DC1AF1AB0D7EE9B50A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
@@ -19,11 +19,12 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = news/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = news/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = news/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		33CB1DFA033624CF7F012A59 /* libPods-news.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-news.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		742CDFF6C9AA133F9D19D03A /* Pods-news.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-news.release.xcconfig"; path = "Target Support Files/Pods-news/Pods-news.release.xcconfig"; sourceTree = "<group>"; };
+		6FAA945C39F7CA89EC9C5863 /* Pods-ArcalisNews.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ArcalisNews.debug.xcconfig"; path = "Target Support Files/Pods-ArcalisNews/Pods-ArcalisNews.debug.xcconfig"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = news/AppDelegate.swift; sourceTree = "<group>"; };
+		7A22E1D8DD48145DB679CE8F /* libPods-ArcalisNews.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ArcalisNews.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = news/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		8D82E083AC160E8FEFDC3AF3 /* Pods-news.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-news.debug.xcconfig"; path = "Target Support Files/Pods-news/Pods-news.debug.xcconfig"; sourceTree = "<group>"; };
+		92F497072E9A955500AAC188 /* news copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "news copy-Info.plist"; path = "/Users/sanjay/Desktop/app/news/ios/news copy-Info.plist"; sourceTree = "<absolute>"; };
+		E2EB7B2C2F151FF380CB6D72 /* Pods-ArcalisNews.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ArcalisNews.release.xcconfig"; path = "Target Support Files/Pods-ArcalisNews/Pods-ArcalisNews.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -32,7 +33,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1F6D174416D2D289A0AF8C2D /* libPods-news.a in Frameworks */,
+				9AE2CE2E76B718708507EB43 /* libPods-ArcalisNews.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,7 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				33CB1DFA033624CF7F012A59 /* libPods-news.a */,
+				7A22E1D8DD48145DB679CE8F /* libPods-ArcalisNews.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -75,6 +76,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				92F497072E9A955500AAC188 /* news copy-Info.plist */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -92,8 +94,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				8D82E083AC160E8FEFDC3AF3 /* Pods-news.debug.xcconfig */,
-				742CDFF6C9AA133F9D19D03A /* Pods-news.release.xcconfig */,
+				6FAA945C39F7CA89EC9C5863 /* Pods-ArcalisNews.debug.xcconfig */,
+				E2EB7B2C2F151FF380CB6D72 /* Pods-ArcalisNews.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -101,23 +103,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* news */ = {
+		13B07F861A680F5B00A75B9A /* Arcalis Daily */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "news" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Arcalis Daily" */;
 			buildPhases = (
-				7E4F7BC9FAA714AFACDE1909 /* [CP] Check Pods Manifest.lock */,
+				B7FC9C59C789FBEB7E1D1146 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				334FF7353110A4C7C5E11047 /* [CP] Embed Pods Frameworks */,
-				6A01F928E6C14DF8618DFE76 /* [CP] Copy Pods Resources */,
+				FDAF6B1A9B533E901C53438A /* [CP] Embed Pods Frameworks */,
+				6C15F912F7C5F85A69210DA7 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = news;
+			name = "Arcalis Daily";
 			productName = news;
 			productReference = 13B07F961A680F5B00A75B9A /* news.app */;
 			productType = "com.apple.product-type.application";
@@ -148,7 +150,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* news */,
+				13B07F861A680F5B00A75B9A /* Arcalis Daily */,
 			);
 		};
 /* End PBXProject section */
@@ -183,49 +185,28 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		334FF7353110A4C7C5E11047 /* [CP] Embed Pods Frameworks */ = {
+		6C15F912F7C5F85A69210DA7 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-news/Pods-news-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-news/Pods-news-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-news/Pods-news-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		6A01F928E6C14DF8618DFE76 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-news/Pods-news-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-ArcalisNews/Pods-ArcalisNews-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			inputPaths = (
 			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-news/Pods-news-resources-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-ArcalisNews/Pods-ArcalisNews-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-news/Pods-news-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ArcalisNews/Pods-ArcalisNews-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		7E4F7BC9FAA714AFACDE1909 /* [CP] Check Pods Manifest.lock */ = {
+		B7FC9C59C789FBEB7E1D1146 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -240,11 +221,32 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-news-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-ArcalisNews-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		FDAF6B1A9B533E901C53438A /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ArcalisNews/Pods-ArcalisNews-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ArcalisNews/Pods-ArcalisNews-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ArcalisNews/Pods-ArcalisNews-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -263,14 +265,19 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8D82E083AC160E8FEFDC3AF3 /* Pods-news.debug.xcconfig */;
+			baseConfigurationReference = 6FAA945C39F7CA89EC9C5863 /* Pods-ArcalisNews.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = D47H5A9TRM;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = news/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Arcalis Daily\nxcodebuild clean\npod install\n\nxed .\nArcalisNews";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.news";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -282,9 +289,9 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = org.reactjs.native.example.news;
+				PRODUCT_BUNDLE_IDENTIFIER = com.arcalisnews.app;
 				PRODUCT_NAME = news;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -293,13 +300,18 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 742CDFF6C9AA133F9D19D03A /* Pods-news.release.xcconfig */;
+			baseConfigurationReference = E2EB7B2C2F151FF380CB6D72 /* Pods-ArcalisNews.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = D47H5A9TRM;
 				INFOPLIST_FILE = news/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Arcalis Daily\nxcodebuild clean\npod install\n\nxed .\nArcalisNews";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.news";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -311,9 +323,9 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = org.reactjs.native.example.news;
+				PRODUCT_BUNDLE_IDENTIFIER = com.arcalisnews.app;
 				PRODUCT_NAME = news;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
@@ -466,7 +478,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "news" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Arcalis Daily" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,

@@ -205,6 +205,14 @@ export const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: scale(6),
   },
+  errorText: {
+  color: '#EF4444', // red color for error
+  fontSize: 12,
+  marginTop: -4,
+  marginBottom: 8,
+  marginLeft:8
+},
+
   input: {
     height: scale(46),
     borderRadius: scale(12),

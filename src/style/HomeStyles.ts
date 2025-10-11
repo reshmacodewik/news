@@ -2,10 +2,8 @@ import { StyleSheet, Dimensions, PixelRatio } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 const baseW = 375;
-export const scale = (n: number) =>
-  (width / baseW) * n;
-const f = (n: number) =>
-  Math.round(PixelRatio.roundToNearestPixel(scale(n)));
+export const scale = (n: number) => (width / baseW) * n;
+const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#e3e9ee' },
@@ -28,7 +26,6 @@ export const styles = StyleSheet.create({
     // borderBottomColor: '#E1E1E1',
     // borderBottomWidth: StyleSheet.hairlineWidth,
     // paddingBottom: scale(16),
-    
   },
   logo: { width: scale(155), height: scale(28) },
   avatarBtn: {
@@ -210,7 +207,7 @@ export const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '500',
   },
- 
+
   dotSep: {
     color: '#9CA3AF',
     fontSize: f(12),
@@ -220,37 +217,42 @@ export const styles = StyleSheet.create({
     height: scale(72),
     borderRadius: scale(10),
   },
-   rowCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginHorizontal: scale(16),
-      marginBottom: scale(12),
-      padding: scale(12),
-      marginTop: scale(5),
-      backgroundColor: '#EEF5FF', // light blue like mock
-      borderRadius: scale(14),
-    },
-    rowLeft: { flex: 1, paddingRight: scale(10) },
-    rowTitle: { fontSize: 18, fontWeight: '500', color: '#0F172A',marginTop: scale(-30) },
-    rowThumb: {
-      width: scale(135),
-      height: scale(97),
-      borderRadius: scale(10),
-    },
-    metaRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: scale(5),
-      marginTop: scale(8),
-      marginBottom: scale(-20),
-    },
-    metaIconImg: {
-      width: scale(20), // or 16 if you prefer
-      height: scale(20),
-      resizeMode: 'contain',
-      tintColor: '#727272',
-    },
-  
-    metaIcon: { fontSize: f(13), color: '#727272' },
-    metaText: { fontSize: f(13), color: '#727272' },
+  rowCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: scale(16),
+    marginBottom: scale(12),
+    padding: scale(12),
+    marginTop: scale(5),
+    backgroundColor: '#EEF5FF', // light blue like mock
+    borderRadius: scale(14),
+  },
+  rowLeft: { flex: 1, paddingRight: scale(10), marginBottom: scale(15) },
+  rowTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#0F172A',
+    marginBottom: scale(5),
+  },
+  rowThumb: {
+    width: scale(135),
+    height: scale(97),
+    borderRadius: scale(10),
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(5),
+    marginTop: scale(8),
+    marginBottom: scale(-20),
+  },
+  metaIconImg: {
+    width: scale(20), // or 16 if you prefer
+    height: scale(20),
+    resizeMode: 'contain',
+    tintColor: '#727272',
+  },
+
+  metaIcon: { fontSize: f(13), color: '#727272' },
+  metaText: { fontSize: f(13), color: '#727272' },
 });
