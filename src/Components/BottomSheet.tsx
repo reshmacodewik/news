@@ -4,15 +4,14 @@ import {
   Dimensions,
   PanResponder,
   StyleSheet,
-  TouchableOpacity,
   View,
   Keyboard,
   Platform,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 const { height } = Dimensions.get('window');
-const SHEET_MAX_H = Math.round(height * 0.80); 
-const SHEET_EXPANDED_H = Math.round(height * 0.8); 
+const SHEET_MAX_H = Math.round(height * 0.8);
 const BACKDROP_OPACITY = 0.35;
 
 type Props = {
@@ -26,6 +25,7 @@ export default function BottomSheet({ visible, onClose, children }: Props) {
   const backdrop = useRef(new Animated.Value(0)).current;
   const [sheetHeight, setSheetHeight] = useState(SHEET_MAX_H);
 
+  // --- Open / Close animations ---
   const open = () => {
     Animated.parallel([
       Animated.spring(translateY, { toValue: 0, useNativeDriver: true }),
@@ -39,34 +39,27 @@ export default function BottomSheet({ visible, onClose, children }: Props) {
 
   const close = (cb?: () => void) => {
     Animated.parallel([
-      Animated.spring(translateY, {
-        toValue: SHEET_MAX_H,
-        useNativeDriver: true,
-      }),
-      Animated.timing(backdrop, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
+      Animated.spring(translateY, { toValue: SHEET_MAX_H, useNativeDriver: true }),
+      Animated.timing(backdrop, { toValue: 0, duration: 200, useNativeDriver: true }),
     ]).start(({ finished }) => finished && cb?.());
   };
 
   // --- Handle visibility ---
   useEffect(() => {
-    visible ? open() : close();
+    if (visible) open();
+    else close();
   }, [visible]);
 
-  // --- Keyboard listeners ---
+  // --- Keyboard handling ---
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setSheetHeight(SHEET_EXPANDED_H),
+      () => setSheetHeight(SHEET_MAX_H)
     );
     const hideSub = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setSheetHeight(SHEET_MAX_H),
+      () => setSheetHeight(SHEET_MAX_H)
     );
-
     return () => {
       showSub.remove();
       hideSub.remove();
@@ -77,7 +70,7 @@ export default function BottomSheet({ visible, onClose, children }: Props) {
   const pan = useMemo(
     () =>
       PanResponder.create({
-        onMoveShouldSetPanResponder: (_, g) => g.dy > 4,
+        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4,
         onPanResponderMove: Animated.event([null, { dy: translateY }], {
           useNativeDriver: false,
         }),
@@ -85,25 +78,20 @@ export default function BottomSheet({ visible, onClose, children }: Props) {
           if (g.dy > SHEET_MAX_H * 0.25 || g.vy > 1.2) close(onClose);
           else open();
         },
-        onPanResponderGrant: () =>
-          translateY.setOffset((translateY as any)._value),
+        onPanResponderGrant: () => translateY.setOffset((translateY as any)._value),
         onPanResponderEnd: () => translateY.flattenOffset(),
       }),
-    [translateY],
+    [translateY]
   );
 
+  // --- Render nothing if fully closed ---
   if (!visible && (backdrop as any)._value === 0) return null;
 
   return (
-    <View style={StyleSheet.absoluteFill}>
+    <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'auto' : 'none'}>
       {/* Backdrop */}
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={() => close(onClose)}
-        style={StyleSheet.absoluteFill}
-      >
+      <TouchableWithoutFeedback onPress={() => close(onClose)}>
         <Animated.View
-          pointerEvents="none"
           style={[
             StyleSheet.absoluteFill,
             {
@@ -115,17 +103,14 @@ export default function BottomSheet({ visible, onClose, children }: Props) {
             },
           ]}
         />
-      </TouchableOpacity>
+      </TouchableWithoutFeedback>
 
       {/* Sheet */}
       <Animated.View
         {...pan.panHandlers}
         style={[
           styles.sheet,
-          {
-            height: sheetHeight,
-            transform: [{ translateY }],
-          },
+          { height: sheetHeight, transform: [{ translateY }] },
         ]}
       >
         <View style={styles.handle} />
@@ -141,12 +126,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#e3e9ee',
+    backgroundColor: '#fff',
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 0,
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowRadius: 12,

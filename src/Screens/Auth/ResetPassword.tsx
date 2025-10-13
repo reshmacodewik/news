@@ -94,7 +94,7 @@ const ResetPasswordScreen = () => {
                 value={formik.values.newPassword}
                 onChangeText={formik.handleChange('newPassword')}
                 onBlur={formik.handleBlur('newPassword')}
-                returnKeyType="done"
+                returnKeyType="next"
               />
               {formik.touched.newPassword && formik.errors.newPassword && (
                 <Text style={{ color: 'red', fontSize: 12, marginLeft: 10 }}>

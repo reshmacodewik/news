@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Image,
@@ -13,6 +13,7 @@ import { useAuth } from '../Screens/Auth/AuthContext';
 import { navigate } from '../Navigators/utils';
 import { getApiWithOutQuery } from '../Utils/api/common';
 import { API_GET_PROFILE } from '../Utils/api/APIConstant';
+import { useFocusEffect } from '@react-navigation/native';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -42,29 +43,37 @@ const Header: React.FC<HeaderProps> = ({
 
   // Default avatar if no profile photo is available
   const AVATAR = require('../icons/user.png');
-  
+
   // Fetch profile photo if authenticated
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (session?.accessToken) {
-        setIsLoading(true); // Start loading
-        try {
-          const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
-          if (res?.data?.photo) {
-            setProfilePhoto(res.data.photo);
-          } else {
-            setProfilePhoto(null);
-          }
-        } catch (err) {
-          console.log('Failed to fetch profile', err);
-          setProfilePhoto(null);
-        } finally {
-          setIsLoading(false); // End loading
-        }
-      }
-    };
-    fetchProfile();
+    if (session?.accessToken) {
+      fetchProfile();
+    }
   }, [session?.accessToken]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (session?.accessToken) {
+        fetchProfile();
+      }
+    }, [session?.accessToken]),
+  );
+
+  // Define fetchProfile outside so both effects can access it:
+  const fetchProfile = async () => {
+    if (!session?.accessToken) return;
+
+    setIsLoading(true);
+    try {
+      const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
+      setProfilePhoto(res?.data?.photo ?? null);
+    } catch (err) {
+      console.log('Failed to fetch profile', err);
+      setProfilePhoto(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAvatarPress = () => {
     const route = session?.accessToken ? authRoute : guestRoute;
@@ -72,7 +81,8 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   // If avatar image fails, use default avatar
-  const avatarSourceUri = profilePhoto && !avatarErrored ? { uri: profilePhoto } : AVATAR;
+  const avatarSourceUri =
+    profilePhoto && !avatarErrored ? { uri: profilePhoto } : AVATAR;
 
   return (
     <View style={styles.header}>

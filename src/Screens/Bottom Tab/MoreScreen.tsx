@@ -114,32 +114,35 @@ const MoreScreen: React.FC = () => {
   });
 
   // Reset password API
- const resetPassword = useMutation({
-  mutationFn: async (values: { newPassword: string; confirmPassword: string }) => {
-    const res = await apiPost({
-      url: API_CHANGE_PASSWORD,
-      values,
-    });
-    return res.data;
-  },
-  onSuccess: () => {
-    ShowToast('Password reset successfully');
-    Keyboard.dismiss();
-    setVisible(false);
-  },
-  onError: err => {
-    console.log('Reset password error', err);
-    ShowToast('Failed to reset password');
-  },
-});
-const PasswordSchema = Yup.object().shape({
-  newPassword: Yup.string()
-    .min(8, 'Password must be at least 8 characters')
-    .required('New password is required'),
-  confirmPassword: Yup.string()
-    .oneOf([Yup.ref('newPassword')], 'Passwords must match')
-    .required('Confirm password is required'),
-});
+  const resetPassword = useMutation({
+    mutationFn: async (values: {
+      newPassword: string;
+      confirmPassword: string;
+    }) => {
+      const res = await apiPost({
+        url: API_CHANGE_PASSWORD,
+        values,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      ShowToast('Password reset successfully');
+      Keyboard.dismiss();
+      setVisible(false);
+    },
+    onError: err => {
+      console.log('Reset password error', err);
+      ShowToast('Failed to reset password');
+    },
+  });
+  const PasswordSchema = Yup.object().shape({
+    newPassword: Yup.string()
+      .min(8, 'Password must be at least 8 characters')
+      .required('New password is required'),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref('newPassword')], 'Passwords must match')
+      .required('Confirm password is required'),
+  });
 
   const onEmail = () => Linking.openURL('mailto:support@arcalisnews.com');
 
@@ -177,7 +180,11 @@ const PasswordSchema = Yup.object().shape({
           <View style={styles.profileLeft}>
             <View style={styles.bigAvatarWrap}>
               <Image
-                source={profile?.photo ? { uri: profile.photo } : AVATAR_BG}
+                source={
+                  profile?.photo
+                    ? { uri: `${profile.photo}?t=${Date.now()}` } // 👈 prevents caching
+                    : AVATAR_BG
+                }
                 style={styles.bigAvatar}
                 resizeMode="cover"
               />

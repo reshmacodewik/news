@@ -62,6 +62,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     const newOrder = sortOrder === 'latest' ? 'oldest' : 'latest';
     setSortOrder(newOrder);
   };
+
   const {
     data: payload,
     isLoading,
@@ -120,8 +121,6 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       }>;
     },
     staleTime: 0, // Always consider data stale
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
   });
 
   const { mutate: AddComment, isPending: commenting } = useMutation({
@@ -132,9 +131,19 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     onSuccess: () => {
       setCommentText('');
       refetchComments();
+      setIsVisible(false);
     },
+
     onError: err => console.log('Failed to add comment', err),
   });
+  const sortedComments = React.useMemo(() => {
+    if (!commentData) return [];
+    return [...commentData].sort((a, b) => {
+      const timeA = new Date(a.createdAt).getTime();
+      const timeB = new Date(b.createdAt).getTime();
+      return sortOrder === 'latest' ? timeB - timeA : timeA - timeB;
+    });
+  }, [commentData, sortOrder]);
 
   const handleAddComment = () => {
     if (!commentText.trim()) return;
@@ -271,9 +280,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                   source={require('../icons/comment1.png')}
                   style={styles.chatIcon}
                 />
-                <Text style={styles.likeCount}>
-                  {commentData ? commentData.length : commentsCount}
-                </Text>
+                <Text style={styles.likeCount}>{commentData?.length ?? 0}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -356,7 +363,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           </Pressable>
         </View>
         <FlatList
-          data={commentData ?? []}
+          data={sortedComments}
           keyExtractor={item => item._id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: insets.bottom }}

@@ -22,6 +22,7 @@ import ShowToast from '../../Utils/ShowToast';
 import { navigate } from '../../Navigators/utils';
 import { useAuth } from '../Auth/AuthContext';
 import Header from '../../Components/Header';
+import { useFocusEffect } from '@react-navigation/native';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -70,7 +71,7 @@ const TrendingScreen: React.FC = () => {
   }, []);
 
   // ── Fetch Categories ─────────────────────────────
-  const { data: categoryData = [] } = useQuery({
+  const { data: categoryData = [], refetch } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({
@@ -81,7 +82,11 @@ const TrendingScreen: React.FC = () => {
       );
     },
   });
-
+  useFocusEffect(
+    React.useCallback(() => {
+      refetch();
+    }, []),
+  );
   // Tabs (with "All")
   const tabs = [{ _id: 'all', title: 'All' }, ...categoryData];
   const activeTabTitle = useMemo(() => {
@@ -117,9 +122,11 @@ const TrendingScreen: React.FC = () => {
       setLoading(false);
     }
   }, [activeTab]);
-  useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchArticles();
+    }, [fetchArticles]),
+  );
 
   // ── UI ──────────────────────────────────────────────
   return (

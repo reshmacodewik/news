@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-    logo: { width: scale(155), height: scale(28) },
+  logo: { width: scale(155), height: scale(28) },
   avatarWrap: {
     width: scale(34),
     height: scale(34),
@@ -61,7 +61,6 @@ export const styles = StyleSheet.create({
 
   // Content
 
-
   sectionTitle: {
     fontSize: 20,
     fontWeight: '500',
@@ -102,19 +101,21 @@ export const styles = StyleSheet.create({
     backgroundColor: '#EEF5FF', // light blue like mock
     borderRadius: scale(14),
   },
-  rowLeft: { flex: 1, paddingRight: scale(10) },
-  rowTitle: { fontSize: 17, fontWeight: '500', color: '#0F172A' },
+  rowLeft: { flex: 1, paddingRight: scale(10), marginBottom: scale(15) },
+  rowTitle: { fontSize: 17, fontWeight: '500', color: '#0F172A', marginBottom: scale(5), },
   rowThumb: {
     width: scale(110),
     height: scale(86),
     borderRadius: scale(12),
+   
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: scale(5),
-    marginTop: scale(8),
-  },
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: scale(5),
+     marginTop: scale(8),
+     marginBottom: scale(-20),
+   },
   metaIconImg: {
     width: scale(20), // or 16 if you prefer
     height: scale(20),

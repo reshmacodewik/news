@@ -26,6 +26,7 @@ import {
 } from '../../Utils/api/APIConstant';
 import HtmlRenderer from '../../Components/HtmlRenderer';
 import Header from '../../Components/Header';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
@@ -73,7 +74,11 @@ const HomeScreen: React.FC = () => {
     },
     // refetchInterval: 1000,
   });
-
+useFocusEffect(
+  React.useCallback(() => {
+    refetch();
+  }, [])
+);
   // === FETCH CATEGORIES ===
   const { data: categoryData = [] } = useQuery({
     queryKey: ['categories'],
@@ -147,11 +152,12 @@ const HomeScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+    <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
       <ScrollView
         style={styles.content}
         contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
-         
       >
         {/* HEADER */}
         <ImageBackground source={BG} style={styles.header} resizeMode="cover">
@@ -267,10 +273,16 @@ const HomeScreen: React.FC = () => {
               onPress={() => handleArticlePress(item._id, item.slug)}
             >
               <View style={styles.rowLeft}>
-                <Text style={styles.rowTitle} numberOfLines={3}>
+                <Text style={styles.rowTitle} numberOfLines={2}>
                   {item.title}
                 </Text>
-                {/* <HtmlRenderer html={item.description} limit={60} /> */}
+                <Text
+                  style={styles.metaText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {(item.description || '').replace(/<[^>]+>/g, '')}
+                </Text>
                 <View style={styles.metaRow}>
                   <Image
                     source={require('../../icons/comment.png')}
