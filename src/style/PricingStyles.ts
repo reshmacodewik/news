@@ -8,7 +8,7 @@ const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#e3e9ee' },
-  scroll: { flex: 1, backgroundColor: '#e3e9ee',marginBottom: scale(25) },
+  scroll: { flex: 1, backgroundColor: '#e3e9ee', marginBottom: scale(25) },
 
   // Top bar
   topBar: {
@@ -31,12 +31,51 @@ export const styles = StyleSheet.create({
   avatar: { width: '100%', height: '100%' },
 
   pageTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '500',
     color: '#0F172A',
-    marginTop: scale(18),
+    marginTop: scale(5),
     marginBottom: scale(12),
     paddingHorizontal: scale(16),
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    backgroundColor: '#f1f3f5',
+    borderRadius: 24,
+    padding: 4,
+    marginBottom: 15,
+    alignSelf: 'center',
+    width: '90%',
+  },
+
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+
+  toggleButtonActive: {
+    backgroundColor: '#2260B2',
+  },
+
+  toggleText: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '500',
+  },
+
+  toggleTextActive: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+
+  discountText: {
+    textAlign: 'center',
+    color: '#2260B2',
+    fontSize: 14,
+    marginBottom: 10,
   },
 
   // Plan card (outer)
@@ -55,11 +94,9 @@ export const styles = StyleSheet.create({
   planCardHighlight: {
     padding: scale(2), // for blue border effect
     backgroundColor: '#2260B2',
-  
   },
 
   ribbon: {
- 
     top: scale(0),
     left: scale(0),
     right: scale(0),
@@ -82,11 +119,10 @@ export const styles = StyleSheet.create({
     borderRadius: scale(18),
     backgroundColor: '#FFFFFF',
     padding: scale(15),
-    paddingHorizontal:scale(22),
+    paddingHorizontal: scale(22),
     paddingBottom: scale(18),
     borderTopLeftRadius: scale(18),
     borderTopRightRadius: scale(18),
-   
   },
 
   planTitle: {

@@ -19,7 +19,7 @@ function App() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider> {/* <-- Wrap the whole app */}
-         
+          <StatusBar barStyle={"light-content"}/>
             <ApplicationNavigator />
           </AuthProvider>
           <Toast />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Alert,
   Linking,
   Platform,
+  AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +21,7 @@ import Header from '../../Components/Header';
 import { navigate } from '../../Navigators/utils';
 import { styles } from '../../style/PricingStyles';
 import { useAuth } from '../Auth/AuthContext';
+import PaymentStatusModal from '../../Components/PaymentStatusModal';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -28,29 +30,25 @@ const AVATAR = require('../../icons/user.png');
 const CHECK = require('../../icons/checkBlue.png');
 const DOT = require('../../icons/dot.png');
 
-const getApiBaseUrl = () => {
-  if (Platform.OS === 'android') return 'http://10.0.2.2:9991'; // Android Emulator
-  if (Platform.OS === 'ios') return 'http://localhost:9991'; // iOS Simulator
-  return 'http://192.168.1.36:9991'; // Physical device (replace with your machine’s IP)
-};
-
-const API_BASE = getApiBaseUrl();
-
 const PricingScreen: React.FC = () => {
-  const selectedCadence: 'monthly' | 'yearly' = 'monthly';
+  const [selectedCadence, setSelectedCadence] = useState<'monthly' | 'annual'>(
+    'monthly',
+  );
+
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
 
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
-  const[paymentStatus,setPaymentStatus]=useState<string | null >(null);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
 
   // ✅ Fetch subscription plans
   const { data, isLoading } = useQuery({
     queryKey: ['subscription-plans'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_SUBSCRIPTION_PLANS });
+      console.log('Plans response:', res.data);
       return res.data;
     },
   });
@@ -95,7 +93,6 @@ const PricingScreen: React.FC = () => {
             planId,
             userId,
             billingCycle,
-            variantId: 624004,
           }),
         },
       );
@@ -131,38 +128,43 @@ const PricingScreen: React.FC = () => {
     }
   };
 
-  // ✅ Poll billing status
-  // ✅ Payment polling effect
+  // ✅ Place this at the top of the component (after other useStates)
+  const appState = useRef(AppState.currentState);
+
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-
-    if (transactionId && showStatusModal) {
-      interval = setInterval(async () => {
-        try {
-          const res = await fetch(
-            `http://192.168.1.36:9991/api/billing/billing-check/${transactionId}`,
+    const subscription = AppState.addEventListener(
+      'change',
+      async nextAppState => {
+        if (
+          appState.current.match(/inactive|background/) &&
+          nextAppState === 'active'
+        ) {
+          console.log(
+            'App returned to foreground — checking payment status...',
           );
-          const json = await res.json();
-          const status = json?.data?.paymentStatus;
-          console.log("status",status);
+          if (transactionId) {
+            try {
+              const res = await fetch(
+                `http://192.168.1.36:9991/api/billing/billing-check/${transactionId}`,
+              );
+              const json = await res.json();
+              const status = json?.data?.paymentStatus;
+              console.log('status on resume:', status);
 
-          if (status === 'completed') {
-            setPaymentStatus('completed');
-            clearInterval(interval);
-          } else if (status === 'failed') {
-            setPaymentStatus('failed');
-            clearInterval(interval);
-          } else {
-            setPaymentStatus('pending');
+              if (status === 'completed') setPaymentStatus('completed');
+              else if (status === 'failed') setPaymentStatus('failed');
+              else setPaymentStatus('pending');
+            } catch (err) {
+              console.error('Error checking payment on resume:', err);
+            }
           }
-        } catch (e) {
-          console.error('Error checking billing:', e);
         }
-      }, 3000);
-    }
+        appState.current = nextAppState;
+      },
+    );
 
-    return () => clearInterval(interval);
-  }, [transactionId, showStatusModal]);
+    return () => subscription.remove();
+  }, [transactionId]);
 
   return (
     <View style={styles.container}>
@@ -180,6 +182,49 @@ const PricingScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.pageTitle}>Subscription Plans</Text>
+        {/* Billing cycle toggle */}
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              selectedCadence === 'monthly' && styles.toggleButtonActive,
+            ]}
+            onPress={() => setSelectedCadence('monthly')}
+          >
+            <Text
+              style={[
+                styles.toggleText,
+                selectedCadence === 'monthly' && styles.toggleTextActive,
+              ]}
+            >
+              Monthly
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              selectedCadence === 'annual' && styles.toggleButtonActive,
+            ]}
+            onPress={() => setSelectedCadence('annual')}
+          >
+            <Text
+              style={[
+                styles.toggleText,
+                selectedCadence === 'annual' && styles.toggleTextActive,
+              ]}
+            >
+              Annual
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Save 15% text */}
+        {selectedCadence === 'annual' && (
+          <Text style={styles.discountText}>
+            🎉 Save 15% with annual subscription
+          </Text>
+        )}
 
         {Array.isArray(data) && data.length > 0 ? (
           data.map(plan => {
@@ -208,7 +253,7 @@ const PricingScreen: React.FC = () => {
                     <Text style={styles.price}>
                       ${plan.price[selectedCadence] ?? 0}
                     </Text>
-                    <Text style={styles.cadence}>/{selectedCadence}</Text>
+                    <Text style={styles.cadence}>/ {selectedCadence}</Text>
                   </View>
 
                   <View style={{ marginTop: scale(12) }}>
@@ -295,82 +340,17 @@ const PricingScreen: React.FC = () => {
           </Text>
         ) : null}
 
-        {/* ✅ Payment Status Modal */}
-        {/* ✅ Payment Status Modal */}
-        {showStatusModal && (
-          <Modal transparent>
-            <View
-              style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: 'rgba(0,0,0,0.5)',
-              }}
-            >
-              <View
-                style={{
-                  backgroundColor: '#fff',
-                  padding: 24,
-                  borderRadius: 12,
-                  alignItems: 'center',
-                  width: '80%',
-                }}
-              >
-                {paymentStatus === 'pending' && (
-                  <>
-                    <ActivityIndicator size="large" color="#2260B2" />
-                    <Text style={{ marginTop: 10, fontSize: 16 }}>
-                      Waiting for payment...
-                    </Text>
-                  </>
-                )}
-
-                {paymentStatus === 'completed' && (
-                  <>
-                    <Text
-                      style={{
-                        fontSize: 18,
-                        fontWeight: 'bold',
-                        color: 'green',
-                      }}
-                    >
-                      Payment Successful 🎉
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setShowStatusModal(false);
-                        navigate('PaymentSuccess' as never);
-                      }}
-                    >
-                      <Text style={{ marginTop: 16, color: '#2260B2' }}>
-                        Continue
-                      </Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-
-                {paymentStatus === 'failed' && (
-                  <>
-                    <Text
-                      style={{ fontSize: 18, fontWeight: 'bold', color: 'red' }}
-                    >
-                      Payment Failed ❌
-                    </Text>
-                    <TouchableOpacity onPress={() => setShowStatusModal(false)}>
-                      <Text style={{ marginTop: 16, color: 'red' }}>Close</Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-
-                {paymentStatus === 'pending' && (
-                  <TouchableOpacity onPress={() => setShowStatusModal(false)}>
-                    <Text style={{ marginTop: 10, color: 'red' }}>Cancel</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          </Modal>
-        )}
+        <PaymentStatusModal
+          visible={showStatusModal}
+          status={
+            paymentStatus === 'pending' ||
+            paymentStatus === 'completed' ||
+            paymentStatus === 'failed'
+              ? paymentStatus
+              : null
+          }
+          onClose={() => setShowStatusModal(false)}
+        />
       </ScrollView>
     </View>
   );

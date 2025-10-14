@@ -91,15 +91,25 @@ const EditProfileScreen = () => {
     );
   };
 
-  const handleSave = () => {
-    const payload = {
-      name,
-      email,
-      phoneNumber: phone,
-      photo: imageUri,
-    };
-    updateProfile(payload);
-  };
+const handleSave = () => {
+  const formData = new FormData();
+
+  formData.append('name', name);
+  formData.append('email', email);
+  formData.append('phoneNumber', phone);
+
+  if (imageUri && imageUri.startsWith('file://')) {
+    const filename = imageUri.split('/').pop() || `profile-${Date.now()}.jpg`;
+    formData.append('photo', {
+      uri: imageUri,
+      name: filename,
+      type: 'image/jpeg', // or 'image/png' depending on your picker
+    });
+  }
+
+  updateProfile(formData);
+};
+
 
  
 

@@ -17,7 +17,7 @@ import { styles } from '../../style/MoreStyles';
 import BottomSheet from '../../Components/BottomSheet';
 import { navigate } from '../../Navigators/utils';
 import { apiPost, getApiWithOutQuery } from '../../Utils/api/common';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   API_CHANGE_PASSWORD,
   API_GET_PROFILE,
@@ -37,9 +37,10 @@ const EDIT = require('../../icons/edit.png');
 const LOCK = require('../../icons/password.png');
 const PLAN = require('../../icons/bell.png');
 const ABOUT = require('../../icons/About.png');
-const SHIELD = require('../../icons/bell.png');
+const SHIELD1 = require('../../icons/bell.png');
 const TERMS = require('../../icons/note.png');
 const CHAT = require('../../icons/chat.png');
+const SHIELD  = require('../../icons/policy.png');
 const LAYERS = require('../../icons/verison.png');
 const LOGOUT = require('../../icons/logout.png');
 const CHEVRON = require('../../icons/arrow.png');
@@ -89,6 +90,7 @@ const MoreScreen: React.FC = () => {
     }
     setVisible(true);
   };
+  const queryClient = useQueryClient();
 
   // Close the BottomSheet and reset inputs
   const close = () => {
@@ -105,13 +107,24 @@ const MoreScreen: React.FC = () => {
   }, [isFocused]);
 
   // Get profile data
-  const { data: profile, isLoading } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['profile-info'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
       return res?.data;
     },
+    staleTime: 0,
   });
+  useEffect(() => {
+    if (isFocused && session?.accessToken) {
+      queryClient.invalidateQueries({ queryKey: ['profile-info'] });
+      refetch(); // extra safety to ensure UI updates instantly
+    }
+  }, [isFocused, session?.accessToken]);
 
   // Reset password API
   const resetPassword = useMutation({
@@ -182,7 +195,7 @@ const MoreScreen: React.FC = () => {
               <Image
                 source={
                   profile?.photo
-                    ? { uri: `${profile.photo}?t=${Date.now()}` } // 👈 prevents caching
+                    ? { uri: `${profile.photo}?v=${Date.now()}` }
                     : AVATAR_BG
                 }
                 style={styles.bigAvatar}
@@ -254,6 +267,13 @@ const MoreScreen: React.FC = () => {
             onPress={() => navigate('TermsAndConditions' as never)}
             style={{ marginTop: -12 }}
           />
+           <Row
+            icon={PLAN}
+            label="Subscription Billing"
+            onPress={() => navigate('SubscriptionBillingScreen' as never)}
+            style={{ marginTop: -12 }}
+          />
+          SubscriptionBillingScreen
         </View>
 
         {/* Contact + Version */}

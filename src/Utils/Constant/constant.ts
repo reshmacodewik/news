@@ -17,6 +17,7 @@ export const SCREEN_NAMES = {
   otpScreen: 'OTPScreen',
   resetPassword: 'ResetPassword',
   paymentsuccess: 'PaymentSuccess',
+  SubscriptionBillingScreen:'SubscriptionBillingScreen',
 } as const;
 
 export type RootStackParamList = {

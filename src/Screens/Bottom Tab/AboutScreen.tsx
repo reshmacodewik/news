@@ -46,6 +46,8 @@ const AboutScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <ScrollView
+       bounces={false}
+        alwaysBounceVertical={false}
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{

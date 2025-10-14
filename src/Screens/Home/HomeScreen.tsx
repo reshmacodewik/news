@@ -12,6 +12,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   ImageSourcePropType,
+  Platform,
 } from 'react-native';
 import { styles } from '../../style/HomeStyles';
 import { navigate } from '../../Navigators/utils';
@@ -74,11 +75,11 @@ const HomeScreen: React.FC = () => {
     },
     // refetchInterval: 1000,
   });
-useFocusEffect(
-  React.useCallback(() => {
-    refetch();
-  }, [])
-);
+  useFocusEffect(
+    React.useCallback(() => {
+      refetch();
+    }, []),
+  );
   // === FETCH CATEGORIES ===
   const { data: categoryData = [] } = useQuery({
     queryKey: ['categories'],
@@ -152,12 +153,17 @@ useFocusEffect(
 
   return (
     <View style={styles.container}>
-    <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar
+        barStyle="dark-content"
+        translucent
+        backgroundColor="transparent"
+      />
 
       <ScrollView
+        bounces={false}
+        alwaysBounceVertical={false}
         style={styles.content}
         contentContainerStyle={{ paddingBottom: 80 }}
-        showsVerticalScrollIndicator={false}
       >
         {/* HEADER */}
         <ImageBackground source={BG} style={styles.header} resizeMode="cover">

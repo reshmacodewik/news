@@ -1,4 +1,4 @@
-import React from 'react';  
+import React from 'react';
 import { SCREEN_NAMES } from '../../Utils/Constant/constant';
 import LoginScreen from '../../Screens/Auth/LoginScreen';
 import SplashScreen from '../../Screens/SplashScreen';
@@ -12,6 +12,7 @@ import ForgotPasswordScreen from '../../Screens/Auth/ForgotPasswordScreen';
 import OTPScreen from '../../Screens/Auth/OTPScreen';
 import ResetPasswordScreen from '../../Screens/Auth/ResetPassword';
 import PaymentSuccess from '../../Screens/PaymentSuccess';
+import SubscriptionBillingScreen from '../../Screens/SubscriptionBillingScreen';
 
 export const notAuthenticatedRoutes = [
   {
@@ -32,8 +33,8 @@ export const notAuthenticatedRoutes = [
     component: SignupScreen,
     headerShown: false,
   },
-    {
-    routeName: SCREEN_NAMES.home,          // <-- add Home for now (so you can navigate to it)
+  {
+    routeName: SCREEN_NAMES.home, // <-- add Home for now (so you can navigate to it)
     headerHeading: 'Home',
     component: BottomTab,
     headerShown: false,
@@ -62,7 +63,7 @@ export const notAuthenticatedRoutes = [
     component: TermsAndConditionsScreen,
     headerShown: false,
   },
-    {
+  {
     routeName: SCREEN_NAMES.forgotPassword,
     headerHeading: 'ForgotPassword',
     component: ForgotPasswordScreen,
@@ -74,18 +75,22 @@ export const notAuthenticatedRoutes = [
     component: OTPScreen,
     headerShown: false,
   },
-{
+  {
     routeName: SCREEN_NAMES.resetPassword,
     headerHeading: 'ResetPassword',
     component: ResetPasswordScreen,
     headerShown: false,
-},
-{
+  },
+  {
     routeName: SCREEN_NAMES.paymentsuccess,
     headerHeading: 'PaymentSuccess',
     component: PaymentSuccess,
     headerShown: false,
-}
-  
+  },
+  {
+    routeName: SCREEN_NAMES.SubscriptionBillingScreen,
+    headerHeading: 'SubscriptionBillingScreen',
+    component: SubscriptionBillingScreen,
+    headerShown: false,
+  },
 ];
-

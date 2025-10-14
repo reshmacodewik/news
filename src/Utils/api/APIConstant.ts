@@ -19,3 +19,4 @@ export const API_COMMENTS_LIST: string = "/users/comments";
 export const API_LIKES: string = "/users/favorites";
 export const API_TERMS_AND_CONDITIONS: string = "/users/cms/terms-and-conditions";
 export const API_CHANGE_PASSWORD: string = "/users/change-password";
+export const API_BILLING_LIST: string ="/billing/user"
