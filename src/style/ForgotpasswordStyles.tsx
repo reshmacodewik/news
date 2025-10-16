@@ -138,4 +138,10 @@ export const styles = StyleSheet.create({
   otpContainer: {
     marginVertical: hp(2),
   },
+    errorText: {
+    color: '#EF4444',
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 8,
+  },
 });

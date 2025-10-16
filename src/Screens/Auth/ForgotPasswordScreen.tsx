@@ -26,6 +26,7 @@ const ForgotPasswordScreen = () => {
     onSubmit: async (values, { setSubmitting }) => {
       try {
         const res = await apiPost({ url: API_VERIFY_EMAIL, values });
+        console.log("hello",res)
         if (res?.success) {
           ShowToast(res.message || 'OTP sent successfully', 'success');
           navigate('OTPScreen' as never, { email: values.email } as never);

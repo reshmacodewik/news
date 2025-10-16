@@ -51,6 +51,7 @@ type Article = {
   articleCategoryId?: { title: string };
   createdAt?: string;
   slug: string;
+   viewingType?: 'free' | 'register' | 'premium';
 };
 
 const HomeScreen: React.FC = () => {
@@ -134,14 +135,19 @@ const HomeScreen: React.FC = () => {
   };
 
   const handleArticlePress = (id: string, slug: string) => {
-    if (!session?.accessToken) {
-      ShowToast('Please login to read this article', 'error');
-      navigate('Login' as never);
-      return;
-    }
+    // if (!session?.accessToken) {
+    //   ShowToast('Please login to read this article', 'error');
+    //   navigate('Login' as never);
+    //   return;
+    // }
 
     navigate('ArticleDetail' as never, { id, slug } as never);
   };
+
+
+useFocusEffect(() => {
+  StatusBar.setBarStyle('light-content');
+});
 
   // === STATIC TAB TYPES ===
   const TABS = [
@@ -153,11 +159,7 @@ const HomeScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="dark-content"
-        translucent
-        backgroundColor="transparent"
-      />
+     
 
       <ScrollView
         bounces={false}

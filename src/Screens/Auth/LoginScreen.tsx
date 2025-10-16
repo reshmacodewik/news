@@ -1,3 +1,4 @@
+// LoginScreen.tsx
 import React, { useEffect } from 'react';
 import {
   View,
@@ -19,45 +20,114 @@ import { AuthSession, useAuth } from './AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 
+import {
+  GoogleSignin,
+  statusCodes,
+  User as GoogleUser,
+} from '@react-native-google-signin/google-signin';
+
 const LoginScreen = () => {
   const isFocused = useIsFocused();
   const { signIn, session } = useAuth();
 
+  // --- GOOGLE CONFIG ---
   useEffect(() => {
-    if (isFocused && session) {
-      navigate('Home' as never);
-    }
+    GoogleSignin.configure({
+      webClientId:
+        '702876724757-g0m95a0bjcsca87lq2t8muegdkje0rn5.apps.googleusercontent.com',
+      iosClientId:
+        '702876724757-l3vlvrcp65lf5iqnfo18obnb71fu89fh.apps.googleusercontent.com',
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isFocused && session) navigate('Home' as never);
   }, [isFocused, session]);
 
+  // ---------- EMAIL/PASSWORD -> API_LOGIN ----------
   const formik = useFormik({
     initialValues: { email: '', password: '' },
     validationSchema: loginSchema,
-    onSubmit: async (values, { setSubmitting }) => {
+    onSubmit: async (values, { setSubmitting, setFieldError }) => {
       try {
         const res = await apiPost({ url: API_LOGIN, values });
-        if (res?.success) {
-          const session: AuthSession = {
-            accessToken: res.data.token,
+        if (res?.success && res?.data?.token) {
+          const newSession: AuthSession = {
+            accessToken: res.data.token, // <-- maps your sample
             user: {
               id: res.data.id,
               name: res.data.name,
               email: res.data.email,
             },
           };
-          signIn(session);
-          await AsyncStorage.setItem('userSession', JSON.stringify(session));
-          ShowToast(res?.message, 'success');
+          signIn(newSession);
+          await AsyncStorage.setItem('userSession', JSON.stringify(newSession));
+          ShowToast(res?.message ?? 'Login successful', 'success');
           navigate('Home' as never);
         } else {
-          formik.setFieldError('password', res?.error);
+          setFieldError('password', res?.error ?? 'Invalid credentials');
         }
       } catch (e: any) {
         ShowToast(e?.message || 'Something went wrong', 'error');
       } finally {
-        setSubmitting(false); // <-- important!
+        setSubmitting(false);
       }
     },
   });
+
+  // ---------- GOOGLE -> API_GOOGLE_LOGIN ----------
+  const handleGoogleSignIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
+
+      // Start Google flow
+      const gUser = await GoogleSignin.signIn();
+      console.log("user",gUser)
+      // Ensure idToken
+      const tokens = await GoogleSignin.getTokens();
+      const idToken = tokens?.idToken ?? (gUser as any)?.idToken;
+      if (!idToken)
+        return ShowToast(
+          'No idToken from Google. Check webClientId & SHA keys.',
+          'error',
+        );
+
+      // Hit your separate Google auth API
+      const res = await apiPost({
+        url: API_LOGIN,
+        values: { idToken }, // backend verifies & returns your app token
+      });
+
+      // Expecting SAME shape as simple login:
+      // { success, code, message, data: { id, name, email, token } }
+      if (!res?.success || !res?.data?.token) {
+        return ShowToast(res?.error || 'Google login failed', 'error');
+      }
+
+      const newSession: AuthSession = {
+        accessToken: res.data.token,
+        user: {
+          id: res.data.id,
+          name: res.data.name,
+          email: res.data.email,
+        },
+      };
+
+      signIn(newSession);
+      await AsyncStorage.setItem('userSession', JSON.stringify(newSession));
+      ShowToast(res?.message ?? 'Login successful', 'success');
+      navigate('Home' as never);
+    } catch (err: any) {
+      if (err.code === statusCodes.SIGN_IN_CANCELLED) return;
+      if (err.code === statusCodes.IN_PROGRESS)
+        return ShowToast('Google sign-in in progress', 'info');
+      if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE)
+        return ShowToast('Update Google Play Services', 'error');
+      ShowToast(err?.message || 'Google sign-in failed', 'error');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -65,14 +135,14 @@ const LoginScreen = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-         scrollEnabled={false}
+        scrollEnabled={false}
       >
         <ImageBackground
           source={require('../../icons/background.png')}
           resizeMode="cover"
           style={{ flex: 1 }}
         >
-          {/* Header Section */}
+          {/* Header */}
           <View style={styles.headerContainer}>
             <View style={styles.logoContainer}>
               <Image
@@ -87,9 +157,9 @@ const LoginScreen = () => {
             </Text>
           </View>
 
-          {/* Form Section */}
+          {/* Form */}
           <View style={styles.formContainer}>
-            {/* Email Input */}
+            {/* Email */}
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Email</Text>
               <TextInput
@@ -103,14 +173,14 @@ const LoginScreen = () => {
                 autoCapitalize="none"
                 returnKeyType="next"
               />
-              {formik.touched.email && formik.errors.email && (
+              {formik.touched.email && formik.errors.email ? (
                 <Text style={{ color: 'red', fontSize: 12, marginLeft: 10 }}>
                   {formik.errors.email}
                 </Text>
-              )}
+              ) : null}
             </View>
 
-            {/* Password Input */}
+            {/* Password */}
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Password</Text>
               <TextInput
@@ -123,15 +193,16 @@ const LoginScreen = () => {
                 secureTextEntry
                 autoCapitalize="none"
                 returnKeyType="done"
+                onSubmitEditing={() => formik.handleSubmit()}
               />
-              {formik.touched.password && formik.errors.password && (
+              {formik.touched.password && formik.errors.password ? (
                 <Text style={{ color: 'red', fontSize: 12, marginLeft: 10 }}>
                   {formik.errors.password}
                 </Text>
-              )}
+              ) : null}
             </View>
 
-            {/* Forgot Password Link */}
+            {/* Forgot */}
             <TouchableOpacity
               style={styles.forgotPasswordContainer}
               onPress={() => navigate('ForgotPassword' as never)}
@@ -139,25 +210,28 @@ const LoginScreen = () => {
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
-            {/* Sign In Button */}
+            {/* Email/Password Sign In */}
             <TouchableOpacity
               style={styles.signInButton}
               onPress={() => formik.handleSubmit()}
+              disabled={formik.isSubmitting}
             >
-              <Text style={styles.signInButtonText}>Sign in</Text>
+              <Text style={styles.signInButtonText}>
+                {formik.isSubmitting ? 'Signing in...' : 'Sign in'}
+              </Text>
             </TouchableOpacity>
 
-            {/* Or Separator */}
+            {/* Or */}
             <View style={styles.separatorContainer}>
               <View style={styles.separatorLine} />
               <Text style={styles.separatorText}>Or</Text>
               <View style={styles.separatorLine} />
             </View>
 
-            {/* Social Sign In Buttons */}
+            {/* Google */}
             <TouchableOpacity
               style={styles.socialButton}
-              onPress={() => console.log('Google Sign in pressed')}
+              onPress={handleGoogleSignIn}
             >
               <Image
                 source={require('../../icons/Google.png')}
@@ -165,10 +239,9 @@ const LoginScreen = () => {
               />
               <Text style={styles.socialButtonText}>Sign in with Google</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.socialButton}
-              onPress={() => console.log('Facebook Sign in pressed')}
+              //onPress={handleFacebookSignIn}
             >
               <Image
                 source={require('../../icons/Facebook.png')}
@@ -176,8 +249,9 @@ const LoginScreen = () => {
               />
               <Text style={styles.socialButtonText}>Sign in with Facebook</Text>
             </TouchableOpacity>
+            {/* (Optional) Facebook can be added later and point to API_FACEBOOK_LOGIN */}
 
-            {/* Sign Up Link */}
+            {/* Sign Up */}
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>
                 Don't you have an account?{' '}

@@ -110,7 +110,7 @@ export const apiPost = async ({
     const res = await defaultAxios.post(url, values);
     return res.data;
   } catch (err: any) {
-    ShowToast(err?.response?.data?.error, 'error');
+    //ShowToast(err?.response?.data?.error, 'error');
     return err?.response?.data;
   }
 };

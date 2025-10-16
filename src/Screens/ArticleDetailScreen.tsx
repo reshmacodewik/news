@@ -23,6 +23,7 @@ import {
   API_LIKES,
 } from '../Utils/api/APIConstant';
 import BottomSheet from '../Components/BottomSheet';
+import { useAuth } from './Auth/AuthContext';
 
 const HERO = require('../icons/news.png');
 const BACK = require('../icons/back.png');
@@ -51,6 +52,7 @@ type ArticleResponse = {
 const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { id } = route.params;
   const { slug } = route.params;
+  const { session } = useAuth();
   const insets = useSafeAreaInsets();
   const [isVisible, setIsVisible] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -77,6 +79,44 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       return res.data;
     },
   });
+
+  React.useEffect(() => {
+    if (!payload?.article) return;
+
+    const vt = (payload.article as any).viewingType as
+      | 'free'
+      | 'register'
+      | 'premium'
+      | undefined;
+
+    if (vt === 'free') return; // allowed
+
+    if (vt === 'register') {
+      if (!session?.accessToken) {
+        navigation.replace('Login'); // replace avoids back loop
+      }
+      return;
+    }
+
+    if (vt === 'premium') {
+      if (!session?.accessToken) {
+        return navigation.replace('Login');
+      }
+
+      const subscribed = (session as any)?.user?.subscriptionActive === true;
+
+      // If you must verify from server each time:
+      // (async () => {
+      //   const res = await getApiWithOutQuery({ url: `/subscriptions/status/${session.user.id}` });
+      //   const active = !!res?.data?.active;
+      //   if (!active) navigation.replace('Pricing');
+      // })();
+
+      if (!subscribed) {
+        navigation.replace('Premium'); 
+      }
+    }
+  }, [payload?.article, session, navigation]);
   const formatDateTime = (value: string | number | Date) => {
     const d = new Date(value);
     const months = [

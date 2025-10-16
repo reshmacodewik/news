@@ -42,9 +42,9 @@ const ICONS: Record<string, IconPair> = {
     inactive: require('../../../icons/sub.png'),
     active: require('../../../icons/sub-outline.png'),
   },
-  [SCREEN_NAMES.more]: {
-    inactive: require('../../../icons/menu.png'),
-    active: require('../../../icons/menu-outline.png'),
+  [SCREEN_NAMES.crypto]: {
+    inactive: require('../../../icons/crypto.png'),
+    active: require('../../../icons/crypto_fill.png'),
   },
 };
 
@@ -114,11 +114,12 @@ export default function BottomTab() {
       <Tab.Screen name={SCREEN_NAMES.home} component={HomeScreen} />
       <Tab.Screen name={SCREEN_NAMES.about} component={AboutScreen} />
       <Tab.Screen name={SCREEN_NAMES.trending} component={TrendingScreen} />
+       <Tab.Screen name={SCREEN_NAMES.crypto} component={TrendingScreen} />
       <Tab.Screen
         name={SCREEN_NAMES.subscription}
         component={PricingScreen}
       />
-      <Tab.Screen name={SCREEN_NAMES.more} component={MoreScreen} />
+   
     </Tab.Navigator>
   );
 }

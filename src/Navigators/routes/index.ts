@@ -13,6 +13,8 @@ import OTPScreen from '../../Screens/Auth/OTPScreen';
 import ResetPasswordScreen from '../../Screens/Auth/ResetPassword';
 import PaymentSuccess from '../../Screens/PaymentSuccess';
 import SubscriptionBillingScreen from '../../Screens/SubscriptionBillingScreen';
+import MoreScreen from '../../Screens/Bottom Tab/MoreScreen';
+import PricingScreen from '../../Screens/Bottom Tab/PricingScreen';
 
 export const notAuthenticatedRoutes = [
   {
@@ -93,4 +95,20 @@ export const notAuthenticatedRoutes = [
     component: SubscriptionBillingScreen,
     headerShown: false,
   },
+  {
+   
+    routeName: SCREEN_NAMES.more,
+    headerHeading: 'MoreScreen',
+    component: MoreScreen,
+    headerShown: false,
+
+  },
+   {
+   
+    routeName: SCREEN_NAMES.subscription,
+    headerHeading: 'PricingScreen',
+    component: PricingScreen,
+    headerShown: false,
+
+  }
 ];

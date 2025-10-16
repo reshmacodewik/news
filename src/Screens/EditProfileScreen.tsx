@@ -12,32 +12,46 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiPost, getApiWithOutQuery } from '../Utils/api/common';
 import { API_EDIT_PROFILE, API_GET_PROFILE } from '../Utils/api/APIConstant';
-import { goBackNavigation, navigate } from '../Navigators/utils';
+import { goBackNavigation } from '../Navigators/utils';
 import styles from '../style/EditProfileStyles';
 
+interface ImageInterface {
+  uri: string;
+  fileName?: string;
+  type?: string;
+  fileSize?: number;
+}
+
 const BACK_ARROW = require('../icons/back.png');
+const USER_ICON = require('../icons/user.png');
+const CAMERA_ICON = require('../icons/camera.png');
 
 const EditProfileScreen = () => {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
   // Form state
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageUri, setImageUri] = useState<ImageInterface | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
 
   // Fetch profile
-  const {
-    data: profileData,
-  
-    isError,
-  } = useQuery({
+  const { data: profileData, isError } = useQuery({
     queryKey: ['profile-info'],
     queryFn: async () => {
-      const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
-      console.log('Profile data:', res.data);
-      return res.data ?? {};
+      try {
+        const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
+        return res.data ?? {};
+        console.log('res', res);
+      } catch (err: any) {
+        console.log(
+          'Failed to fetch profile',
+          err.response?.status,
+          err.response?.data,
+        );
+        throw err;
+      }
     },
   });
 
@@ -47,72 +61,78 @@ const EditProfileScreen = () => {
       setName(profileData.name || '');
       setEmail(profileData.email || '');
       setPhone(profileData.phoneNumber || '');
-      setImageUri(profileData.photo || null);
+      if (profileData.photo) {
+        setImageUri({ uri: profileData.photo });
+      }
     }
   }, [profileData]);
 
   // Mutation to update profile
   const { mutate: updateProfile, isPending: updating } = useMutation({
-    mutationFn: async (payload: any) => {
-      const res = await apiPost({
-        url: API_EDIT_PROFILE,
-        values: payload,
-      });
-      return res.data;
+    mutationFn: async (payload: FormData) => {
+      try {
+        const res = await apiPost({ url: API_EDIT_PROFILE, values: payload });
+        return res.data;
+      } catch (err: any) {
+        console.log(
+          'Failed to update profile',
+          err.response?.status,
+          err.response?.data,
+        );
+        throw err;
+      }
     },
-    onSuccess: data => {
-      console.log('Profile updated successfully:', data);
+    onSuccess: () => {
+      console.log('Profile updated successfully');
       queryClient.invalidateQueries({ queryKey: ['profile-info'] });
-      goBackNavigation(); // go back after saving
-    },
-    onError: error => {
-      console.log('Failed to update profile', error);
+      goBackNavigation();
     },
   });
 
-  const handleBackPress = () => {
-      goBackNavigation();
-  };
+  const handleBackPress = () => goBackNavigation();
 
+  // Pick image
   const pickImage = () => {
     launchImageLibrary(
-      {
-        mediaType: 'photo',
-        includeBase64: false,
-        maxHeight: 1200,
-        maxWidth: 1200,
-        quality: 0.9,
-      },
+      { mediaType: 'photo', includeBase64: false },
       response => {
-        if (response?.assets?.[0]?.uri) {
-          setImageUri(response.assets[0].uri);
+        const asset = response?.assets?.[0];
+        if (asset?.uri) {
+          setImageUri({
+            uri: asset.uri,
+            fileName: asset.fileName || `profile-${Date.now()}.jpg`,
+            type: asset.type || 'image/jpeg',
+            fileSize: asset.fileSize,
+          });
         }
       },
     );
   };
 
-const handleSave = () => {
-  const formData = new FormData();
+  // Save profile
+  const handleSave = () => {
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('email', email);
+    formData.append('phoneNumber', phone);
 
-  formData.append('name', name);
-  formData.append('email', email);
-  formData.append('phoneNumber', phone);
+    if (imageUri?.uri) {
+      formData.append('photo', {
+        uri: imageUri.uri,
+        name: imageUri.fileName ?? `profile-${Date.now()}.jpg`,
+        type: imageUri.type ?? 'image/jpeg',
+      } as any);
+    }
 
-  if (imageUri && imageUri.startsWith('file://')) {
-    const filename = imageUri.split('/').pop() || `profile-${Date.now()}.jpg`;
-    formData.append('photo', {
-      uri: imageUri,
-      name: filename,
-      type: 'image/jpeg', // or 'image/png' depending on your picker
-    });
-  }
+    // Debug log
+    console.log('Submitting FormData:');
+    console.log('Name:', name);
+    console.log('Email:', email);
+    console.log('Phone:', phone);
+    if (imageUri) console.log('Image:', imageUri);
 
-  updateProfile(formData);
-};
-
-
- 
-
+    updateProfile(formData);
+  };
 
   return (
     <View style={styles.container}>
@@ -120,11 +140,7 @@ const handleSave = () => {
 
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBackPress}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <Image source={BACK_ARROW} style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={styles.navTitle}>Edit Profile</Text>
@@ -139,25 +155,15 @@ const handleSave = () => {
         <View style={styles.profileSection}>
           <TouchableOpacity onPress={pickImage} activeOpacity={0.8}>
             <View style={styles.avatarWrap}>
-              {imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.profileImage} />
-              ) : (
-                <Image
-                  source={require('../icons/user.png')}
-                  style={styles.userIcon}
-                />
-              )}
-
-              {/* Camera badge */}
+              <Image
+                source={imageUri ? { uri: imageUri.uri } : USER_ICON}
+                style={styles.profileImage}
+              />
               <View style={styles.cameraBadge}>
-                <Image
-                  source={require('../icons/camera.png')}
-                  style={styles.cameraIcon}
-                />
+                <Image source={CAMERA_ICON} style={styles.cameraIcon} />
               </View>
             </View>
           </TouchableOpacity>
-
           <Text style={styles.profileName}>{name || ' '}</Text>
         </View>
 
@@ -184,16 +190,6 @@ const handleSave = () => {
             autoCapitalize="none"
             style={styles.input}
           />
-
-          {/* <Text style={styles.label}>Phone No</Text>
-          <TextInput
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="98-888-999"
-            placeholderTextColor="#8892a6"
-            keyboardType="phone-pad"
-            style={styles.input}
-          /> */}
         </View>
 
         {/* Save */}

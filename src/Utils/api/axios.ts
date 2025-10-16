@@ -18,13 +18,13 @@ defaultAxios.interceptors.request.use(async config => {
 defaultAxios.interceptors.response.use(
   async response => {
     if (response?.data?.status === 401) {
-      // await handleLogout();
+       await handleLogout();
     }
     return response;
   },
   async error => {
     if (error?.response?.status === 401) {
-      // await handleLogout();
+      await handleLogout();
     }
     return Promise.reject(error);
   },

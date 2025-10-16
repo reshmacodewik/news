@@ -68,8 +68,7 @@ const PaymentStatusModal: React.FC<PaymentStatusModalProps> = ({
             </>
           )}
 
-          {/* ✅ Completed */}
-          {/* ✅ Completed */}
+       
           {status === 'completed' && (
             <>
               <View

@@ -1,21 +1,32 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ImageBackground, KeyboardAvoidingView, Platform } from 'react-native';
-import { RouteProp, useRoute } from '@react-navigation/native'; // To access the route params
- // Import the param list
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import { styles } from '../../style/OTPScreenstyles';
 import ShowToast from '../../Utils/ShowToast';
 import { navigate } from '../../Navigators/utils';
 import { RootStackParamList } from '../../Utils/Constant/constant';
+import { apiPost } from '../../Utils/api/common';
+import { API_VERIFY_OTP } from '../../Utils/api/APIConstant';
 
-type OTPScreenRouteProp = RouteProp<RootStackParamList, 'OTPScreen'>;  // Specify the type of the route params
+type OTPScreenRouteProp = RouteProp<RootStackParamList, 'OTPScreen'>;
 
 const OTPScreen = () => {
-  const route = useRoute<OTPScreenRouteProp>();  // Use the route prop with the type
-  const { email } = route.params;  // Now email is typed
+  const route = useRoute<OTPScreenRouteProp>();
+  const { email } = route.params;
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
+  // Handle OTP input
   const handleChange = (text: string, index: number) => {
     if (/^\d*$/.test(text)) {
       const newOtp = [...otp];
@@ -34,20 +45,50 @@ const OTPScreen = () => {
     }
   };
 
-  const handleVerify = () => {
+  // ✅ API Call to verify OTP
+  const handleVerify = async () => {
     const code = otp.join('');
+
     if (code.length < 6) {
       ShowToast('Please enter the complete OTP', 'error');
       return;
     }
-    ShowToast('OTP Verified Successfully', 'success');
-    navigate('ResetPassword', { email, otp: code });  // Pass email and OTP to ResetPassword screen
+
+    try {
+      setSubmitting(true);
+      const response = await apiPost({
+        url: API_VERIFY_OTP,
+        values: { email, otp: code },
+      });
+
+      if (response?.success) {
+        ShowToast(response.message || 'OTP Verified Successfully', 'success');
+        navigate('ResetPassword', {
+          email,
+          otp: ''
+        });
+      } else {
+        ShowToast(response?.error || 'Invalid OTP', 'error');
+      }
+    } catch (error) {
+      ShowToast('Something went wrong. Please try again.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
+  // ✅ UI
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ImageBackground source={require('../../icons/background.png')} resizeMode="cover" style={styles.bg}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <ImageBackground
+          source={require('../../icons/background.png')}
+          resizeMode="cover"
+          style={styles.bg}
+        >
           {/* Header */}
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Please Check Your Email</Text>
@@ -71,11 +112,24 @@ const OTPScreen = () => {
                 />
               ))}
             </View>
-            <TouchableOpacity style={styles.resendButton} onPress={() => ShowToast('OTP resent to your email', 'success')}>
+
+            {/* Resend Button */}
+            <TouchableOpacity
+              style={styles.resendButton}
+              onPress={() => ShowToast('OTP resent to your email', 'success')}
+            >
               <Text style={styles.resendText}>Resend OTP</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.verifyButton} onPress={handleVerify}>
-              <Text style={styles.verifyText}>Verify</Text>
+
+            {/* Verify Button */}
+            <TouchableOpacity
+              style={[styles.verifyButton, submitting && { opacity: 0.6 }]}
+              onPress={handleVerify}
+              disabled={submitting}
+            >
+              <Text style={styles.verifyText}>
+                {submitting ? 'Verifying...' : 'Verify'}
+              </Text>
             </TouchableOpacity>
           </View>
         </ImageBackground>

@@ -8,7 +8,8 @@ export const SCREEN_NAMES = {
   // bottom tabs
   home: 'Home',
   about: 'Fast News',
-  trending: 'Trending',
+  trending: 'Finance',
+  crypto:'Crypto',
   subscription: 'Premium',
   more: 'More',
   editProfile: 'EditProfile',
@@ -18,6 +19,7 @@ export const SCREEN_NAMES = {
   resetPassword: 'ResetPassword',
   paymentsuccess: 'PaymentSuccess',
   SubscriptionBillingScreen:'SubscriptionBillingScreen',
+  
 } as const;
 
 export type RootStackParamList = {
