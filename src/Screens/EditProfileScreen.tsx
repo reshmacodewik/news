@@ -29,7 +29,7 @@ const CAMERA_ICON = require('../icons/camera.png');
 const EditProfileScreen = () => {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-
+  const [isNewPhoto, setIsNewPhoto] = useState(false);
   // Form state
   const [imageUri, setImageUri] = useState<ImageInterface | null>(null);
   const [name, setName] = useState('');
@@ -43,7 +43,6 @@ const EditProfileScreen = () => {
       try {
         const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
         return res.data ?? {};
-        console.log('res', res);
       } catch (err: any) {
         console.log(
           'Failed to fetch profile',
@@ -90,8 +89,19 @@ const EditProfileScreen = () => {
   });
 
   const handleBackPress = () => goBackNavigation();
+  useEffect(() => {
+    if (profileData) {
+      setName(profileData.name || '');
+      setEmail(profileData.email || '');
+      setPhone(profileData.phoneNumber || '');
+      if (profileData.photo) {
+        setImageUri({ uri: profileData.photo });
+        setIsNewPhoto(false);
+      }
+    }
+  }, [profileData]);
 
-  // Pick image
+  // picker: this will be a LOCAL URI – mark as new
   const pickImage = () => {
     launchImageLibrary(
       { mediaType: 'photo', includeBase64: false },
@@ -104,11 +114,11 @@ const EditProfileScreen = () => {
             type: asset.type || 'image/jpeg',
             fileSize: asset.fileSize,
           });
+          setIsNewPhoto(true);
         }
       },
     );
   };
-
   // Save profile
   const handleSave = () => {
     const formData = new FormData();
@@ -117,19 +127,13 @@ const EditProfileScreen = () => {
     formData.append('phoneNumber', phone);
 
     if (imageUri?.uri) {
+      // React Native requires this shape
       formData.append('photo', {
         uri: imageUri.uri,
         name: imageUri.fileName ?? `profile-${Date.now()}.jpg`,
         type: imageUri.type ?? 'image/jpeg',
       } as any);
     }
-
-    // Debug log
-    console.log('Submitting FormData:');
-    console.log('Name:', name);
-    console.log('Email:', email);
-    console.log('Phone:', phone);
-    if (imageUri) console.log('Image:', imageUri);
 
     updateProfile(formData);
   };

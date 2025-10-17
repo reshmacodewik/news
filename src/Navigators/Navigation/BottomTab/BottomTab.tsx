@@ -19,6 +19,7 @@ import AboutScreen from '../../../Screens/Bottom Tab/AboutScreen';
 import TrendingScreen from '../../../Screens/Bottom Tab/TrendingScreen';
 import MoreScreen from '../../../Screens/Bottom Tab/MoreScreen';
 import PricingScreen from '../../../Screens/Bottom Tab/PricingScreen';
+import CryptoScreen from '../../../Screens/Bottom Tab/CryptoScreen';
 
 type IconPair = {
   inactive: any;
@@ -114,7 +115,7 @@ export default function BottomTab() {
       <Tab.Screen name={SCREEN_NAMES.home} component={HomeScreen} />
       <Tab.Screen name={SCREEN_NAMES.about} component={AboutScreen} />
       <Tab.Screen name={SCREEN_NAMES.trending} component={TrendingScreen} />
-       <Tab.Screen name={SCREEN_NAMES.crypto} component={TrendingScreen} />
+       <Tab.Screen name={SCREEN_NAMES.crypto} component={CryptoScreen} />
       <Tab.Screen
         name={SCREEN_NAMES.subscription}
         component={PricingScreen}

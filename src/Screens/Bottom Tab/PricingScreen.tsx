@@ -37,7 +37,7 @@ const PricingScreen: React.FC = () => {
 
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
-
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
@@ -71,62 +71,84 @@ const PricingScreen: React.FC = () => {
       ),
     ]);
 
-  // ✅ Handle Subscribe
-  const handleSubscribe = async (planId: string) => {
-    try {
-      setLoadingPlan(planId);
+const handleSubscribe = async (planId: string) => {
+  try {
+    const billingCycle = selectedCadence;
+    const userId =
+      (session as any)?.user?.id ||
+      (session as any)?.user?._id ||
+      (session as any)?.user?.userId;
+    const token = session?.accessToken;
 
-      const billingCycle = selectedCadence;
-      const userId = session?.user?.id;
-
-      if (!planId || !billingCycle || !userId) {
-        Alert.alert('Error', 'Missing required fields for subscription');
-        return;
-      }
-
-      const res = await fetch(
-        `http://192.168.1.36:9991/api/billing/create-checkout`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            planId,
-            userId,
-            billingCycle,
-          }),
-        },
+    // 🔒 If not logged in → show alert
+    if (!token || !userId) {
+      Alert.alert(
+        'Please log in',
+        'You need to log in to subscribe to a plan.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Login',
+            onPress: () => navigate('Login', {} as any),
+          },
+        ],
+        { cancelable: true }
       );
-
-      const json = await res.json();
-
-      if (!res.ok || !json?.data?.checkoutUrl) {
-        throw new Error(json?.error || 'Failed to create checkout');
-      }
-
-      let url = json.data.checkoutUrl.trim();
-      const trxId = json.data.transactionId;
-
-      // ✅ Ensure valid URL format
-      if (!/^https?:\/\//i.test(url)) {
-        url = `https://${url}`;
-      }
-
-      // ✅ Open in external browser
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-        setTransactionId(trxId);
-        setShowStatusModal(true);
-      } else {
-        Alert.alert('Error', 'Cannot open link. Please try again.');
-      }
-    } catch (e) {
-      console.error('Error creating checkout:', e);
-      Alert.alert('Error', 'Failed to open checkout. Please try again.');
-    } finally {
-      setLoadingPlan(null);
+      return;
     }
-  };
+
+    if (!planId || !billingCycle || !userId) {
+      Alert.alert('Error', 'Missing required fields for subscription');
+      return;
+    }
+
+    setLoadingPlan(planId);
+
+    const res = await fetch(`https://api.arcalisnews.com/api/billing/create-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Authorization: `Bearer ${token}`, // uncomment if your API requires auth
+      },
+      body: JSON.stringify({
+        planId,
+        userId,
+        billingCycle,
+      }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok || !json?.data?.checkoutUrl) {
+      throw new Error(json?.error || 'Failed to create checkout');
+    }
+
+    let url = String(json.data.checkoutUrl || '').trim();
+    const trxId = json.data.transactionId;
+
+    if (!/^https?:\/\//i.test(url)) {
+      url = `https://${url}`;
+    }
+
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+      setTransactionId(trxId);
+      setShowStatusModal(true);
+    } else {
+  
+    }
+  } catch (e) {
+    console.error('Error creating checkout:', e);
+    
+  } finally {
+    setLoadingPlan(null);
+  }
+};
+
 
   // ✅ Place this at the top of the component (after other useStates)
   const appState = useRef(AppState.currentState);
@@ -145,7 +167,7 @@ const PricingScreen: React.FC = () => {
           if (transactionId) {
             try {
               const res = await fetch(
-                `http://192.168.1.36:9991/api/billing/billing-check/${transactionId}`,
+                `https://api.arcalisnews.com/api/billing/billing-check/${transactionId}`,
               );
               const json = await res.json();
               const status = json?.data?.paymentStatus;
@@ -352,6 +374,7 @@ const PricingScreen: React.FC = () => {
           onClose={() => setShowStatusModal(false)}
         />
       </ScrollView>
+      
     </View>
   );
 };

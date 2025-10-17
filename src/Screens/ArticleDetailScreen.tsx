@@ -11,6 +11,7 @@ import {
   TextInput,
   FlatList,
   Pressable,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../style/ArticleDetailStyles';
@@ -24,6 +25,7 @@ import {
 } from '../Utils/api/APIConstant';
 import BottomSheet from '../Components/BottomSheet';
 import { useAuth } from './Auth/AuthContext';
+import { APIBaseUrl } from '../Utils/constance';
 
 const HERO = require('../icons/news.png');
 const BACK = require('../icons/back.png');
@@ -41,6 +43,7 @@ type Article = {
   description: string;
   image?: string;
   createdAt?: string;
+  viewingType?: 'free' | 'register' | 'premium';
 };
 
 type ArticleResponse = {
@@ -49,17 +52,96 @@ type ArticleResponse = {
   comments: number;
 };
 
+type SubscriptionRecord = {
+  _id: string;
+  userId: { _id: string } | null;
+  status: 'active' | 'canceled' | 'paused';
+  startDate: string;
+  endDate: string;
+  amount: number;
+  currency: string;
+  billingCycle: 'monthly' | 'annual';
+  paymentStatus: 'pending' | 'paid' | 'failed' | string;
+  isExpired: boolean;
+};
+
+// ===== helpers for subscription check =====
+
+
+async function fetchWithTimeout(input: RequestInfo, init: RequestInit = {}, ms = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(input, { ...init, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+async function isUserSubscribed(opts: {
+  userId: string;
+  token?: string;
+}): Promise<boolean> {
+  const { userId, token } = opts;
+
+  const res = await fetchWithTimeout(`${APIBaseUrl}/users/userActiveSubscriptionDetails`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token ? { 'x-access-token': token } : {}),
+    },
+    body: JSON.stringify({ userId }),
+  }, 10000);
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Subscription check failed (${res.status}). ${text}`);
+  }
+
+  const payload = (await res.json()) as {
+    success: boolean;
+    code?: number;
+    message?: string;
+    data?: SubscriptionRecord[];
+  };
+
+  const list = payload?.data ?? [];
+  const now = Date.now();
+
+  // Active if:
+  // - belongs to this user
+  // - status === "active"
+  // - not expired
+  // - endDate in the future
+  // (paymentStatus can be "pending" right after checkout, allowed)
+  return list.some((s) => {
+    if (!s?.userId?._id) return false;
+    const ends = new Date(s.endDate).getTime();
+    return (
+      s.userId._id === userId &&
+      s.status === 'active' &&
+      s.isExpired === false &&
+      Number.isFinite(ends) &&
+      ends > now
+    );
+  });
+}
+
 const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { id } = route.params;
-  const { slug } = route.params;
+  const { id, slug } = route.params;
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
+
   const [isVisible, setIsVisible] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isFav, setIsFav] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
   const [sortOrder, setSortOrder] = useState<'latest' | 'oldest'>('latest');
+
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
+
   const handleSortChange = () => {
     const newOrder = sortOrder === 'latest' ? 'oldest' : 'latest';
     setSortOrder(newOrder);
@@ -75,48 +157,62 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       const res = await getApiWithOutQuery({
         url: `${API_ARTICLES_LIST}/${slug}`,
       });
-      console.log('ArticleDetailScreen', res.data);
+      // console.log('ArticleDetailScreen', res.data);
       return res.data;
     },
   });
 
+  // ===== Premium gate (server-verified) =====
   React.useEffect(() => {
-    if (!payload?.article) return;
+    const article = payload?.article;
+    if (!article) return;
 
-    const vt = (payload.article as any).viewingType as
-      | 'free'
-      | 'register'
-      | 'premium'
-      | undefined;
+    const vt = article.viewingType;
 
-    if (vt === 'free') return; // allowed
+    // free: allow
+    if (vt === 'free') return;
+
+    // require login for register/premium
+    const token = session?.accessToken;
+    const uid =
+      (session as any)?.user?.id ||
+      (session as any)?.user?._id ||
+      (session as any)?.user?.userId;
 
     if (vt === 'register') {
-      if (!session?.accessToken) {
-        navigation.replace('Login'); // replace avoids back loop
+      if (!token) {
+        navigation.replace('Login');
       }
       return;
     }
 
     if (vt === 'premium') {
-      if (!session?.accessToken) {
-        return navigation.replace('Login');
+      if (!token || !uid) {
+        navigation.replace('Login');
+        return;
       }
 
-      const subscribed = (session as any)?.user?.subscriptionActive === true;
+      let cancelled = false;
+      (async () => {
+        try {
+          const ok = await isUserSubscribed({ userId: String(uid), token });
+          if (cancelled) return;
+          if (!ok) {
+            navigation.replace('Premium');
+          }
+        } catch (err: any) {
+          if (cancelled) return;
+          Alert.alert('Subscription check failed', err?.message ?? 'Please try again.');
+          navigation.replace('Premium');
+        }
+      })();
 
-      // If you must verify from server each time:
-      // (async () => {
-      //   const res = await getApiWithOutQuery({ url: `/subscriptions/status/${session.user.id}` });
-      //   const active = !!res?.data?.active;
-      //   if (!active) navigation.replace('Pricing');
-      // })();
-
-      if (!subscribed) {
-        navigation.replace('Premium'); 
-      }
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [payload?.article, session, navigation]);
+  }, [payload?.article, session?.accessToken, (session as any)?.user, navigation]);
+
   const formatDateTime = (value: string | number | Date) => {
     const d = new Date(value);
     const months = [
@@ -137,20 +233,17 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     const h12 = h24 % 12 || 12;
     const min = String(d.getMinutes()).padStart(2, '0');
     const ampm = h24 >= 12 ? 'PM' : 'AM';
-    return `${
-      months[d.getMonth()]
-    } ${d.getDate()}, ${d.getFullYear()} ${h12}:${min} ${ampm}`;
+    return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${h12}:${min} ${ampm}`;
   };
 
   const article = payload?.article;
   const likeCount = payload?.counlike ?? 0;
-  const commentsCount = payload?.comments ?? 0;
 
   const { data: commentData, refetch: refetchComments } = useQuery({
     queryKey: ['comments', id],
     queryFn: async () => {
       const res = await getApiWithOutQuery({
-        url: `${API_COMMENTS_LIST}/${id}?sortOrder=desc`, // ✅ add sortOrder=desc
+        url: `${API_COMMENTS_LIST}/${id}?sortOrder=desc`,
       });
       return (res.data.comments ?? []) as Array<{
         _id: string;
@@ -160,7 +253,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         photo?: string;
       }>;
     },
-    staleTime: 0, // Always consider data stale
+    staleTime: 0,
   });
 
   const { mutate: AddComment, isPending: commenting } = useMutation({
@@ -173,9 +266,9 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       refetchComments();
       setIsVisible(false);
     },
-
     onError: err => console.log('Failed to add comment', err),
   });
+
   const sortedComments = React.useMemo(() => {
     if (!commentData) return [];
     return [...commentData].sort((a, b) => {
@@ -189,18 +282,18 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     if (!commentText.trim()) return;
     AddComment({ articleId: id, content: commentText });
   };
+
   React.useEffect(() => {
     setLocalLikeCount(likeCount);
-  }, [likeCount /*, payload?.userHasLiked*/]);
+  }, [likeCount]);
 
-  // mutation (toggle like)
   const { mutate: toggleLike, isPending: likePending } = useMutation({
-    mutationFn: async (like: boolean) => {
+    mutationFn: async (_like: boolean) => {
       const res = await apiPost({
         url: API_LIKES,
         values: { articleId: id },
       });
-      console.log('toggleLike', res.data);
+      // console.log('toggleLike', res.data);
       return res.data;
     },
     onError: (_err, likeJustSet) => {
@@ -209,13 +302,13 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     },
   });
 
-  // press handler
   const handleToggleFav = () => {
     const next = !isFav;
     setIsFav(next);
     setLocalLikeCount(c => c + (next ? 1 : -1));
     toggleLike(next);
   };
+
   const getTimeAgo = (dateString: string) => {
     const now = new Date();
     const date = new Date(dateString);
@@ -232,6 +325,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     const diffInYears = Math.floor(diffInMonths / 12);
     return `${diffInYears} years ago`;
   };
+
 
   return (
     <View style={styles.container}>

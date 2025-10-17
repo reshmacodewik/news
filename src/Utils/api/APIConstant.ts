@@ -14,9 +14,16 @@ export const API_ARTICLE_TYPE: string = "/users/article/type";
 export const API_CATEGORIES: string = "/users/categories";
 export const API_ARTICLES_CATEGORIES: string = "/users/articles-by-category";
 export const API_GET_ARTICLES_BY_TYPE: string = "/users/articles/type";
+export const API_GET_ARTICLES_BY_DOMAIN_TYPE: string = "/articles/get_article_category_by_domain_id";
 export const API_ADD_COMMENT: string = "/users/comments";
 export const API_COMMENTS_LIST: string = "/users/comments";
 export const API_LIKES: string = "/users/favorites";
 export const API_TERMS_AND_CONDITIONS: string = "/users/cms/terms-and-conditions";
 export const API_CHANGE_PASSWORD: string = "/users/change-password";
 export const API_BILLING_LIST: string ="/billing/user"
+export const API_BILLING_CHECKOUT: string="billing/create-checkout"
+export const API_BILLING_CHECK: string="billing/billing-check"
+
+export const API_DOMAIN_LIST : string="/domain/all"
+
+

@@ -47,7 +47,7 @@ type Article = {
 
 const toSrc = (img: string) => ({ uri: img });
 
-const TrendingScreen: React.FC = () => {
+const CryptoScreen: React.FC = () => {
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
 
@@ -393,4 +393,4 @@ const TrendingScreen: React.FC = () => {
   );
 };
 
-export default TrendingScreen;
+export default CryptoScreen;
