@@ -11,15 +11,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../../style/MoreStyles';
 import BottomSheet from '../../Components/BottomSheet';
 import { navigate } from '../../Navigators/utils';
-import { apiPost, getApiWithOutQuery } from '../../Utils/api/common';
+import { apiDelete, apiPost, getApiWithOutQuery } from '../../Utils/api/common';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   API_CHANGE_PASSWORD,
+  API_DELETE_ACCOUNT,
   API_GET_PROFILE,
 } from '../../Utils/api/APIConstant';
 import ShowToast from '../../Utils/ShowToast';
@@ -40,7 +42,7 @@ const ABOUT = require('../../icons/About.png');
 const SHIELD1 = require('../../icons/bell.png');
 const TERMS = require('../../icons/note.png');
 const CHAT = require('../../icons/chat.png');
-const SHIELD  = require('../../icons/policy.png');
+const SHIELD = require('../../icons/policy.png');
 const LAYERS = require('../../icons/verison.png');
 const LOGOUT = require('../../icons/logout.png');
 const CHEVRON = require('../../icons/arrow.png');
@@ -83,6 +85,9 @@ const MoreScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const confirmRef = React.useRef<TextInput>(null);
   const isFocused = useIsFocused();
+
+const userId = session?.user?.id;
+
   const openNewPassword = () => {
     if (!session?.accessToken) {
       ShowToast('Please login to change password');
@@ -169,6 +174,41 @@ const MoreScreen: React.FC = () => {
       ShowToast('Failed to logout. Try again.');
     }
   };
+const handleDeleteAccount = async () => {
+  if (!userId) {
+    ShowToast('User not logged in');
+    return;
+  }
+
+  Alert.alert(
+    'Confirm Delete',
+    'Are you sure you want to delete your account? This action cannot be undone.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const res = await apiDelete({ url: `${API_DELETE_ACCOUNT}/${userId}` });
+
+            if (res?.success) {
+              ShowToast(res?.message || 'Account deleted successfully');
+              await signOut();
+              navigate('Home' as never);
+            } else {
+              ShowToast(res?.message || 'Failed to delete account');
+            }
+          } catch (err) {
+            console.log('Delete error:', err);
+            ShowToast('Something went wrong. Please try again.');
+          }
+        },
+      },
+    ]
+  );
+};
+
 
   return (
     <View style={styles.container}>
@@ -267,7 +307,7 @@ const MoreScreen: React.FC = () => {
             onPress={() => navigate('TermsAndConditions' as never)}
             style={{ marginTop: -12 }}
           />
-           <Row
+          <Row
             icon={PLAN}
             label="Subscription Billing"
             onPress={() => navigate('SubscriptionBillingScreen' as never)}
@@ -309,6 +349,17 @@ const MoreScreen: React.FC = () => {
             </View>
           </View>
         </View>
+
+        {session?.accessToken && (
+          <TouchableOpacity
+            style={styles.logoutRow}
+            activeOpacity={0.85}
+            onPress={() => handleDeleteAccount()}
+          >
+            <Image source={LOGOUT} style={styles.logoutIcon} />
+            <Text style={styles.logoutText}>Delete Account</Text>
+          </TouchableOpacity>
+        )}
         {session?.accessToken && (
           <TouchableOpacity
             style={styles.logoutRow}

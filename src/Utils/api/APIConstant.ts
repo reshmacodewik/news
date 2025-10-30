@@ -25,7 +25,7 @@ export const API_CHANGE_PASSWORD: string = "/users/change-password";
 export const API_BILLING_LIST: string ="/billing/user"
 export const API_BILLING_CHECKOUT: string="billing/create-checkout"
 export const API_BILLING_CHECK: string="billing/billing-check"
-
+export const API_SOCIAL_LOGIN: string = "/users/social_login";
 export const API_DOMAIN_LIST : string="/domain/all"
-
+export const API_DELETE_ACCOUNT: string = "/users/profile";
 

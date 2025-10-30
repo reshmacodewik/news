@@ -1,4 +1,3 @@
-// LoginScreen.tsx
 import React, { useEffect } from 'react';
 import {
   View,
@@ -16,7 +15,7 @@ import { useFormik } from 'formik';
 import { loginSchema } from '../../validation/signupSchema';
 import ShowToast from '../../Utils/ShowToast';
 import { apiPost } from '../../Utils/api/common';
-import { API_LOGIN } from '../../Utils/api/APIConstant'; // <-- ensure this exists
+import { API_LOGIN, API_SOCIAL_LOGIN } from '../../Utils/api/APIConstant';
 import { AuthSession, useAuth } from './AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
@@ -25,18 +24,18 @@ import { LoginManager, AccessToken } from 'react-native-fbsdk-next';
 import {
   GoogleSignin,
   statusCodes,
+  SignInSuccessResponse,
 } from '@react-native-google-signin/google-signin';
 
 const LoginScreen = () => {
   const isFocused = useIsFocused();
   const { signIn, session } = useAuth();
 
-  // --- GOOGLE CONFIG (Android needs the *WEB* client id here for idToken) ---
+  // --- GOOGLE CONFIGURATION ---
   useEffect(() => {
     GoogleSignin.configure({
-      // IMPORTANT: Use your OAuth 2.0 Client ID of type "Web application"
       webClientId:
-        '702876724757-g0m95a0bjcsca87lq2t8muegdkje0rn5.apps.googleusercontent.com',
+        '702876724757-g0m95a0bjcsca87lq2t8muegdkje0rn5.apps.googleusercontent.com', // <-- Web Client ID
       iosClientId:
         '702876724757-l3vlvrcp65lf5iqnfo18obnb71fu89fh.apps.googleusercontent.com',
       offlineAccess: true,
@@ -45,18 +44,11 @@ const LoginScreen = () => {
     });
   }, []);
 
-  const googleSignOut = async () => {
-    try {
-      await GoogleSignin.signOut();
-      // await GoogleSignin.revokeAccess();
-    } catch {}
-  };
-
   useEffect(() => {
     if (isFocused && session) navigate('Home' as never);
   }, [isFocused, session]);
 
-  // ---------- EMAIL/PASSWORD -> API_LOGIN ----------
+  // ---------- EMAIL/PASSWORD LOGIN ----------
   const formik = useFormik({
     initialValues: { email: '', password: '' },
     validationSchema: loginSchema,
@@ -87,93 +79,86 @@ const LoginScreen = () => {
     },
   });
 
-  // ---------- GOOGLE -> API_GOOGLE_LOGIN ----------
+  // ---------- GOOGLE LOGIN ----------
   const handleGoogleSignIn = async () => {
-    console.log('👉 Pressed Google Sign-In button');
+    console.log('👉 Google Sign-In button pressed');
     try {
-      await GoogleSignin.hasPlayServices({
-        showPlayServicesUpdateDialog: true,
-      });
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-      // If a previous attempt exists, ensure clean state on Android
+      // Sign-in flow
+      const gUser = (await GoogleSignin.signIn()) as SignInSuccessResponse;
+      console.log('✅ Google user:', gUser);
+
+      const tokens = await GoogleSignin.getTokens();
+      const idToken = tokens?.idToken;
+
+      if (!idToken) {
+        return ShowToast('No ID token from Google', 'error');
+      }
+
+      // Extract user details safely
+      const googleUser = gUser.data?.user ?? {};
+      let decoded: any = {};
       try {
-        await GoogleSignin.signOut();
+        decoded = jwtDecode(idToken);
       } catch {}
 
-      // Start Google flow
-      // Start Google flow
-      const gUser: any = await GoogleSignin.signIn();
-      console.log('✅ Google user (basic):', JSON.stringify(gUser));
+      const name = googleUser.name ?? decoded?.name ?? '';
+      const email = googleUser.email ?? decoded?.email ?? '';
+      const picture = googleUser.photo ?? decoded?.picture ?? '';
+      const googleId = googleUser.id ?? decoded?.sub ?? '';
 
-      // Get tokens (idToken is what your backend verifies)
-      // const { getCurrentUser } = await GoogleSignin.getTokens();
-      // if (!getCurrentUser) {
-      //   return ShowToast(
-      //     'No idToken from Google. Check webClientId & SHA-1/SHA-256.',
-      //     'error',
-      //   );
-      // }
+      console.log('📦 Sending to backend:', {
+        tokenId: idToken,
+        name,
+        email,
+        picture,
+        googleId,
+      });
 
-      // let email = '';
-      // let name = '';
-      // try {
-      //   const payload: any = jwtDecode(idToken);
-      //    console.log(payload);
-      //   email = payload?.email ?? gUser?.user?.email ?? '';
-      //   name = payload?.name ?? gUser?.user?.name ?? '';
+      const res = await apiPost({
+        url: API_SOCIAL_LOGIN,
+        values: {
+          tokenId: idToken,
+          name,
+          email,
+          picture,
+          googleId,
+        },
+      });
 
-      // } catch {}
+      console.log('🌍 Backend response:', res);
 
-      // === Hit your backend to exchange Google token for your app session ===
-      // Body shape must match your server's controller
-      // const res = await apiPost({
-      //   url: API_GOOGLE_LOGIN, // e.g. '/auth/google/mobile'
-      //   values: {
-      //     tokenId: idToken,
-      //     email,
-      //     name,
-      //     // You can also send gUser.user.photo if you store avatars
-      //     googleId: gUser?.user?.id, // or payload.sub if you prefer
-      //     // device info if you log sessions
-      //   },
-      // });
-
-      // if (!res?.success || !res?.data?.token) {
-      //   console.log('🔴 Google exchange error:', res);
-      //   return ShowToast(
-      //     res?.message || res?.error || 'Google login failed',
-      //     'error',
-      //   );
-      // }
-
-      // // Build your session exactly like email/password path
-      // const newSession: AuthSession = {
-      //   accessToken: res.data.token,
-      //   user: {
-      //     id: res.data.id,
-      //     name: res.data.name ?? name,
-      //     email: res.data.email ?? email,
-      //   },
-      // };
-
-      // signIn(newSession);
-      // await AsyncStorage.setItem('userSession', JSON.stringify(newSession));
-      // ShowToast(res?.message ?? 'Login successful', 'success');
-      // navigate('Home' as never);
+      if (res?.success && res?.data?.token) {
+        const newSession: AuthSession = {
+          accessToken: res.data.token,
+          user: {
+            id: res.data.id,
+            name: res.data.name ?? name,
+            email: res.data.email ?? email,
+          },
+        };
+        signIn(newSession);
+        await AsyncStorage.setItem('userSession', JSON.stringify(newSession));
+        ShowToast(res?.message ?? 'Google login successful', 'success');
+        navigate('Home' as never);
+      } else {
+        console.log('❌ Google login backend error:', res);
+        ShowToast(res?.message || 'Google login failed', 'error');
+      }
     } catch (err: any) {
-      console.log('❌ Google Sign-In Error:', JSON.stringify(err, null, 2));
-
+      console.log('❌ Google Sign-In Error:', err);
       if (err.code === statusCodes.SIGN_IN_CANCELLED)
         return ShowToast('Sign-in cancelled', 'info');
       if (err.code === statusCodes.IN_PROGRESS)
         return ShowToast('Google sign-in already in progress', 'info');
       if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE)
         return ShowToast('Update Google Play Services', 'error');
-
-      // Common Android auth codes: 10 (DEVELOPER_ERROR), 12500 (SIGN_IN_FAILED)
       ShowToast(err?.message || 'Google sign-in failed', 'error');
     }
   };
+
+
   const isIOS = Platform.OS === 'ios';
   const buttonIcon = isIOS
     ? require('../../icons/apple.png')

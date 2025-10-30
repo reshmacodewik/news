@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">news</string>
-     <string name="facebook_app_id">817220324159421</string>
-  <string name="facebook_client_token">YOUR_FB_CLIENT_TOKEN</string> <!-- from fb settings -->
-  <string name="fb_login_protocol_scheme">fb817220324159421</string>
+    <string name="app_name">Arcalis News</string>
+    <string name="facebook_app_id">817220324159421</string>
+<string name="facebook_client_token">b0802f323a3e238bff298b7700ebaeb5</string>
+<string name="fb_login_protocol_scheme">fb817220324159421</string>
+
 </resources>

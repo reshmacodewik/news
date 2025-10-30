@@ -31,7 +31,7 @@ const CHECK = require('../../icons/checkBlue.png');
 const DOT = require('../../icons/dot.png');
 
 const PricingScreen: React.FC = () => {
-  const [selectedCadence, setSelectedCadence] = useState<'monthly' | 'annual'>(
+  const [selectedCadence, setSelectedCadence] = useState<'monthly' | 'annual' | 'weekly'>(
     'monthly',
   );
 
@@ -71,84 +71,84 @@ const PricingScreen: React.FC = () => {
       ),
     ]);
 
-const handleSubscribe = async (planId: string) => {
-  try {
-    const billingCycle = selectedCadence;
-    const userId =
-      (session as any)?.user?.id ||
-      (session as any)?.user?._id ||
-      (session as any)?.user?.userId;
-    const token = session?.accessToken;
+  const handleSubscribe = async (planId: string) => {
+    try {
+      const billingCycle = selectedCadence;
+      const userId =
+        (session as any)?.user?.id ||
+        (session as any)?.user?._id ||
+        (session as any)?.user?.userId;
+      const token = session?.accessToken;
 
-    // 🔒 If not logged in → show alert
-    if (!token || !userId) {
-      Alert.alert(
-        'Please log in',
-        'You need to log in to subscribe to a plan.',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
+      // 🔒 If not logged in → show alert
+      if (!token || !userId) {
+        Alert.alert(
+          'Please log in',
+          'You need to log in to subscribe to a plan.',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+            {
+              text: 'Login',
+              onPress: () => navigate('Login', {} as any),
+            },
+          ],
+          { cancelable: true },
+        );
+        return;
+      }
+
+      if (!planId || !billingCycle || !userId) {
+        Alert.alert('Error', 'Missing required fields for subscription');
+        return;
+      }
+
+      setLoadingPlan(planId);
+
+      const res = await fetch(
+        `https://api.arcalisnews.com/api/billing/create-checkout`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // Authorization: `Bearer ${token}`, // uncomment if your API requires auth
           },
-          {
-            text: 'Login',
-            onPress: () => navigate('Login', {} as any),
-          },
-        ],
-        { cancelable: true }
+          body: JSON.stringify({
+            planId,
+            userId,
+            billingCycle,
+          }),
+        },
       );
-      return;
+
+      const json = await res.json();
+
+      if (!res.ok || !json?.data?.checkoutUrl) {
+        throw new Error(json?.error || 'Failed to create checkout');
+      }
+
+      let url = String(json.data.checkoutUrl || '').trim();
+      const trxId = json.data.transactionId;
+
+      if (!/^https?:\/\//i.test(url)) {
+        url = `https://${url}`;
+      }
+
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+        setTransactionId(trxId);
+        setShowStatusModal(true);
+      } else {
+      }
+    } catch (e) {
+      console.error('Error creating checkout:', e);
+    } finally {
+      setLoadingPlan(null);
     }
-
-    if (!planId || !billingCycle || !userId) {
-      Alert.alert('Error', 'Missing required fields for subscription');
-      return;
-    }
-
-    setLoadingPlan(planId);
-
-    const res = await fetch(`https://api.arcalisnews.com/api/billing/create-checkout`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Authorization: `Bearer ${token}`, // uncomment if your API requires auth
-      },
-      body: JSON.stringify({
-        planId,
-        userId,
-        billingCycle,
-      }),
-    });
-
-    const json = await res.json();
-
-    if (!res.ok || !json?.data?.checkoutUrl) {
-      throw new Error(json?.error || 'Failed to create checkout');
-    }
-
-    let url = String(json.data.checkoutUrl || '').trim();
-    const trxId = json.data.transactionId;
-
-    if (!/^https?:\/\//i.test(url)) {
-      url = `https://${url}`;
-    }
-
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-      setTransactionId(trxId);
-      setShowStatusModal(true);
-    } else {
-  
-    }
-  } catch (e) {
-    console.error('Error creating checkout:', e);
-    
-  } finally {
-    setLoadingPlan(null);
-  }
-};
-
+  };
 
   // ✅ Place this at the top of the component (after other useStates)
   const appState = useRef(AppState.currentState);
@@ -239,6 +239,22 @@ const handleSubscribe = async (planId: string) => {
               Annual
             </Text>
           </TouchableOpacity>
+             <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              selectedCadence === 'weekly' && styles.toggleButtonActive,
+            ]}
+            onPress={() => setSelectedCadence('weekly')}
+          >
+            <Text
+              style={[
+                styles.toggleText,
+                selectedCadence === 'weekly' && styles.toggleTextActive,
+              ]}
+            >
+             Weekly
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Save 15% text */}
@@ -279,37 +295,8 @@ const handleSubscribe = async (planId: string) => {
                   </View>
 
                   <View style={{ marginTop: scale(12) }}>
-                    {plan.features.map(
-                      (
-                        feature:
-                          | string
-                          | number
-                          | bigint
-                          | boolean
-                          | React.ReactElement<
-                              unknown,
-                              string | React.JSXElementConstructor<any>
-                            >
-                          | Iterable<React.ReactNode>
-                          | React.ReactPortal
-                          | Promise<
-                              | string
-                              | number
-                              | bigint
-                              | boolean
-                              | React.ReactPortal
-                              | React.ReactElement<
-                                  unknown,
-                                  string | React.JSXElementConstructor<any>
-                                >
-                              | Iterable<React.ReactNode>
-                              | null
-                              | undefined
-                            >
-                          | null
-                          | undefined,
-                        i: React.Key | null | undefined,
-                      ) => (
+                    {Array.isArray(plan.features) && plan.features.length > 0 ? (
+                      plan.features.map((feature: any, i: number) => (
                         <View key={i} style={styles.featureRow}>
                           <Image
                             source={i === 0 ? CHECK : DOT}
@@ -327,8 +314,8 @@ const handleSubscribe = async (planId: string) => {
                             {feature}
                           </Text>
                         </View>
-                      ),
-                    )}
+                      ))
+                    ) : null}
                   </View>
 
                   <TouchableOpacity
@@ -374,7 +361,6 @@ const handleSubscribe = async (planId: string) => {
           onClose={() => setShowStatusModal(false)}
         />
       </ScrollView>
-      
     </View>
   );
 };

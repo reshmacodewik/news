@@ -162,7 +162,7 @@ export const styles = StyleSheet.create({
   logoutRow: {
     marginHorizontal: scale(16),
     marginTop: scale(8),
-    marginBottom: scale(16),
+    marginBottom: scale(5),
     backgroundColor: '#FFFFFF',
     borderRadius: scale(16),
     paddingHorizontal: scale(14),
