@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
+	<!-- Basic App Info -->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
@@ -13,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>ArcalisDaily</string>
+	<string>Arcalis News</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -24,6 +26,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+
+	<!-- Permissions -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -31,8 +35,9 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>This app needs access to your location to provide relevant content and services.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to your photo library to allow image upload and sharing features.</string>
 	<key>NSCameraUsageDescription</key>
@@ -40,14 +45,21 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs access to your microphone to record audio with videos.</string>
 
+	<!-- React Native new architecture -->
 	<key>RCTNewArchEnabled</key>
 	<true/>
+
+	<!-- Launch screen -->
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+
+	<!-- Device capabilities -->
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
 	</array>
+
+	<!-- Orientation -->
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -58,56 +70,57 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+
+	<!-- Status Bar -->
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+
+	<!-- URL Schemes (Google + Facebook) -->
 	<key>CFBundleURLTypes</key>
-<array>
-  <dict>
-    <key>CFBundleURLSchemes</key>
-    <array>
-    <key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.702876724757-l3vlvrcp65lf5iqnfo18obnb71fu89fh</string>
-    </array>
-  </dict>
-</array>
-<key>CFBundleURLTypes</key>
-<array>
-  <dict>
-    <key>CFBundleURLSchemes</key>
-    <array>
-      <!-- Google Sign-In -->
-      <string>com.googleusercontent.apps.702876724757-l3vlvrcp65lf5iqnfo18obnb71fu89fh</string>
-      <!-- Facebook Login -->
-      <string>fb817220324159421</string>
-    </array>
-  </dict>
-</array>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.702876724757-l3vlvrcp65lf5iqnfo18obnb71fu89fh</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>facebook</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb817220324159421</string>
+			</array>
+		</dict>
+	</array>
 
-<key>FacebookAppID</key>
-<string> 817220324159421</string>
+	<!-- Facebook Integration -->
+	<key>FacebookAppID</key>
+	<string>817220324159421</string>
+	<key>FacebookDisplayName</key>
+	<string>Arcalis News</string>
 
-<key>FacebookDisplayName</key>
-<string>Arcalis News</string>
-
-<key>LSApplicationQueriesSchemes</key>
-<array>
-  <string>fbapi</string>
-  <string>fbapi20130214</string>
-  <string>fbapi20130410</string>
-  <string>fbapi20130702</string>
-  <string>fbapi20131010</string>
-  <string>fbapi20131219</string>
-  <string>fbapi20140410</string>
-  <string>fbapi20140116</string>
-  <string>fbapi20150313</string>
-  <string>fbapi20150629</string>
-  <string>fbapi20160328</string>
-  <string>fbauth</string>
-  <string>fbauth2</string>
-  <string>fb-messenger-share-api</string>
-  <string>fbshareextension</string>
-</array>
-
+	<!-- Allow opening Facebook/Google apps -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>fbapi</string>
+		<string>fbapi20130214</string>
+		<string>fbapi20130410</string>
+		<string>fbapi20130702</string>
+		<string>fbapi20131010</string>
+		<string>fbapi20131219</string>
+		<string>fbapi20140410</string>
+		<string>fbapi20140116</string>
+		<string>fbapi20150313</string>
+		<string>fbapi20150629</string>
+		<string>fbapi20160328</string>
+		<string>fbauth</string>
+		<string>fbauth2</string>
+		<string>fb-messenger-share-api</string>
+		<string>fbshareextension</string>
+	</array>
 
 </dict>
 </plist>

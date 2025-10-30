@@ -7,7 +7,7 @@ const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  video: { ...StyleSheet.absoluteFillObject },     // full-screen video
+  //video: { ...StyleSheet.absoluteFillObject },     // full-screen video
   centerBox: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
@@ -17,4 +17,5 @@ export const styles = StyleSheet.create({
     width: '80%',
     height: scale(160),
   },
+
 });

@@ -12,10 +12,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../../style/TrendingStyles';
 import { useQuery } from '@tanstack/react-query';
-import { getApiWithOutQuery } from '../../Utils/api/common';
+import { getApiByParams, getApiWithOutQuery } from '../../Utils/api/common';
 import {
   API_ARTICLES_CATEGORIES,
   API_ARTICLES_LIST,
+  API_CATEGORIES,
+  API_CATEGORIES_BY_DOMAIN,
   API_DOMAIN_LIST,
   API_GET_ARTICLES_BY_DOMAIN_TYPE,
   API_GET_ARTICLES_BY_TYPE,
@@ -25,6 +27,7 @@ import { navigate } from '../../Navigators/utils';
 import { useAuth } from '../Auth/AuthContext';
 import Header from '../../Components/Header';
 import { useFocusEffect } from '@react-navigation/native';
+import { useDomainByType } from '../../Hook/useDomainByType';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -50,77 +53,23 @@ const toSrc = (img: string) => ({ uri: img });
 const TrendingScreen: React.FC = () => {
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
-
+  const [loading, setLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState('all');
   const [breakingNews, setBreakingNews] = useState<Article[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
-  const [domainId, setDomainId] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { domain, domainId } = useDomainByType('finance');
 
-  // ── Fetch Domains & set domainId (string _id, not index) ───────────
-  useEffect(() => {
-    const getAllDomain = async () => {
-      try {
-        const res = await getApiWithOutQuery({ url: API_DOMAIN_LIST });
-        const list: any[] =
-          (Array.isArray(res?.data) && res.data) ||
-          (Array.isArray(res?.data?.data) && res.data.data) ||
-          [];
-        const domain = list.find((val: any) => val?.type === 1);
-        console.log(domain)
-        setDomainId(domain?._id ?? '');
-      } catch {
-        setDomainId('');
-      }
-    };
-    getAllDomain();
-  }, []);
-
-  // ── Optionally fetch Breaking News for this domain ────────────────
-  useEffect(() => {
-    if (!domainId) return;
-    const getBreaking = async () => {
-      try {
-        const res = await getApiWithOutQuery({
-          url: `${API_GET_ARTICLES_BY_DOMAIN_TYPE}/${domainId}`,
-        });
-        const list: Article[] =
-          (Array.isArray(res?.data?.articles) && res.data.articles) || [];
-        setBreakingNews(list);
-      } catch {
-        setBreakingNews([]);
-      }
-    };
-    getBreaking();
-  }, [domainId]);
-
-  // ── Fetch Categories (guard result to array) ───────────────────────
-  const { data: categoryDataRaw = [], refetch } = useQuery({
-    queryKey: ['categories'],
+  const { data: categoryDataRaw = [] } = useQuery({
+    queryKey: ['categories-domain', domainId],
     queryFn: async () => {
-      const res = await getApiWithOutQuery({
-         url: `${API_ARTICLES_CATEGORIES}/?domain_id=${domainId}`,
+      const res = await getApiByParams({
+        url: API_CATEGORIES_BY_DOMAIN,
+        params: domainId,
       });
-      return (
-        res.data?.categories?.filter((c: any) => c.status === 'active') ?? []
-      );
+      return res.data ?? [];
     },
   });
 
-  // Log whenever domainId changes (before query starts)
-  useEffect(() => {
-    console.log('🔹 domainId before query:', domainId);
-  }, [domainId]);
-
-  // Refetch on screen focus if we have a domainId
-  useFocusEffect(
-    useCallback(() => {
-      if (domainId) refetch();
-    }, [refetch, domainId]),
-  );
-
-  // --- normalize categories safely ------------------------------------
-  // Accept common shapes: direct array or {data: [...]}
   const rawCategoryArray: any[] = useMemo(() => {
     if (Array.isArray(categoryDataRaw)) return categoryDataRaw;
     if (Array.isArray((categoryDataRaw as any)?.data))
@@ -154,7 +103,7 @@ const TrendingScreen: React.FC = () => {
   // If domainId changes, reset to "all" so All is always valid
   useEffect(() => {
     setActiveTab('all');
-  }, [domainId]);
+  }, []);
 
   // If current activeTab no longer exists (e.g., category list changed), snap back to "all"
   useEffect(() => {
@@ -170,33 +119,22 @@ const TrendingScreen: React.FC = () => {
   const fetchArticles = useCallback(async () => {
     setLoading(true);
     try {
-      const domainQ = domainId
-        ? `domain_id=${encodeURIComponent(String(domainId))}&`
-        : '';
-      const url =
-        activeTab === 'all'
-          ? `${API_ARTICLES_LIST}?${domainQ}limit=20`
-          : `${API_GET_ARTICLES_BY_DOMAIN_TYPE}?${domainQ}categoryId=${encodeURIComponent(
-              activeTab,
-            )}&limit=20`;
-
-      const res = await getApiWithOutQuery({ url });
-
-      // Handle common shapes: { articles: [...] } | { data: { articles: [...] } } | direct array
-      const list: Article[] =
-        (Array.isArray(res?.data?.articles) && res.data.articles) ||
-        (Array.isArray(res?.data?.data?.articles) && res.data.data.articles) ||
-        (Array.isArray(res?.data) && res.data) ||
-        [];
-
-      setArticles(list);
+      const res = await getApiWithOutQuery({
+        url:
+          API_ARTICLES_CATEGORIES +
+          `?categoryId=${activeTab !== 'all' ? activeTab : ''}&domainType=${
+            domain?.type
+          }`,
+      });
+      setArticles(res.data?.articles ?? []);
+      // setArticles(list);
     } catch (err) {
       setArticles([]);
       console.log('Error fetching articles for tab:', activeTab, err);
     } finally {
       setLoading(false);
     }
-  }, [activeTab, domainId]);
+  }, [activeTab, domain?.type]);
 
   // Fetch on focus + when tab/domain changes
   useFocusEffect(
@@ -206,53 +144,12 @@ const TrendingScreen: React.FC = () => {
   );
 
   const handleArticlePress = (id: string, slug: string) => {
-    if (!session?.accessToken) {
-      ShowToast('Please login to read this article', 'error');
-      navigate('Login' as never);
-      return;
-    }
     navigate('ArticleDetail' as never, { id, slug } as never);
   };
-
-  // ── Fetch Articles by Tab ─────────────────────────────────────────
-  // const fetchArticles = useCallback(async () => {
-  //   setLoading(true);
-  //   try {
-  //     const url =
-  //       activeTab === 'all'
-  //         ? `${API_ARTICLES_LIST}?limit=20`
-  //         : // Use the “by category/type” endpoint for category tabs
-  //           `${API_GET_ARTICLES_BY_TYPE}?categoryId=${activeTab}&limit=20`;
-
-  //     const res = await getApiWithOutQuery({ url });
-
-  //     // Common server shapes handled below:
-  //     // { articles: [...] } or { data: { articles: [...] } } or direct array
-  //     const list: Article[] =
-  //       (Array.isArray(res?.data?.articles) && res.data.articles) ||
-  //       (Array.isArray(res?.data?.data?.articles) && res.data.data.articles) ||
-  //       (Array.isArray(res?.data) && res.data) ||
-  //       [];
-
-  //     setArticles(list);
-  //   } catch (err) {
-  //     setArticles([]);
-  //     console.log('Error fetching articles for tab:', activeTab, err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, [activeTab]);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchArticles();
-    }, [fetchArticles]),
-  );
 
   // ── UI ─────────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View
         style={{
           backgroundColor: '#e3e9ee',
@@ -308,45 +205,6 @@ const TrendingScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + scale(80) }}
       >
-        {/* Breaking News */}
-        {/* Breaking News (show only if we have items) */}
-        {Array.isArray(breakingNews) && breakingNews.length > 0 && (
-          <>
-            <Text style={[styles.sectionTitle, { marginTop: scale(16) }]}>
-              Breaking News
-            </Text>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: scale(16) }}
-            >
-              {breakingNews.map(item => (
-                <TouchableOpacity
-                  key={item._id}
-                  style={styles.breakCard}
-                  activeOpacity={0.8}
-                  onPress={() => handleArticlePress(item._id, item.slug)}
-                >
-                  <ImageBackground
-                    source={item.image ? { uri: item.image } : undefined}
-                    style={styles.breakImage}
-                    imageStyle={styles.breakImageRadius}
-                  />
-                  <Text style={styles.breakCaption} numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </>
-        )}
-
-        {/* Articles */}
-        <Text style={[styles.sectionTitle, { marginTop: scale(18) }]}>
-          {activeTabTitle} News
-        </Text>
-
         {loading ? (
           <ActivityIndicator style={{ marginTop: scale(20) }} />
         ) : (

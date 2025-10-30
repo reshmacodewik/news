@@ -2,8 +2,6 @@
 import axios from 'axios';
 import ShowToast from '../ShowToast';
 import { defaultAxios } from './axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ApiParams {
   url: string;
@@ -39,23 +37,6 @@ export const getApiWithOutQuery = async ({
     throw err;
   }
 };
-
-// export const getApiWithOutQueryWithToken = async ({
-//   url,
-// }: ApiParams & { token: string }): Promise<any> => {
-//   try {
-//     const token = await AsyncStorage.getItem('@auth_token');
-//     const res = await defaultAxios.get(url, {
-//       headers: {
-//         Accept: 'application/json',
-//         Authorization: `Bearer ${token}`, // Add Authorization header with token
-//       },
-//     });
-//     return res.data;
-//   } catch (err: any) {
-//     return err?.response?.data;
-//   }
-// };
 
 export const getApi = async ({
   url,

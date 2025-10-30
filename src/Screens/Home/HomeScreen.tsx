@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,26 +12,21 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   ImageSourcePropType,
-  Platform,
 } from 'react-native';
 import { styles } from '../../style/HomeStyles';
 import { navigate } from '../../Navigators/utils';
 import { useAuth } from '../Auth/AuthContext';
-import ShowToast from '../../Utils/ShowToast';
 import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../../Utils/api/common';
 import {
   API_ARTICLES_LIST,
-  API_CATEGORIES,
   API_GET_ARTICLES_BY_TYPE,
 } from '../../Utils/api/APIConstant';
-import HtmlRenderer from '../../Components/HtmlRenderer';
 import Header from '../../Components/Header';
 import { useFocusEffect } from '@react-navigation/native';
+import { useDomainByType } from '../../Hook/useDomainByType';
 
 const { width } = Dimensions.get('window');
-
-// helper for images (local or URL)
 const toSrc = (img: ImageSourcePropType | string) =>
   typeof img === 'string' ? { uri: img } : img;
 
@@ -51,46 +46,31 @@ type Article = {
   articleCategoryId?: { title: string };
   createdAt?: string;
   slug: string;
-   viewingType?: 'free' | 'register' | 'premium';
+  viewingType?: 'free' | 'register' | 'premium';
 };
 
 const HomeScreen: React.FC = () => {
   const { session } = useAuth();
-
-  // local state
+  const { domain } = useDomainByType('news');
   const [activeSlide, setActiveSlide] = useState(0);
-  const [breakingNews, setBreakingNews] = useState<Article[]>([]);
-  const [topNews, setTopNews] = useState<Article[]>([]);
-  const [latestNews, setLatestNews] = useState<Article[]>([]);
   const [trendingNews, setTrendingNews] = useState<Article[]>([]);
   const [selectedType, setSelectedType] = useState('top-news');
 
-  const listRef = useRef<FlatList<Article>>(null);
-
-  // === FETCH MAIN ARTICLES ===
   const { data: allArticles = [], refetch } = useQuery({
-    queryKey: ['articles'],
+    queryKey: ['articles', domain?.type],
     queryFn: async () => {
-      const res = await getApiWithOutQuery({ url: API_ARTICLES_LIST });
+      const res = await getApiWithOutQuery({
+        url: API_ARTICLES_LIST + `/${domain?.type}`,
+      });
       return res.data?.articles ?? [];
     },
-    // refetchInterval: 1000,
   });
+
   useFocusEffect(
     React.useCallback(() => {
       refetch();
     }, []),
   );
-  // === FETCH CATEGORIES ===
-  const { data: categoryData = [] } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const res = await getApiWithOutQuery({ url: API_CATEGORIES });
-      return (
-        res.data?.categories?.filter((c: any) => c.status === 'active') ?? []
-      );
-    },
-  });
 
   // === FETCH ARTICLES BY TYPE ===
   const getData = async (type: string, setter: (data: any) => void) => {
@@ -110,12 +90,7 @@ const HomeScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    const newsTypes = [
-      { type: '/breaking', setter: setBreakingNews },
-      { type: '/top-news', setter: setTopNews },
-      { type: '/latest', setter: setLatestNews },
-      { type: '/trending', setter: setTrendingNews },
-    ];
+    const newsTypes = [{ type: '/trending', setter: setTrendingNews }];
     newsTypes.forEach(({ type, setter }) => getData(type, setter));
   }, []);
 
@@ -135,19 +110,12 @@ const HomeScreen: React.FC = () => {
   };
 
   const handleArticlePress = (id: string, slug: string) => {
-    // if (!session?.accessToken) {
-    //   ShowToast('Please login to read this article', 'error');
-    //   navigate('Login' as never);
-    //   return;
-    // }
-
     navigate('ArticleDetail' as never, { id, slug } as never);
   };
 
-
-useFocusEffect(() => {
-  StatusBar.setBarStyle('light-content');
-});
+  useFocusEffect(() => {
+    StatusBar.setBarStyle('light-content');
+  });
 
   // === STATIC TAB TYPES ===
   const TABS = [
@@ -159,8 +127,6 @@ useFocusEffect(() => {
 
   return (
     <View style={styles.container}>
-     
-
       <ScrollView
         bounces={false}
         alwaysBounceVertical={false}
@@ -185,15 +151,17 @@ useFocusEffect(() => {
           </View>
 
           {/* === TRENDING NEWS CAROUSEL === */}
-          <View style={styles.trendingHeader}>
-            <Text style={styles.trendingTitle}>Trending news</Text>
-            <TouchableOpacity
-              hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
-              onPress={() => navigate('Trending' as never)}
-            >
-              <Text style={styles.seeAll}>See all</Text>
-            </TouchableOpacity>
-          </View>
+          {Array.isArray(trendingNews) && trendingNews.length > 0 && (
+            <View style={styles.trendingHeader}>
+              <Text style={styles.trendingTitle}>Trending news</Text>
+              <TouchableOpacity
+                hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
+                onPress={() => navigate('Trending' as never)}
+              >
+                <Text style={styles.seeAll}>See all</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <FlatList
             data={Array.isArray(trendingNews) ? trendingNews : []}
@@ -307,6 +275,19 @@ useFocusEffect(() => {
               </View>
               <Image source={{ uri: item.image }} style={styles.rowThumb} />
             </TouchableOpacity>
+          )}
+          ListEmptyComponent={() => (
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: 40,
+              }}
+            >
+              <Text style={{ fontSize: 16, color: '#777' }}>
+                No data available
+              </Text>
+            </View>
           )}
           ListFooterComponent={<View style={{ height: 16 }} />}
         />

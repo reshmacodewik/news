@@ -19,13 +19,16 @@ import { apiPost, getApiWithOutQuery } from '../Utils/api/common';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   API_ADD_COMMENT,
-  API_ARTICLES_LIST,
+  API_ARTICLES_DETAILS,
   API_COMMENTS_LIST,
   API_LIKES,
 } from '../Utils/api/APIConstant';
 import BottomSheet from '../Components/BottomSheet';
 import { useAuth } from './Auth/AuthContext';
-import { APIBaseUrl } from '../Utils/constance';
+import PaywallCard from '../Components/PaywallCard';
+import { formatDateTime, getTimeAgo } from '../libs/helper';
+import ShowToast from '../Utils/ShowToast';
+import { navigate } from '../Navigators/utils';
 
 const HERO = require('../icons/news.png');
 const BACK = require('../icons/back.png');
@@ -36,98 +39,18 @@ type Props = {
 };
 
 type Article = {
-  createdBy: any;
+  author: any;
   _id: string;
   slug: string;
   title: string;
+  shortContent: string;
   description: string;
   image?: string;
   createdAt?: string;
+  commentCount?: number;
+  likeCount?: number;
   viewingType?: 'free' | 'register' | 'premium';
 };
-
-type ArticleResponse = {
-  article: Article;
-  counlike: number;
-  comments: number;
-};
-
-type SubscriptionRecord = {
-  _id: string;
-  userId: { _id: string } | null;
-  status: 'active' | 'canceled' | 'paused';
-  startDate: string;
-  endDate: string;
-  amount: number;
-  currency: string;
-  billingCycle: 'monthly' | 'annual';
-  paymentStatus: 'pending' | 'paid' | 'failed' | string;
-  isExpired: boolean;
-};
-
-// ===== helpers for subscription check =====
-
-
-async function fetchWithTimeout(input: RequestInfo, init: RequestInit = {}, ms = 8000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), ms);
-  try {
-    const res = await fetch(input, { ...init, signal: controller.signal });
-    return res;
-  } finally {
-    clearTimeout(id);
-  }
-}
-
-async function isUserSubscribed(opts: {
-  userId: string;
-  token?: string;
-}): Promise<boolean> {
-  const { userId, token } = opts;
-
-  const res = await fetchWithTimeout(`${APIBaseUrl}/users/userActiveSubscriptionDetails`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(token ? { 'x-access-token': token } : {}),
-    },
-    body: JSON.stringify({ userId }),
-  }, 10000);
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Subscription check failed (${res.status}). ${text}`);
-  }
-
-  const payload = (await res.json()) as {
-    success: boolean;
-    code?: number;
-    message?: string;
-    data?: SubscriptionRecord[];
-  };
-
-  const list = payload?.data ?? [];
-  const now = Date.now();
-
-  // Active if:
-  // - belongs to this user
-  // - status === "active"
-  // - not expired
-  // - endDate in the future
-  // (paymentStatus can be "pending" right after checkout, allowed)
-  return list.some((s) => {
-    if (!s?.userId?._id) return false;
-    const ends = new Date(s.endDate).getTime();
-    return (
-      s.userId._id === userId &&
-      s.status === 'active' &&
-      s.isExpired === false &&
-      Number.isFinite(ends) &&
-      ends > now
-    );
-  });
-}
 
 const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { id, slug } = route.params;
@@ -147,97 +70,17 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     setSortOrder(newOrder);
   };
 
-  const {
-    data: payload,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ['article', slug],
-    queryFn: async (): Promise<ArticleResponse> => {
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['article-details', slug],
+    queryFn: async (): Promise<Article> => {
       const res = await getApiWithOutQuery({
-        url: `${API_ARTICLES_LIST}/${slug}`,
+        url: `${API_ARTICLES_DETAILS}/${slug}`,
       });
-      // console.log('ArticleDetailScreen', res.data);
-      return res.data;
+      return res.data?.article;
     },
   });
 
-  // ===== Premium gate (server-verified) =====
-  React.useEffect(() => {
-    const article = payload?.article;
-    if (!article) return;
-
-    const vt = article.viewingType;
-
-    // free: allow
-    if (vt === 'free') return;
-
-    // require login for register/premium
-    const token = session?.accessToken;
-    const uid =
-      (session as any)?.user?.id ||
-      (session as any)?.user?._id ||
-      (session as any)?.user?.userId;
-
-    if (vt === 'register') {
-      if (!token) {
-        navigation.replace('Login');
-      }
-      return;
-    }
-
-    if (vt === 'premium') {
-      if (!token || !uid) {
-        navigation.replace('Login');
-        return;
-      }
-
-      let cancelled = false;
-      (async () => {
-        try {
-          const ok = await isUserSubscribed({ userId: String(uid), token });
-          if (cancelled) return;
-          if (!ok) {
-            navigation.replace('Premium');
-          }
-        } catch (err: any) {
-          if (cancelled) return;
-          Alert.alert('Subscription check failed', err?.message ?? 'Please try again.');
-          navigation.replace('Premium');
-        }
-      })();
-
-      return () => {
-        cancelled = true;
-      };
-    }
-  }, [payload?.article, session?.accessToken, (session as any)?.user, navigation]);
-
-  const formatDateTime = (value: string | number | Date) => {
-    const d = new Date(value);
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    const h24 = d.getHours();
-    const h12 = h24 % 12 || 12;
-    const min = String(d.getMinutes()).padStart(2, '0');
-    const ampm = h24 >= 12 ? 'PM' : 'AM';
-    return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${h12}:${min} ${ampm}`;
-  };
-
-  const article = payload?.article;
-  const likeCount = payload?.counlike ?? 0;
+  const likeCount = data?.likeCount ?? 0;
 
   const { data: commentData, refetch: refetchComments } = useQuery({
     queryKey: ['comments', id],
@@ -263,6 +106,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     },
     onSuccess: () => {
       setCommentText('');
+      refetch();
       refetchComments();
       setIsVisible(false);
     },
@@ -279,12 +123,17 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [commentData, sortOrder]);
 
   const handleAddComment = () => {
+    if (!session?.accessToken) {
+      ShowToast('Login Required', 'error');
+      navigate('Login');
+      return;
+    }
     if (!commentText.trim()) return;
     AddComment({ articleId: id, content: commentText });
   };
 
   React.useEffect(() => {
-    setLocalLikeCount(likeCount);
+    setLocalLikeCount(data?.likeCount as number);
   }, [likeCount]);
 
   const { mutate: toggleLike, isPending: likePending } = useMutation({
@@ -293,7 +142,6 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         url: API_LIKES,
         values: { articleId: id },
       });
-      // console.log('toggleLike', res.data);
       return res.data;
     },
     onError: (_err, likeJustSet) => {
@@ -303,29 +151,21 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   });
 
   const handleToggleFav = () => {
+    if (!session?.accessToken) {
+      ShowToast('Login Required', 'error');
+      navigate('Login');
+      return;
+    }
     const next = !isFav;
     setIsFav(next);
     setLocalLikeCount(c => c + (next ? 1 : -1));
     toggleLike(next);
   };
 
-  const getTimeAgo = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours} hours ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 30) return `${diffInDays} days ago`;
-    const diffInMonths = Math.floor(diffInDays / 30);
-    if (diffInMonths < 12) return `${diffInMonths} months ago`;
-    const diffInYears = Math.floor(diffInMonths / 12);
-    return `${diffInYears} years ago`;
-  };
-
+  const viewingType = data?.viewingType;
+  const token = session?.accessToken;
+  const needsLogin =
+    (viewingType === 'register' || viewingType === 'premium') && !token;
 
   return (
     <View style={styles.container}>
@@ -342,7 +182,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <Image source={BACK} style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={styles.appTitle} numberOfLines={1}>
-          Aecalis News
+          Views
         </Text>
         <View style={{ width: scale(24) }} />
       </View>
@@ -354,7 +194,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       >
         {/* Hero */}
         <ImageBackground
-          source={article?.image ? { uri: article.image } : HERO}
+          source={data?.image ? { uri: data.image } : HERO}
           style={styles.hero}
           imageStyle={styles.heroImg}
         />
@@ -362,10 +202,9 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         {/* Headline & meta */}
         <View style={styles.headerBlock}>
           <Text style={styles.headline}>
-            {article?.title ?? (isLoading ? 'Loading…' : '—')}
+            {data?.title ?? (isLoading ? 'Loading…' : '—')}
           </Text>
 
-          {/* ✅ Use a View, not a View inside Text */}
           <View
             style={{
               flexDirection: 'row',
@@ -374,11 +213,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             }}
           >
             <Text style={styles.byAuthor}>
-              {article?.createdBy
-                ? `By ${article?.createdBy?.firstName || ''} ${
-                    article?.createdBy?.lastName || ''
-                  }`
-                : 'By Unknown'}
+              {data?.author ? `By ${data?.author}` : 'By Unknown'}
             </Text>
             {/* Likes + Comments */}
             <View style={{ flexDirection: 'row' }}>
@@ -414,25 +249,34 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                   source={require('../icons/comment1.png')}
                   style={styles.chatIcon}
                 />
-                <Text style={styles.likeCount}>{commentData?.length ?? 0}</Text>
+                <Text style={styles.likeCount}>{data?.commentCount}</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <Text style={styles.dateline}>
-            {article?.createdAt
-              ? formatDateTime(article.createdAt)
-              : 'September 13, 2025 4:16 AM'}
+            {data?.createdAt ? formatDateTime(data.createdAt) : ''}
           </Text>
         </View>
-
-        {/* Body */}
-        <Text style={styles.body}>
-          {(article?.description ?? '').replace(/<[^>]+>/g, '')}
-        </Text>
+        {needsLogin ? (
+          <ScrollView>
+            <PaywallCard
+              mode={viewingType === 'premium' ? 'premium' : 'login'}
+              onSignIn={() => navigation.navigate('Login')}
+              onViewPlans={() => navigation.navigate('Premium')}
+            />
+          </ScrollView>
+        ) : (
+          <>
+            {/* Body */}
+            <Text style={styles.body}>
+              {(data?.description ?? '').replace(/<[^>]+>/g, '')}
+            </Text>
+          </>
+        )}
 
         {/* Quote */}
-        <View style={styles.quoteWrap}>
+        {/* <View style={styles.quoteWrap}>
           <View style={styles.quoteBar} />
           <Text style={styles.quoteText}>
             “Our goal is not to punish nations unfairly,” said one senior U.S.
@@ -440,7 +284,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             country benefits economically from practices that violate
             international sanctions and threaten global security.”
           </Text>
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* Comments BottomSheet */}

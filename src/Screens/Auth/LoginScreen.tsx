@@ -8,6 +8,7 @@ import {
   ScrollView,
   Image,
   ImageBackground,
+  Platform,
 } from 'react-native';
 import { styles } from '../../style/LoginScreenstyles';
 import { navigate } from '../../Navigators/utils';
@@ -90,7 +91,9 @@ const LoginScreen = () => {
   const handleGoogleSignIn = async () => {
     console.log('👉 Pressed Google Sign-In button');
     try {
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
 
       // If a previous attempt exists, ensure clean state on Android
       try {
@@ -102,7 +105,6 @@ const LoginScreen = () => {
       const gUser: any = await GoogleSignin.signIn();
       console.log('✅ Google user (basic):', JSON.stringify(gUser));
 
-
       // Get tokens (idToken is what your backend verifies)
       // const { getCurrentUser } = await GoogleSignin.getTokens();
       // if (!getCurrentUser) {
@@ -111,7 +113,6 @@ const LoginScreen = () => {
       //     'error',
       //   );
       // }
-
 
       // let email = '';
       // let name = '';
@@ -122,7 +123,6 @@ const LoginScreen = () => {
       //   name = payload?.name ?? gUser?.user?.name ?? '';
 
       // } catch {}
-     
 
       // === Hit your backend to exchange Google token for your app session ===
       // Body shape must match your server's controller
@@ -174,38 +174,47 @@ const LoginScreen = () => {
       ShowToast(err?.message || 'Google sign-in failed', 'error');
     }
   };
-const handleFacebookSignIn = async () => {
-  try {
-    try { LoginManager.logOut(); } catch {}
-    const result = await LoginManager.logInWithPermissions(
-      ['public_profile', 'email']
-    );
-    if (result.isCancelled) return ShowToast('Facebook sign-in cancelled', 'info');
+  const isIOS = Platform.OS === 'ios';
+  const buttonIcon = isIOS
+    ? require('../../icons/apple.png')
+    : require('../../icons/Facebook.png');
 
-    const tok = await AccessToken.getCurrentAccessToken();
-    if (!tok?.accessToken) return ShowToast('No Facebook access token', 'error');
+  const buttonText = isIOS ? 'Sign in with Apple' : 'Sign in with Facebook';
 
-    const res = await apiPost({
-      url: API_FACEBOOK_LOGIN,
-      values: { accessToken: tok.accessToken.toString() },
-    });
+  // const handlePress = isIOS ? handleAppleSignIn : handleFacebookSignIn;
 
-    if (!res?.success || !res?.data?.token) {
-      return ShowToast(res?.message || res?.error || 'Facebook login failed', 'error');
-    }
+  // const handleFacebookSignIn = async () => {
+  //   try {
+  //     try { LoginManager.logOut(); } catch {}
+  //     const result = await LoginManager.logInWithPermissions(
+  //       ['public_profile', 'email']
+  //     );
+  //     if (result.isCancelled) return ShowToast('Facebook sign-in cancelled', 'info');
 
-    const session = {
-      accessToken: res.data.token,
-      user: { id: res.data.id, name: res.data.name, email: res.data.email },
-    };
-    signIn(session);
-    await AsyncStorage.setItem('userSession', JSON.stringify(session));
-    ShowToast('Login successful', 'success');
-    navigate('Home' as never);
-  } catch (e: any) {
-    ShowToast(e?.message || 'Facebook sign-in failed', 'error');
-  }
-};
+  //     const tok = await AccessToken.getCurrentAccessToken();
+  //     if (!tok?.accessToken) return ShowToast('No Facebook access token', 'error');
+
+  //     const res = await apiPost({
+  //       url: API_FACEBOOK_LOGIN,
+  //       values: { accessToken: tok.accessToken.toString() },
+  //     });
+
+  //     if (!res?.success || !res?.data?.token) {
+  //       return ShowToast(res?.message || res?.error || 'Facebook login failed', 'error');
+  //     }
+
+  //     const session = {
+  //       accessToken: res.data.token,
+  //       user: { id: res.data.id, name: res.data.name, email: res.data.email },
+  //     };
+  //     signIn(session);
+  //     await AsyncStorage.setItem('userSession', JSON.stringify(session));
+  //     ShowToast('Login successful', 'success');
+  //     navigate('Home' as never);
+  //   } catch (e: any) {
+  //     ShowToast(e?.message || 'Facebook sign-in failed', 'error');
+  //   }
+  // };
   return (
     <View style={styles.container}>
       <ScrollView
@@ -251,7 +260,14 @@ const handleFacebookSignIn = async () => {
                 returnKeyType="next"
               />
               {formik.touched.email && formik.errors.email ? (
-                <Text style={{ color: 'red', fontSize: 12, marginLeft: 10, marginTop: 5 }}>
+                <Text
+                  style={{
+                    color: 'red',
+                    fontSize: 12,
+                    marginLeft: 10,
+                    marginTop: 5,
+                  }}
+                >
                   {formik.errors.email}
                 </Text>
               ) : null}
@@ -273,7 +289,14 @@ const handleFacebookSignIn = async () => {
                 onSubmitEditing={() => formik.handleSubmit()}
               />
               {formik.touched.password && formik.errors.password ? (
-                <Text style={{ color: 'red', fontSize: 12, marginLeft: 10, marginTop: 5 }}>
+                <Text
+                  style={{
+                    color: 'red',
+                    fontSize: 12,
+                    marginLeft: 10,
+                    marginTop: 5,
+                  }}
+                >
                   {formik.errors.password}
                 </Text>
               ) : null}
@@ -306,21 +329,30 @@ const handleFacebookSignIn = async () => {
             </View>
 
             {/* Google */}
-            <TouchableOpacity style={styles.socialButton} onPress={handleGoogleSignIn}>
-              <Image source={require('../../icons/Google.png')} style={styles.socialIcon} />
+            <TouchableOpacity
+              style={styles.socialButton}
+              onPress={handleGoogleSignIn}
+            >
+              <Image
+                source={require('../../icons/Google.png')}
+                style={styles.socialIcon}
+              />
               <Text style={styles.socialButtonText}>Sign in with Google</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.socialButton}  onPress={handleFacebookSignIn} >
-              <Image source={require('../../icons/Facebook.png')} style={styles.socialIcon} />
-              <Text style={styles.socialButtonText}>Sign in with Facebook</Text>
+            <TouchableOpacity style={styles.socialButton} onPress={() => {}}>
+              <Image source={buttonIcon} style={styles.socialIcon} />
+              <Text style={styles.socialButtonText}>{buttonText}</Text>
             </TouchableOpacity>
 
             {/* Sign Up */}
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>
                 Don't you have an account?{' '}
-                <Text style={styles.signUpLink} onPress={() => navigate('Signup' as never)}>
+                <Text
+                  style={styles.signUpLink}
+                  onPress={() => navigate('Signup' as never)}
+                >
                   Sign up
                 </Text>
               </Text>
