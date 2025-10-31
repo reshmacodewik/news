@@ -79,6 +79,9 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       return res.data?.article;
     },
   });
+  const isLoggedIn = !!session?.accessToken; // or check from Redux/store
+  const isSubscribed =
+    session?.user?.plan === 'premium' || session?.user?.isPremium;
 
   const likeCount = data?.likeCount ?? 0;
 
@@ -133,6 +136,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   React.useEffect(() => {
+    console.log('likeCount updated:', data?.likeCount);
     setLocalLikeCount(data?.likeCount as number);
   }, [likeCount]);
 
@@ -217,30 +221,30 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             </Text>
             {/* Likes + Comments */}
             <View style={{ flexDirection: 'row' }}>
-              <View
+              {/* ❤️ Likes */}
+              <TouchableOpacity
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
                   marginRight: 16,
                 }}
+                onPress={handleToggleFav}
+                disabled={likePending}
               >
-                <TouchableOpacity
-                  style={{ flexDirection: 'row', alignItems: 'center' }}
-                  onPress={handleToggleFav}
-                  disabled={likePending}
-                >
-                  <Image
-                    source={
-                      isFav
-                        ? require('../icons/heart_red.png') // your red heart image
-                        : require('../icons/heart.png') // your default/gray heart
-                    }
-                    style={styles.chatIcon}
-                  />
+                <Image
+                  source={
+                    isFav
+                      ? require('../icons/heart_red.png')
+                      : require('../icons/heart.png')
+                  }
+                  style={styles.chatIcon}
+                />
+                {localLikeCount > 0 && (
                   <Text style={styles.likeCount}>{localLikeCount}</Text>
-                </TouchableOpacity>
-              </View>
+                )}
+              </TouchableOpacity>
 
+              {/* 💬 Comments */}
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center' }}
                 onPress={() => setIsVisible(true)}
@@ -249,7 +253,9 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                   source={require('../icons/comment1.png')}
                   style={styles.chatIcon}
                 />
-                <Text style={styles.likeCount}>{data?.commentCount}</Text>
+                {data?.commentCount && data.commentCount > 0 && (
+                  <Text style={styles.likeCount}>{data.commentCount}</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -258,21 +264,44 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             {data?.createdAt ? formatDateTime(data.createdAt) : ''}
           </Text>
         </View>
-        {needsLogin ? (
-          <ScrollView>
-            <PaywallCard
-              mode={viewingType === 'premium' ? 'premium' : 'login'}
-              onSignIn={() => navigation.navigate('Login')}
-              onViewPlans={() => navigation.navigate('Premium')}
-            />
-          </ScrollView>
-        ) : (
-          <>
-            {/* Body */}
+        {viewingType === 'premium' ? (
+          !isLoggedIn ? (
+            // Premium article → not logged in → show Sign In + Subscribe
+            <ScrollView>
+              <PaywallCard
+                mode="login"
+                onSignIn={() => navigation.navigate('Login')}
+                onSubscribe={() => navigation.navigate('Premium')}
+              />
+            </ScrollView>
+          ) : !isSubscribed ? (
+            // Premium article → logged in but not subscribed → show Subscribe only
+            <ScrollView>
+              <PaywallCard
+                mode="premium"
+                token={session?.accessToken}
+                onSignIn={() => {}}
+                onSubscribe={() => navigation.navigate('Premium')}
+              />
+            </ScrollView>
+          ) : (
+            // Premium article → subscribed → show full article
             <Text style={styles.body}>
               {(data?.description ?? '').replace(/<[^>]+>/g, '')}
             </Text>
-          </>
+          )
+        ) : viewingType === 'register' && !isLoggedIn ? (
+          // Register article → not logged in → show Sign In + Subscribe
+          <ScrollView>
+            <PaywallCard mode="register" onSignIn={() => navigation.navigate('Login')} onSubscribe={function (): void {
+                throw new Error('Function not implemented.');
+              } } />
+          </ScrollView>
+        ) : (
+          // Free or logged-in Register article → show full article
+          <Text style={styles.body}>
+            {(data?.description ?? '').replace(/<[^>]+>/g, '')}
+          </Text>
         )}
 
         {/* Quote */}

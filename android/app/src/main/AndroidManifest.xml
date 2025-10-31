@@ -30,9 +30,10 @@
         </activity>
 
         <!-- ✅ Google Sign-In (non-Firebase) -->
-        <meta-data
-            android:name="com.google.android.gms.auth.API_KEY"
-            android:value="AIzaSyDN3IWluuVx2LU8w2Dvs0gNkzBSyoJCqbY" />
+    <meta-data
+    android:name="com.google.android.gms.auth.api.credentials.ClientId"
+    android:value="702876724757-jds7gqa7sush8s6jquccr4plj24mmfas.apps.googleusercontent.com" />
+
 
         <!-- ✅ Facebook SDK Configuration -->
        <meta-data android:name="com.facebook.sdk.ApplicationId"

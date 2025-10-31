@@ -141,8 +141,8 @@ export default StyleSheet.create({
     backgroundColor: '#031B38',
     borderRadius: 14,
     paddingVertical: 16,
-    marginTop: '65%',
-    width: Math.min(width * 0.92, 560),
+    marginTop: '8%',
+    width: Math.min(width * 0.62, 560),
     alignSelf: 'center',
   },
   saveText: {

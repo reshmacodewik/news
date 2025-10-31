@@ -1,10 +1,12 @@
 import { StyleSheet, Dimensions } from 'react-native';
-const { width } = Dimensions.get('window');
 
+const { width } = Dimensions.get('window');
+const scale = (size: number) => (width / 375) * size;
+const f = (size: number) => scale(size);
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#e3e9ee',
   },
 
   scrollContent: {
@@ -21,9 +23,17 @@ export const styles = StyleSheet.create({
   backButton: {
     marginRight: 12,
   },
+  backIcon: {
+    width: scale(20),
+    height: scale(20),
+    tintColor: '#374151',
+  },
   backArrow: {
     fontSize: 22,
     color: '#000',
+  },
+  placeholder: {
+    width: scale(40),
   },
   headerTitle: {
     fontSize: 18,
@@ -55,7 +65,7 @@ export const styles = StyleSheet.create({
     color: '#B30000',
   },
   bannerTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#B30000',
   },
@@ -65,7 +75,7 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
   upgradeButton: {
-    backgroundColor: '#fff',
+   
     borderRadius: 6,
     paddingVertical: 6,
     paddingHorizontal: 14,
@@ -95,7 +105,7 @@ export const styles = StyleSheet.create({
   /* 💳 Billing Card */
   billingCard: {
     borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
+    borderBottomColor: '#000',
     paddingVertical: 14,
   },
   billingRow: {

@@ -1,168 +1,219 @@
-// components/PaywallCard.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 
 type Props = {
-  mode: 'login' | 'premium';
-  onSignIn: () => void;
-  onViewPlans?: () => void;
+  mode: 'login' | 'premium' | 'register';
+  token?: string; // 👈 new optional prop
+  onSignIn?: () => void;
+  onSubscribe: () => void;
 };
 
-const BLUE = '#2260B2';
-const BLUE_DARK = '#1d56a3';
-const BORDER = '#E5E7EB';
-const TEXT = '#111827';
-const MUTED = '#6B7280';
-const CARD_BG = '#FFFFFF';
-const BADGE_BG = '#EEF3FB';
+const PaywallCard: React.FC<Props> = ({
+  mode,
+  token,
+  onSignIn,
+  onSubscribe,
+}) => {
+   const isLogin = mode === 'login';
+  const isRegister = mode === 'register';
+    const isLoggedIn = !!token;
 
-const PaywallCard: React.FC<Props> = ({ mode, onSignIn, onViewPlans }) => {
-  const isLogin = mode === 'login';
+  const badgeText =
+    mode === 'premium'
+      ? 'Premium Content'
+      : mode === 'register'
+      ? 'Login Required'
+      : 'Premium Content';
+ // 👈 detect login
 
   return (
     <View
       style={{
-        marginHorizontal: 16,
-        marginTop: 12,
-        padding: 16,
-        backgroundColor: CARD_BG,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: BORDER,
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 20,
+        backgroundColor: '#F9FAFB',
       }}
     >
-      {/* Badge */}
       <View
         style={{
-          alignSelf: 'center',
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 10,
-          paddingVertical: 6,
-          borderRadius: 999,
-          backgroundColor: BADGE_BG,
-          marginBottom: 12,
+          width: '100%',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: '#E5E7EB',
+          paddingVertical: 12,
+          paddingHorizontal: 18,
+          shadowColor: '#000',
+          shadowOpacity: 0.05,
+          marginTop: 40,
+          elevation: 2,
         }}
       >
-        <LockIcon />
-        <Text style={{ marginLeft: 6, fontSize: 12, fontWeight: '700', color: TEXT }}>
-          Premium content
-        </Text>
-      </View>
-
-      {/* Title + copy */}
-      <Text
-        style={{
-          fontSize: 16,
-          lineHeight: 22,
-          fontWeight: '700',
-          color: TEXT,
-          textAlign: 'center',
-          marginBottom: 6,
-        }}
-      >
-        {isLogin ? 'Sign in required' : 'Subscribe to continue'}
-      </Text>
-      <Text
-        style={{
-          fontSize: 13,
-          lineHeight: 18,
-          color: MUTED,
-          textAlign: 'center',
-          marginBottom: 14,
-        }}
-      >
-        {isLogin
-          ? 'Please sign in to read this article.'
-          : 'Become a member to unlock this article and more.'}
-      </Text>
-
-      {/* Primary CTA */}
-      <TouchableOpacity
-        onPress={onSignIn}
-        activeOpacity={0.85}
-        style={{
-          height: 44,
-          borderRadius: 10,
-          backgroundColor: BLUE,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: isLogin ? 2 : 10,
-        }}
-      >
-        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Sign In</Text>
-      </TouchableOpacity>
-
-      {/* Secondary CTA (only for premium) */}
-      {!isLogin && (
-        <TouchableOpacity
-          onPress={onViewPlans}
-          activeOpacity={0.85}
+        {/* 🔒 Lock Badge */}
+        <View
           style={{
-            height: 44,
-            borderRadius: 10,
-            borderWidth: 1.5,
-            borderColor: BLUE,
+            alignSelf: 'center',
+            flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'center',
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 999,
+            backgroundColor: '#EEF3FB',
+            marginBottom: 16,
           }}
         >
-          <Text style={{ color: BLUE, fontWeight: '700', fontSize: 15 }}>View Plans</Text>
-        </TouchableOpacity>
-      )}
+          <LockIcon />
+          <Text
+            style={{
+              marginLeft: 6,
+              fontSize: 12,
+              fontWeight: '700',
+              color: '#111827',
+            }}
+          >
+            {badgeText}
+          </Text>
+        </View>
 
-      {/* tiny reassurance line */}
-      <Text
-        style={{
-          marginTop: 10,
-          fontSize: 11,
-          textAlign: 'center',
-          color: MUTED,
-        }}
-      >
-        Secure sign-in • Cancel anytime
-      </Text>
+        {/* 🖼️ Logo */}
+        <View style={{ alignSelf: 'center', marginBottom: 12 }}>
+          <Image
+            source={require('../icons/logo1.png')}
+            style={{
+              width: 300,
+              height: 60,
+              resizeMode: 'contain',
+              alignSelf: 'center',
+            }}
+          />
+        </View>
+
+        {/* Text */}
+        <Text
+          style={{
+            textAlign: 'center',
+            color: '#111827',
+            fontWeight: '700',
+            fontSize: 16,
+            marginBottom: 8,
+          }}
+        >
+          Continue reading this article with an Arcalis News subscription
+        </Text>
+
+        <Text
+          style={{
+            textAlign: 'center',
+            color: '#6B7280',
+            fontSize: 13,
+            lineHeight: 18,
+            marginBottom: 20,
+          }}
+        >
+           {isLogin
+            ? 'Sign in to your account to continue.'
+            : isRegister
+            ? 'Please sign in to continue reading.'
+            : 'Become a member to unlock this article and more.'}
+        </Text>
+
+        {/* Buttons */}
+        <View style={{ marginTop: 2, flexDirection: 'row', flex: 1,width:'100%',gap: 10 }}>
+         {((mode === 'login' || mode === 'premium' || mode === 'register') &&
+            !isLoggedIn) && (
+            <TouchableOpacity
+              onPress={onSignIn}
+              activeOpacity={0.85}
+              style={{
+                height: 46,
+                width: mode === 'register' ? '60%' : '45%',
+                marginHorizontal: mode === 'register' ? 80 : 0,
+                borderRadius: 10,
+                backgroundColor: '#2260B2',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text
+                style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}
+              >
+                Sign In
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Always show Subscribe Now */}
+           {mode !== 'register' && (
+          <TouchableOpacity
+            onPress={onSubscribe}
+            activeOpacity={0.85}
+            style={{
+              height: 46,
+              width: isLogin && !isLoggedIn ? '48%' : '45%',
+              marginHorizontal: isLogin && !isLoggedIn ? 0 : 100,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: '#2260B2',
+              alignItems: 'center',
+              justifyContent: 'center',
+
+              marginBottom: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: '#2260B2',
+                fontWeight: '700',
+                fontSize: 15,
+              }}
+            >
+              Subscribe Now
+            </Text>
+          </TouchableOpacity>
+             )}
+        </View>
+      </View>
     </View>
   );
 };
 
-/** tiny inline lock icon (no deps) */
-const LockIcon = () => (
+/** 🔐 Lock Icon */
+type LockIconProps = {
+  size?: number;
+  tintColor?: string;
+  background?: string;
+  style?: object;
+};
+
+export const LockIcon = ({
+  size = 22,
+  tintColor = '#000',
+  background = '#EEF3FB',
+  style,
+}: LockIconProps) => (
   <View
     style={{
-      width: 18,
-      height: 18,
-      borderRadius: 9,
-      backgroundColor: '#DBE7FB',
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      backgroundColor: background,
       alignItems: 'center',
       justifyContent: 'center',
     }}
   >
-    <View
-      style={{
-        width: 9,
-        height: 7,
-        borderWidth: 1.6,
-        borderColor: '#184A8F',
-        borderRadius: 2,
-        borderTopLeftRadius: 2,
-        borderTopRightRadius: 2,
-        borderBottomLeftRadius: 2,
-        borderBottomRightRadius: 2,
-      }}
-    />
-    <View
-      style={{
-        position: 'absolute',
-        top: 3,
-        width: 8,
-        height: 5,
-        borderTopLeftRadius: 6,
-        borderTopRightRadius: 6,
-        borderWidth: 1.6,
-        borderBottomWidth: 0,
-        borderColor: '#184A8F',
-      }}
+    <Image
+      source={require('../icons/lock.png')} // 👈 update this path
+      style={[
+        {
+          width: size * 0.6,
+          height: size * 0.6,
+          tintColor: tintColor,
+          resizeMode: 'contain',
+        },
+        style,
+      ]}
     />
   </View>
 );

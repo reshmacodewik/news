@@ -8,6 +8,7 @@ import {
   Image,
   ImageBackground,
   Platform,
+  Alert,
 } from 'react-native';
 import { styles } from '../../style/LoginScreenstyles';
 import { navigate } from '../../Navigators/utils';
@@ -25,7 +26,9 @@ import {
   GoogleSignin,
   statusCodes,
   SignInSuccessResponse,
+  SignInResponse,
 } from '@react-native-google-signin/google-signin';
+import axios from 'axios';
 
 const LoginScreen = () => {
   const isFocused = useIsFocused();
@@ -40,7 +43,6 @@ const LoginScreen = () => {
         '702876724757-l3vlvrcp65lf5iqnfo18obnb71fu89fh.apps.googleusercontent.com',
       offlineAccess: true,
       scopes: ['profile', 'email'],
-      forceCodeForRefreshToken: false,
     });
   }, []);
 
@@ -81,83 +83,83 @@ const LoginScreen = () => {
 
   // ---------- GOOGLE LOGIN ----------
   const handleGoogleSignIn = async () => {
-    console.log('👉 Google Sign-In button pressed');
     try {
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      console.log('🔵 Starting Google Sign-In...');
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
 
-      // Sign-in flow
-      const gUser = (await GoogleSignin.signIn()) as SignInSuccessResponse;
-      console.log('✅ Google user:', gUser);
+      const signInResponse = await GoogleSignin.signIn();
 
-      const tokens = await GoogleSignin.getTokens();
-      const idToken = tokens?.idToken;
+      // ✅ Extract user & token correctly for the latest version
+      const user = signInResponse.data?.user;
+      const idToken = signInResponse.data?.idToken;
 
-      if (!idToken) {
-        return ShowToast('No ID token from Google', 'error');
+      if (!user || !idToken) {
+        Alert.alert('Error', 'Google sign-in failed. Please try again.');
+        return;
       }
 
-      // Extract user details safely
-      const googleUser = gUser.data?.user ?? {};
-      let decoded: any = {};
-      try {
-        decoded = jwtDecode(idToken);
-      } catch {}
+      const googleData = {
+        googleId: user.id,
+        email: user.email,
+        name: user.name || '',
+        picture: user.photo,
+        idToken,
+      };
 
-      const name = googleUser.name ?? decoded?.name ?? '';
-      const email = googleUser.email ?? decoded?.email ?? '';
-      const picture = googleUser.photo ?? decoded?.picture ?? '';
-      const googleId = googleUser.id ?? decoded?.sub ?? '';
+      console.log('📤 Sending to backend:', googleData);
 
-      console.log('📦 Sending to backend:', {
-        tokenId: idToken,
-        name,
-        email,
-        picture,
-        googleId,
-      });
+      const response = await axios.post(
+        'http://192.168.1.36:9991/api/users/social_login',
+        googleData,
+        { timeout: 10000 },
+      );
 
-      const res = await apiPost({
-        url: API_SOCIAL_LOGIN,
-        values: {
-          tokenId: idToken,
-          name,
-          email,
-          picture,
-          googleId,
-        },
-      });
+      console.log('🌍 Backend response:', response.data);
 
-      console.log('🌍 Backend response:', res);
-
-      if (res?.success && res?.data?.token) {
+      if (response.data.success && response.data.data?.token) {
         const newSession: AuthSession = {
-          accessToken: res.data.token,
+          accessToken: response.data.data.token,
           user: {
-            id: res.data.id,
-            name: res.data.name ?? name,
-            email: res.data.email ?? email,
+            id: response.data.data.id,
+            name: response.data.data.name,
+            email: response.data.data.email,
+            photo: response.data.data.photo, // if backend sends it
           },
         };
+
+        // ✅ Save session to context + storage
         signIn(newSession);
         await AsyncStorage.setItem('userSession', JSON.stringify(newSession));
-        ShowToast(res?.message ?? 'Google login successful', 'success');
+
+        ShowToast('Login successful', 'success');
         navigate('Home' as never);
       } else {
-        console.log('❌ Google login backend error:', res);
-        ShowToast(res?.message || 'Google login failed', 'error');
+        ShowToast(
+          response.data.message || response.data.error || 'Login failed',
+          'error',
+        );
       }
-    } catch (err: any) {
-      console.log('❌ Google Sign-In Error:', err);
-      if (err.code === statusCodes.SIGN_IN_CANCELLED)
-        return ShowToast('Sign-in cancelled', 'info');
-      if (err.code === statusCodes.IN_PROGRESS)
-        return ShowToast('Google sign-in already in progress', 'info');
-      if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE)
-        return ShowToast('Update Google Play Services', 'error');
-      ShowToast(err?.message || 'Google sign-in failed', 'error');
+    } catch (error: any) {
+      console.log('🔥 Google Sign-In Error:', error);
+
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log('Cancelled', 'You cancelled Google sign-in.');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log('In Progress', 'Google sign-in is already running.');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.log('Error', 'Google Play Services not available.');
+      } else if (error.message?.includes('Network Error')) {
+        console.log(
+          'Network Error',
+          'Please check your internet or server URL.',
+        );
+      } else {
+        console.log('Error', error.message || 'Something went wrong.');
+      }
     }
   };
-
 
   const isIOS = Platform.OS === 'ios';
   const buttonIcon = isIOS
