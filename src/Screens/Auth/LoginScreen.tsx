@@ -160,7 +160,68 @@ const LoginScreen = () => {
       }
     }
   };
+const handleFacebookSignIn = async () => {
+  try {
+    // ensure logout before new login
+    try { LoginManager.logOut(); } catch {}
 
+    // request permissions
+    const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
+    if (result.isCancelled) {
+      ShowToast('Facebook sign-in cancelled', 'info');
+      return;
+    }
+
+    const data = await AccessToken.getCurrentAccessToken();
+    if (!data) {
+      ShowToast('No access token received from Facebook', 'error');
+      return;
+    }
+
+    const { accessToken } = data;
+
+    // optionally fetch user info
+    const fbUser = await fetch(`https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`).then(res => res.json());
+
+    const socialData = {
+      facebookId: fbUser.id,
+      name: fbUser.name,
+      email: fbUser.email,
+      picture: fbUser.picture?.data?.url,
+      accessToken,
+    };
+
+    console.log('📤 Sending to backend:', socialData);
+
+    const response = await axios.post('http://192.168.1.36:9991/api/users/social_login', socialData);
+    console.log('🌍 Backend response:', response.data);
+
+    if (response.data.success && response.data.data?.token) {
+      const newSession = {
+        accessToken: response.data.data.token,
+        user: {
+          id: response.data.data.id,
+          name: response.data.data.name,
+          email: response.data.data.email,
+          photo: response.data.data.photo,
+        },
+      };
+
+      const { signIn } = useAuth();
+      signIn(newSession);
+      await AsyncStorage.setItem('userSession', JSON.stringify(newSession));
+
+      ShowToast('Login successful', 'success');
+      navigate('Home' as never);
+    } else {
+      ShowToast(response.data.message || 'Facebook login failed', 'error');
+    }
+
+  } catch (e: any) {
+    console.log('🔥 Facebook Login Error:', e);
+    ShowToast(e?.message || 'Facebook login failed', 'error');
+  }
+};
   const isIOS = Platform.OS === 'ios';
   const buttonIcon = isIOS
     ? require('../../icons/apple.png')
@@ -168,40 +229,40 @@ const LoginScreen = () => {
 
   const buttonText = isIOS ? 'Sign in with Apple' : 'Sign in with Facebook';
 
-  // const handlePress = isIOS ? handleAppleSignIn : handleFacebookSignIn;
+   const handlePress = isIOS ? handleAppleSignIn : handleFacebookSignIn;
 
-  // const handleFacebookSignIn = async () => {
-  //   try {
-  //     try { LoginManager.logOut(); } catch {}
-  //     const result = await LoginManager.logInWithPermissions(
-  //       ['public_profile', 'email']
-  //     );
-  //     if (result.isCancelled) return ShowToast('Facebook sign-in cancelled', 'info');
+  const handleAppleSignIn = async () => {
+    try {
+      try { LoginManager.logOut(); } catch {}
+      const result = await LoginManager.logInWithPermissions(
+        ['public_profile', 'email']
+      );
+      if (result.isCancelled) return ShowToast('Facebook sign-in cancelled', 'info');
 
-  //     const tok = await AccessToken.getCurrentAccessToken();
-  //     if (!tok?.accessToken) return ShowToast('No Facebook access token', 'error');
+      const tok = await AccessToken.getCurrentAccessToken();
+      if (!tok?.accessToken) return ShowToast('No Facebook access token', 'error');
 
-  //     const res = await apiPost({
-  //       url: API_FACEBOOK_LOGIN,
-  //       values: { accessToken: tok.accessToken.toString() },
-  //     });
+      const res = await apiPost({
+        url: API_SOCIAL_LOGIN,
+        values: { accessToken: tok.accessToken.toString() },
+      });
 
-  //     if (!res?.success || !res?.data?.token) {
-  //       return ShowToast(res?.message || res?.error || 'Facebook login failed', 'error');
-  //     }
+      if (!res?.success || !res?.data?.token) {
+        return ShowToast(res?.message || res?.error || 'Facebook login failed', 'error');
+      }
 
-  //     const session = {
-  //       accessToken: res.data.token,
-  //       user: { id: res.data.id, name: res.data.name, email: res.data.email },
-  //     };
-  //     signIn(session);
-  //     await AsyncStorage.setItem('userSession', JSON.stringify(session));
-  //     ShowToast('Login successful', 'success');
-  //     navigate('Home' as never);
-  //   } catch (e: any) {
-  //     ShowToast(e?.message || 'Facebook sign-in failed', 'error');
-  //   }
-  // };
+      const session = {
+        accessToken: res.data.token,
+        user: { id: res.data.id, name: res.data.name, email: res.data.email },
+      };
+      signIn(session);
+      await AsyncStorage.setItem('userSession', JSON.stringify(session));
+      ShowToast('Login successful', 'success');
+      navigate('Home' as never);
+    } catch (e: any) {
+      ShowToast(e?.message || 'Facebook sign-in failed', 'error');
+    }
+  };
   return (
     <View style={styles.container}>
       <ScrollView
@@ -327,7 +388,7 @@ const LoginScreen = () => {
               <Text style={styles.socialButtonText}>Sign in with Google</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.socialButton} onPress={() => {}}>
+            <TouchableOpacity style={styles.socialButton}  onPress={handlePress}>
               <Image source={buttonIcon} style={styles.socialIcon} />
               <Text style={styles.socialButtonText}>{buttonText}</Text>
             </TouchableOpacity>

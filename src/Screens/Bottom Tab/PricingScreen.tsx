@@ -586,25 +586,53 @@ const PricingScreen: React.FC = () => {
                     )}
                   </View>
 
-                  {/* BUTTON */}
-                  <TouchableOpacity
-                    style={[
-                      styles.ctaBtn,
-                      { backgroundColor: isFree ? '#2c232333' : '#333' },
-                      loadingPlan === plan._id && { opacity: 0.6 },
-                    ]}
-                    activeOpacity={0.9}
-                    disabled={isFree || loadingPlan === plan._id}
-                    onPress={() => handleSubscribe(plan._id)}
-                  >
-                    <Text style={[styles.ctaText, { color: '#fff' }]}>
-                      {isFree
-                        ? 'Activated'
-                        : loadingPlan === plan._id
-                        ? 'Processing...'
-                        : 'Subscribe Now'}
-                    </Text>
-                  </TouchableOpacity>
+                  {(() => {
+                    // 🔹 Identify user's current plan
+                    const currentPlanId = session?.user?.planId ?? null; // adjust field name if different
+                    const userHasPlan = !!currentPlanId;
+
+                    // 🔹 Determine if this plan is free
+                    const isFree =
+                      plan.price?.monthly === 0 || plan.price?.yearly === 0;
+
+                    // 🔹 Determine button label
+                    let buttonText = 'Subscribe Now';
+                    if (plan.name?.toLowerCase().includes('premium')) {
+                      buttonText = 'Go Premium';
+                    }
+                    if (isFree) {
+                      buttonText = 'Free';
+                    }
+                    if (userHasPlan && plan._id === currentPlanId) {
+                      buttonText = 'Activated';
+                    }
+
+                    // 🔹 Disable logic
+                    // 👉 If user already has a plan, disable all buttons except their active one
+                    const isDisabled =
+                      (userHasPlan && plan._id !== currentPlanId) || // disable other plans
+                      isFree || // disable free plans
+                      loadingPlan === plan._id; // disable while processing
+
+                    return (
+                      <TouchableOpacity
+                        style={[
+                          styles.ctaBtn,
+                          { backgroundColor: isDisabled ? '#ccc' : '#333' },
+                          loadingPlan === plan._id && { opacity: 0.6 },
+                        ]}
+                        activeOpacity={0.9}
+                        disabled={isDisabled}
+                        onPress={() => !isDisabled && handleSubscribe(plan._id)}
+                      >
+                        <Text style={[styles.ctaText, { color: '#fff' }]}>
+                          {loadingPlan === plan._id
+                            ? 'Processing...'
+                            : buttonText}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })()}
                 </View>
               </View>
             );

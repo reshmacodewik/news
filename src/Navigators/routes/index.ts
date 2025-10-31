@@ -15,6 +15,7 @@ import PaymentSuccess from '../../Screens/PaymentSuccess';
 import SubscriptionBillingScreen from '../../Screens/SubscriptionBillingScreen';
 import MoreScreen from '../../Screens/Bottom Tab/MoreScreen';
 import PricingScreen from '../../Screens/Bottom Tab/PricingScreen';
+import AboutScreen from '../../Screens/Bottom Tab/AboutScreen';
 
 export const notAuthenticatedRoutes = [
   {
@@ -110,5 +111,11 @@ export const notAuthenticatedRoutes = [
     component: PricingScreen,
     headerShown: false,
 
+  },
+  {
+    routeName: SCREEN_NAMES.about,
+    headerHeading: 'AboutScreen',
+    component: AboutScreen,
+    headerShown: false,
   }
 ];

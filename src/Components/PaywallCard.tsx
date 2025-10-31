@@ -128,7 +128,7 @@ const PaywallCard: React.FC<Props> = ({
               activeOpacity={0.85}
               style={{
                 height: 46,
-                width: mode === 'register' ? '60%' : '45%',
+                width: mode === 'register' ? '60%' : '48%',
                 marginHorizontal: mode === 'register' ? 80 : 0,
                 borderRadius: 10,
                 backgroundColor: '#2260B2',
@@ -151,7 +151,7 @@ const PaywallCard: React.FC<Props> = ({
             activeOpacity={0.85}
             style={{
               height: 46,
-              width: isLogin && !isLoggedIn ? '48%' : '45%',
+              width: isLogin && !isLoggedIn ? '48%' : '48%',
               marginHorizontal: isLogin && !isLoggedIn ? 0 : 100,
               borderRadius: 10,
               borderWidth: 1,
