@@ -113,8 +113,17 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       setCommentText('');
       setIsVisible(false);
       refetchComments();
-      // ✅ Refresh article details query
-      queryClient.invalidateQueries({ queryKey: ['article-details', slug] });
+
+      // ✅ Instant optimistic update
+      queryClient.setQueryData(['article-details', slug], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          commentCount: (oldData.commentCount || 0) + 1,
+        };
+      });
+
+      // ✅ No invalidate here (so it doesn’t reset)
     },
   });
 
@@ -146,11 +155,15 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       return res.data;
     },
     onSuccess: () => {
-      refetch(); // ✅ Refresh article details
-    },
-    onError: (_err, likeJustSet) => {
-      setIsFav(!likeJustSet);
-      setLocalLikeCount(c => c + (likeJustSet ? -1 : +1));
+      // ✅ Optimistic cache update
+      queryClient.setQueryData(['article-details', slug], (oldData: any) => {
+        if (!oldData) return oldData;
+        const isLiked = !isFav;
+        return {
+          ...oldData,
+          likeCount: (oldData.likeCount || 0) + (isLiked ? 1 : -1),
+        };
+      });
     },
   });
 
@@ -186,7 +199,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <Image source={BACK} style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={styles.appTitle} numberOfLines={1}>
-        Arcalis News
+          Arcalis News
         </Text>
         <View style={{ width: scale(24) }} />
       </View>
@@ -268,8 +281,8 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                   source={require('../icons/comment1.png')}
                   style={styles.chatIcon}
                 />
-                {data?.commentCount && data.commentCount > 0 && (
-                  <Text style={styles.likeCount}>{data.commentCount}</Text>
+                {(data?.commentCount ?? 0) > 0 && (
+                  <Text style={styles.likeCount}>{data?.commentCount}</Text>
                 )}
               </TouchableOpacity>
             </View>
