@@ -375,7 +375,7 @@ const PricingScreen: React.FC = () => {
       setLoadingPlan(planId);
 
       const res = await fetch(
-        `http://192.168.1.36:9991/api/billing/create-checkout`,
+        `https://api.arcalisnews.com/api/billing/create-checkout`,
         {
           method: 'POST',
           headers: {
@@ -433,7 +433,7 @@ const PricingScreen: React.FC = () => {
           try {
             console.log('🔄 Checking payment for:', transactionId);
             const res = await fetch(
-              `http://192.168.1.36:9991/api/billing/billing-check/${transactionId}`,
+              `https://api.arcalisnews.com/api/billing/billing-check/${transactionId}`,
             );
             const json = await res.json();
             const status = json?.data?.paymentStatus;

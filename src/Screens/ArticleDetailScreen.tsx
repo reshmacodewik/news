@@ -186,7 +186,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <Image source={BACK} style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={styles.appTitle} numberOfLines={1}>
-          Views
+        Arcalis News
         </Text>
         <View style={{ width: scale(24) }} />
       </View>

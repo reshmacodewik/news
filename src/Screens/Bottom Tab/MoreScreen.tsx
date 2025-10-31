@@ -47,6 +47,7 @@ const LAYERS = require('../../icons/verison.png');
 const LOGOUT = require('../../icons/logout.png');
 const CHEVRON = require('../../icons/arrow.png');
 const AVATAR = require('../../icons/user.png');
+const DELETE = require('../../icons/delete.png');
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
 // Reusable Row Component
@@ -356,7 +357,7 @@ const handleDeleteAccount = async () => {
             activeOpacity={0.85}
             onPress={() => handleDeleteAccount()}
           >
-            <Image source={LOGOUT} style={styles.logoutIcon} />
+            <Image source={DELETE} style={styles.logoutIcon} />
             <Text style={styles.logoutText}>Delete Account</Text>
           </TouchableOpacity>
         )}
