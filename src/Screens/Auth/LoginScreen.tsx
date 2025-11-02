@@ -111,7 +111,7 @@ const LoginScreen = () => {
       console.log('📤 Sending to backend:', googleData);
 
       const response = await axios.post(
-        'http://192.168.1.36:9991/api/users/social_login',
+        'https://api.arcalisnews.com/api/users/social_login',
         googleData,
         { timeout: 10000 },
       );
@@ -193,7 +193,7 @@ const handleFacebookSignIn = async () => {
 
     console.log('📤 Sending to backend:', socialData);
 
-    const response = await axios.post('http://192.168.1.36:9991/api/users/social_login', socialData);
+    const response = await axios.post('https://api.arcalisnews.com/api/users/social_login', socialData);
     console.log('🌍 Backend response:', response.data);
 
     if (response.data.success && response.data.data?.token) {

@@ -113,9 +113,12 @@ const HomeScreen: React.FC = () => {
     navigate('ArticleDetail' as never, { id, slug } as never);
   };
 
-  useFocusEffect(() => {
-    StatusBar.setBarStyle('light-content');
-  });
+useFocusEffect(() => {
+  StatusBar.setBarStyle('light-content'); // white text/icons
+  StatusBar.setBackgroundColor('transparent'); // optional: blend with background image
+  StatusBar.setTranslucent(true);
+});
+
 
   // === STATIC TAB TYPES ===
   const TABS = [
