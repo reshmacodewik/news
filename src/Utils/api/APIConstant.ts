@@ -28,4 +28,6 @@ export const API_BILLING_CHECK: string="billing/billing-check"
 export const API_SOCIAL_LOGIN: string = "/users/social_login";
 export const API_DOMAIN_LIST : string="/domain/all"
 export const API_DELETE_ACCOUNT: string = "/users/profile";
+export const API_UPDATE_COMMENT: string = "/users/comments/update/:id";
+export const API_DELETE_COMMENT: string = "/users/comments/delete/:id";
 

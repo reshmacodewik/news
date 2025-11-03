@@ -1,28 +1,42 @@
 import "react-native-gesture-handler";
 import React from "react";
-import { StatusBar, useColorScheme, StyleSheet } from "react-native";
+import { StatusBar, StyleSheet } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Toast from 'react-native-toast-message';
-
+import Toast from "react-native-toast-message";
 import ApplicationNavigator from "./src/Navigators/Index";
 import { AuthProvider } from "./src/Screens/Auth/AuthContext";
- // <-- import AuthProvider
+import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 
 const queryClient = new QueryClient();
-function App() {
-  const isDarkMode = useColorScheme() === "dark";
 
+const AppContent = () => {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  return (
+    <>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#000" : "#fff"}
+      />
+      <ApplicationNavigator />
+      <Toast />
+    </>
+  );
+};
+
+export default function App() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider> {/* <-- Wrap the whole app */}
-          <StatusBar barStyle={"light-content"}/>
-            <ApplicationNavigator />
+          <AuthProvider>
+            <ThemeProvider>
+              <AppContent />
+            </ThemeProvider>
           </AuthProvider>
-          <Toast />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -30,9 +44,5 @@ function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
 });
-
-export default App;

@@ -28,6 +28,7 @@ import { useAuth } from '../Auth/AuthContext';
 import Header from '../../Components/Header';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDomainByType } from '../../Hook/useDomainByType';
+import NewsCard from '../../Components/NewsCard';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -69,7 +70,14 @@ const TrendingScreen: React.FC = () => {
       return res.data ?? [];
     },
   });
+  const getCategoryTitle = (articleCategoryId: any) => {
+    if (!articleCategoryId) return 'General';
+    if (typeof articleCategoryId === 'object' && articleCategoryId.title)
+      return articleCategoryId.title;
 
+    const match = categories.find((c: any) => c._id === articleCategoryId);
+    return match?.title || 'General';
+  };
   const rawCategoryArray: any[] = useMemo(() => {
     if (Array.isArray(categoryDataRaw)) return categoryDataRaw;
     if (Array.isArray((categoryDataRaw as any)?.data))
@@ -205,46 +213,31 @@ const TrendingScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + scale(80) }}
       >
-        {loading ? (
+         {loading ? (
           <ActivityIndicator style={{ marginTop: scale(20) }} />
         ) : (
-          articles.map(item => (
-            <TouchableOpacity
-              key={item._id}
-              style={styles.rowCard}
-              onPress={() => handleArticlePress(item._id, item.slug)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.rowLeft}>
-                <Text style={styles.rowTitle} numberOfLines={2}>
-                  {item.title}
-                </Text>
-                <Text
-                  style={styles.metaText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {(item.description || '').replace(/<[^>]+>/g, '')}
-                </Text>
-                <View style={styles.metaRow}>
-                  <Image
-                    source={require('../../icons/comment.png')}
-                    style={styles.metaIconImg}
-                  />
-                  <Text style={styles.metaText}>{item.commentCount ?? 0}</Text>
-                  <View style={{ width: 10 }} />
-                  <Image
-                    source={require('../../icons/eye.png')}
-                    style={styles.metaIconImg}
-                  />
-                  <Text style={styles.metaText}>{item.viewCount ?? 0}+</Text>
-                </View>
-              </View>
-              {!!item.image && (
-                <Image source={{ uri: item.image }} style={styles.rowThumb} />
-              )}
-            </TouchableOpacity>
-          ))
+          articles.map(item => {
+            const rawCategory =
+              item.articleCategoryId?.title ||
+              getCategoryTitle(item.articleCategoryId) ||
+              'Uncategorized';
+
+            const category =
+              rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1);
+
+            return (
+              <NewsCard
+                key={item._id}
+                category={category}
+                title={item.title}
+                description={(item.description || '').replace(/<[^>]+>/g, '')}
+                image={item.image}
+                commentCount={item.commentCount ?? 0}
+                viewCount={item.viewCount ?? 0}
+                onPress={() => handleArticlePress(item._id, item.slug)}
+              />
+            );
+          })
         )}
       </ScrollView>
     </View>

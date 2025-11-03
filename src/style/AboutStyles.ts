@@ -96,4 +96,20 @@ export const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: scale(16),
   },
+  stickyHeaderContainer: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  zIndex: 10, // ensures it stays on top
+},
+
+headerBackground: {
+  width: '100%',
+  height: 180, // adjust based on design
+  justifyContent: 'flex-start',
+},
+
+
+
 });

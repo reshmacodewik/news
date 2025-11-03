@@ -101,7 +101,65 @@ export const styles = StyleSheet.create({
     color: '#707070',
     marginBottom: 10,
   },
-
+    row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+ headerRow: {
+    backgroundColor: '#f7f7f8',
+  },
+  cell: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 13,
+    color: '#333',
+  },
+    tablecontainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    margin: 2,
+    elevation: 2,
+   
+  },
+  headerCell: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#444',
+  },
+  statusBadge: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  paid: {
+    backgroundColor: '#e6f5ec',
+  },
+  pending: {
+    backgroundColor: '#fff5e0',
+  },
+  failed: {
+    backgroundColor: '#fdecea',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  paidText: {
+    color: '#1a7f37',
+  },
+  pendingText: {
+    color: '#b26a00',
+  },
+  failedText: {
+    color: '#d32f2f',
+  },
   /* 💳 Billing Card */
   billingCard: {
     borderBottomWidth: 1,
@@ -128,21 +186,18 @@ export const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  statusBadge: {
-    borderRadius: 6,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-  },
+  // statusBadge: {
+  //   borderRadius: 6,
+  //   paddingVertical: 3,
+  //   paddingHorizontal: 8,
+  // },
   statusPaid: {
     backgroundColor: '#E5F6EA',
   },
   statusPending: {
     backgroundColor: '#FFF2D9',
   },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
+ 
   statusTextPaid: {
     color: '#1B873F',
   },

@@ -1,4 +1,5 @@
 import { StyleSheet, Dimensions, PixelRatio } from 'react-native';
+import { darkColors } from '../theme/colors';
 
 const { width, height } = Dimensions.get('window');
 const baseW = 375;
@@ -6,7 +7,7 @@ export const scale = (n: number) => (width / baseW) * n;
 const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#e3e9ee' },
+  container: { flex: 1, backgroundColor: darkColors.background },
 
   // ===== Header / Hero =====
   header: {
@@ -226,8 +227,16 @@ export const styles = StyleSheet.create({
     marginTop: scale(5),
     backgroundColor: '#EEF5FF', // light blue like mock
     borderRadius: scale(14),
+    borderWidth:1,
+    borderColor:'#D1D9E6' 
   },
-  rowLeft: { flex: 1, paddingRight: scale(10), marginBottom: scale(15) },
+  rowLeft: { flex: 1, paddingRight: scale(10), marginBottom: scale(15),flexDirection:'row' },
+  rowRight: {
+    flex:1,
+    flexDirection: 'row',
+    
+    gap: scale(8),
+  },
   rowTitle: {
     fontSize: 18,
     fontWeight: '500',
@@ -235,7 +244,7 @@ export const styles = StyleSheet.create({
     marginBottom: scale(5),
   },
   rowThumb: {
-    width: scale(135),
+    width: scale(100),
     height: scale(97),
     borderRadius: scale(10),
   },

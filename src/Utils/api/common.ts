@@ -18,6 +18,7 @@ interface ApiParamsQuery {
 interface postParams {
   url: string;
   values: any;
+  isForm?: boolean;
   headers?: Record<string, string>;
 }
 
@@ -85,16 +86,20 @@ export const getApiByParams = async ({
 export const apiPost = async ({
   url,
   values,
-  
+  isForm = false,
 }: postParams): Promise<any> => {
   try {
-    const res = await defaultAxios.post(url, values);
+    const headers = isForm
+      ? { 'Content-Type': 'multipart/form-data' }
+      : { 'Content-Type': 'application/json' };
+
+    const res = await defaultAxios.post(url, values, { headers });
     return res.data;
   } catch (err: any) {
-    //ShowToast(err?.response?.data?.error, 'error');
     return err?.response?.data;
   }
 };
+
 
 export const apiPATCH = async ({ url, values }: postParams): Promise<any> => {
   try {

@@ -12,6 +12,7 @@ import {
   Platform,
   Keyboard,
   Alert,
+  Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../../style/MoreStyles';
@@ -31,6 +32,9 @@ import { useIsFocused } from '@react-navigation/native';
 import Header from '../../Components/Header';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+import { useTheme } from '../../context/ThemeContext';
+
+
 // ---- Assets ----
 const LOGO = require('../../icons/logoblack.png');
 const AVATAR_BG = require('../../icons/user.png');
@@ -48,6 +52,9 @@ const LOGOUT = require('../../icons/logout.png');
 const CHEVRON = require('../../icons/arrow.png');
 const AVATAR = require('../../icons/user.png');
 const DELETE = require('../../icons/delete.png');
+const DARKMODE = require('../../icons/dark_mode.png');
+const LIGHTMODE = require('../../icons/day-mode.png');
+// ---- End Assets ----
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
 // Reusable Row Component
@@ -86,8 +93,9 @@ const MoreScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const confirmRef = React.useRef<TextInput>(null);
   const isFocused = useIsFocused();
+  const { theme, toggleTheme } = useTheme();
 
-const userId = session?.user?.id;
+  const userId = session?.user?.id;
 
   const openNewPassword = () => {
     if (!session?.accessToken) {
@@ -175,42 +183,49 @@ const userId = session?.user?.id;
       ShowToast('Failed to logout. Try again.');
     }
   };
-const handleDeleteAccount = async () => {
-  if (!userId) {
-    ShowToast('User not logged in');
-    return;
-  }
+  const handleDeleteAccount = async () => {
+    if (!userId) {
+      ShowToast('User not logged in');
+      return;
+    }
 
-  Alert.alert(
-    'Confirm Delete',
-    'Are you sure you want to delete your account? This action cannot be undone.',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const res = await apiDelete({ url: `${API_DELETE_ACCOUNT}/${userId}` });
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete your account? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const res = await apiDelete({
+                url: `${API_DELETE_ACCOUNT}/${userId}`,
+              });
 
-            if (res?.success) {
-              ShowToast(res?.message || 'Account deleted successfully');
-              await signOut();
-              navigate('Home' as never);
-            } else {
-              ShowToast(res?.message || 'Failed to delete account');
+              if (res?.success) {
+                ShowToast(res?.message || 'Account deleted successfully');
+                await signOut();
+                navigate('Home' as never);
+              } else {
+                ShowToast(res?.message || 'Failed to delete account');
+              }
+            } catch (err) {
+              console.log('Delete error:', err);
+              ShowToast('Something went wrong. Please try again.');
             }
-          } catch (err) {
-            console.log('Delete error:', err);
-            ShowToast('Something went wrong. Please try again.');
-          }
+          },
         },
-      },
-    ]
-  );
-};
-
-
+      ],
+    );
+  };
+// const handlDarkModeToggle = async (isDarkMode: boolean) => {
+//   try {
+//     await setDarkMode(!isDarkMode);
+//       toggleTheme(!isDarkMode);
+//   } catch (error) {
+//     console.log('Error toggling dark mode:', error);
+//   }
   return (
     <View style={styles.container}>
       {/* Safe top */}
@@ -348,6 +363,29 @@ const handleDeleteAccount = async () => {
                 {version} ({buildNumber})
               </Text>
             </View>
+          </View>
+          <View style={[styles.row, { alignItems: 'center' }]}>
+            <Image
+              source={theme === 'dark' ? LIGHTMODE : DARKMODE}
+              style={[
+                styles.rowIcon,
+                { tintColor: theme === 'dark' ? '#fff' : '#000' },
+              ]}
+            />
+            <Text
+              style={[
+                styles.rowLabel,
+                { color: theme === 'dark' ? '#fff' : '#000' },
+              ]}
+            >
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </Text>
+            <Switch
+              value={theme === 'dark'}
+              onValueChange={toggleTheme}
+              thumbColor={theme === 'dark' ? '#fff' : '#000'}
+              trackColor={{ false: '#ccc', true: '#666' }}
+            />
           </View>
         </View>
 

@@ -12,6 +12,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   ImageSourcePropType,
+  Animated,
 } from 'react-native';
 import { styles } from '../../style/HomeStyles';
 import { navigate } from '../../Navigators/utils';
@@ -19,12 +20,15 @@ import { useAuth } from '../Auth/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../../Utils/api/common';
 import {
+  API_ARTICLES_CATEGORIES,
   API_ARTICLES_LIST,
   API_GET_ARTICLES_BY_TYPE,
 } from '../../Utils/api/APIConstant';
 import Header from '../../Components/Header';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDomainByType } from '../../Hook/useDomainByType';
+import NewsCard from '../../Components/NewsCard';
+import { useTheme } from '../../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const toSrc = (img: ImageSourcePropType | string) =>
@@ -55,8 +59,11 @@ const HomeScreen: React.FC = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [trendingNews, setTrendingNews] = useState<Article[]>([]);
   const [selectedType, setSelectedType] = useState('top-news');
-
-  const { data: allArticles = [], refetch } = useQuery({
+  const [showTrending, setShowTrending] = useState(true);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  // === FETCH ALL ARTICLES ===
+  const colors = useTheme();
+  const { data: allArticles = [], refetch: refetchAllArticles } = useQuery({
     queryKey: ['articles', domain?.type],
     queryFn: async () => {
       const res = await getApiWithOutQuery({
@@ -65,10 +72,19 @@ const HomeScreen: React.FC = () => {
       return res.data?.articles ?? [];
     },
   });
+  const { data: categories = [], refetch: refetchCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await getApiWithOutQuery({
+        url: API_ARTICLES_CATEGORIES,
+      });
+      return res.data?.articles ?? []; // categories list
+    },
+  });
 
   useFocusEffect(
     React.useCallback(() => {
-      refetch();
+      refetchAllArticles();
     }, []),
   );
 
@@ -103,6 +119,16 @@ const HomeScreen: React.FC = () => {
     [allArticles, selectedType],
   );
 
+  // Helper to get category title
+  const getCategoryTitle = (articleCategoryId: any) => {
+    if (!articleCategoryId) return 'General';
+    if (typeof articleCategoryId === 'object' && articleCategoryId.title)
+      return articleCategoryId.title;
+
+    const match = categories.find((c: any) => c._id === articleCategoryId);
+    return match?.title || 'General';
+  };
+
   // === HANDLE SLIDE SCROLL ===
   const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / width);
@@ -113,12 +139,11 @@ const HomeScreen: React.FC = () => {
     navigate('ArticleDetail' as never, { id, slug } as never);
   };
 
-useFocusEffect(() => {
-  StatusBar.setBarStyle('light-content'); // white text/icons
-  StatusBar.setBackgroundColor('transparent'); // optional: blend with background image
-  StatusBar.setTranslucent(true);
-});
-
+  useFocusEffect(() => {
+    StatusBar.setBarStyle('light-content'); // white text/icons
+    StatusBar.setBackgroundColor('transparent'); // optional: blend with background image
+    StatusBar.setTranslucent(true);
+  });
 
   // === STATIC TAB TYPES ===
   const TABS = [
@@ -127,16 +152,29 @@ useFocusEffect(() => {
     { label: 'Trending', type: 'trending' },
     { label: 'Breaking', type: 'breaking' },
   ];
-
+  const lastOffset = useRef(0);
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentOffset = e.nativeEvent.contentOffset.y;
+    const diff = currentOffset - lastOffset.current;
+    if (diff > 10 && showTrending) {
+      // scrolling down -> hide
+      setShowTrending(false);
+    } else if (diff < -10 && !showTrending) {
+      // scrolling up -> show
+      setShowTrending(true);
+    }
+    lastOffset.current = currentOffset;
+  };
   return (
-    <View style={styles.container}>
-      <ScrollView
-        bounces={false}
-        alwaysBounceVertical={false}
-        style={styles.content}
-        contentContainerStyle={{ paddingBottom: 80 }}
-      >
-        {/* HEADER */}
+    <Animated.ScrollView
+      bounces={false}
+      alwaysBounceVertical={false}
+      style={styles.content}
+      contentContainerStyle={{ paddingBottom: 80 }}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
+    >
+      <View style={[styles.container]}>
         <ImageBackground source={BG} style={styles.header} resizeMode="cover">
           <Header
             logoSource={LOGO}
@@ -246,38 +284,26 @@ useFocusEffect(() => {
           keyExtractor={item => item._id}
           scrollEnabled={false}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.rowCard}
-              activeOpacity={0.9}
+            <NewsCard
+              category={
+                (
+                  item.articleCategoryId.title ||
+                  getCategoryTitle(item.articleCategoryId)
+                )
+                  .charAt(0)
+                  .toUpperCase() +
+                (
+                  item.articleCategoryId.title ||
+                  getCategoryTitle(item.articleCategoryId)
+                ).slice(1)
+              }
+              title={item.title}
+              description={item.description}
+              image={item.image}
+              commentCount={item.commentCount}
+              viewCount={item.viewCount}
               onPress={() => handleArticlePress(item._id, item.slug)}
-            >
-              <View style={styles.rowLeft}>
-                <Text style={styles.rowTitle} numberOfLines={2}>
-                  {item.title}
-                </Text>
-                <Text
-                  style={styles.metaText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {(item.description || '').replace(/<[^>]+>/g, '')}
-                </Text>
-                <View style={styles.metaRow}>
-                  <Image
-                    source={require('../../icons/comment.png')}
-                    style={styles.metaIconImg}
-                  />
-                  <Text style={styles.metaText}>{item.commentCount}</Text>
-                  <View style={{ width: 10 }} />
-                  <Image
-                    source={require('../../icons/eye.png')}
-                    style={styles.metaIconImg}
-                  />
-                  <Text style={styles.metaText}>{item.viewCount}+</Text>
-                </View>
-              </View>
-              <Image source={{ uri: item.image }} style={styles.rowThumb} />
-            </TouchableOpacity>
+            />
           )}
           ListEmptyComponent={() => (
             <View
@@ -294,8 +320,8 @@ useFocusEffect(() => {
           )}
           ListFooterComponent={<View style={{ height: 16 }} />}
         />
-      </ScrollView>
-    </View>
+      </View>
+    </Animated.ScrollView>
   );
 };
 

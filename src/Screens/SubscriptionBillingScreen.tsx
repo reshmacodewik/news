@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Linking,
   Image,
+  FlatList,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../style/SubscriptionBillingStyles';
@@ -17,6 +18,19 @@ import { useAuth } from './Auth/AuthContext';
 import { API_BILLING_LIST } from '../Utils/api/APIConstant';
 
 const BACK_ARROW = require('../icons/back.png');
+
+interface Payment {
+  billingCycle: string;
+  startDate: string;
+  endDate: string;
+  status: 'Paid' | 'Pending' | 'Failed';
+  amount: string;
+  createdAt: string;
+  planId?: {
+    id?: string;
+    name?: string;
+  };
+}
 
 const SubscriptionBillingScreen = () => {
   const insets = useSafeAreaInsets();
@@ -31,16 +45,56 @@ const SubscriptionBillingScreen = () => {
       const res = await getApiWithOutQuery({
         url: `${API_BILLING_LIST}/${userId}`,
       });
-      console.log('resp', res);
       return res?.data ?? { payments: [], upgradeAvailable: false };
     },
   });
 
-  const payments = data?.payments ?? [];
+  const payments: Payment[] = data?.payments ?? [];
 
   const handleViewInvoice = (url: string) => {
     if (url) Linking.openURL(url);
   };
+
+  const renderItem = ({ item }: { item: Payment }) => (
+    <View style={styles.row}>
+      <Text style={styles.cell}>{item.billingCycle}</Text>
+      <Text style={styles.cell}>{item.startDate}</Text>
+      <Text style={styles.cell}>{item.endDate}</Text>
+
+      <View
+        style={[
+          styles.statusBadge,
+          item.status === 'Paid'
+            ? styles.paid
+            : item.status === 'Pending'
+              ? styles.pending
+              : styles.failed,
+        ]}
+      >
+        <Text
+          style={[
+            styles.statusText,
+            item.status === 'Paid'
+              ? styles.paidText
+              : item.status === 'Pending'
+                ? styles.pendingText
+                : styles.failedText,
+          ]}
+        >
+          {item.status}
+        </Text>
+      </View>
+
+      <Text style={styles.cell}>${item.amount}</Text>
+      <Text style={styles.cell}>
+        {new Date(item.createdAt).toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })}
+      </Text>
+    </View>
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -80,7 +134,7 @@ const SubscriptionBillingScreen = () => {
               <View style={styles.bannerIconCircle}>
                 <Text style={styles.bannerIcon}>!</Text>
               </View>
-              <View style={{ flex: 1 ,flexDirection: 'row'}}>
+              <View style={{ flex: 1, flexDirection: 'row' }}>
                 <View style={{ flex: 0 }}>
                   <Text style={styles.bannerTitle}>
                     You are on the {payments[0]?.planId?.name} plan.
@@ -90,9 +144,9 @@ const SubscriptionBillingScreen = () => {
                     {new Date(payments[0]?.endDate).toLocaleDateString()}.
                   </Text>
                 </View>
-
-                {/* ✅ Conditional Upgrade Button */}
               </View>
+
+              {/* ✅ Conditional Upgrade Button */}
               {(() => {
                 const endDate = new Date(payments[0]?.endDate);
                 const today = new Date();
@@ -104,7 +158,6 @@ const SubscriptionBillingScreen = () => {
                   payments[0]?.planId?.name?.toLowerCase() ?? '';
                 let showUpgrade = false;
 
-                // Match plans containing keywords
                 const isWeekly =
                   currentPlan.includes('week') ||
                   currentPlan.includes('standard');
@@ -113,12 +166,10 @@ const SubscriptionBillingScreen = () => {
                   currentPlan.includes('year') ||
                   currentPlan.includes('annual');
 
-                // Weekly/Standard plan → show upgrade 1 day before expiry
-                if (isWeekly && daysLeft <= 1) {
-                  showUpgrade = true;
-                }
-                // Monthly plan → show upgrade anytime (for annual upgrade)
-                else if (isMonthly && daysLeft <= 5) {
+                if (
+                  (isWeekly && daysLeft <= 1) ||
+                  (isMonthly && daysLeft <= 5)
+                ) {
                   showUpgrade = true;
                 }
 
@@ -132,7 +183,6 @@ const SubscriptionBillingScreen = () => {
                     </TouchableOpacity>
                   );
                 }
-
                 return null;
               })()}
             </View>
@@ -149,45 +199,43 @@ const SubscriptionBillingScreen = () => {
               No billing history found.
             </Text>
           ) : (
-            payments.map((item: any) => (
-              <View key={item._id} style={styles.billingCard}>
-                <View style={styles.billingRow}>
-                  <Text style={styles.billingDate}>
-                    {new Date(item.createdAt).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: '2-digit',
-                      year: 'numeric',
-                    })}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ flexDirection: 'column' }}
+            >
+              <View style={styles.tablecontainer}>
+                {/* Table Header */}
+                <View style={[styles.row, styles.headerRow]}>
+                  <Text style={[styles.headerCell, { minWidth: 120 }]}>
+                    Payment Cycle
                   </Text>
-
-                  <Text style={styles.billingAmount}>
-                    ${item.amount} {item.currency}
+                  <Text style={[styles.headerCell, { minWidth: 120 }]}>
+                    Start Date
+                  </Text>
+                  <Text style={[styles.headerCell, { minWidth: 120 }]}>
+                    End Date
+                  </Text>
+                  <Text style={[styles.headerCell, { minWidth: 130 }]}>
+                    Payment Status
+                  </Text>
+                  <Text style={[styles.headerCell, { minWidth: 100 }]}>
+                    Amount
+                  </Text>
+                  <Text style={[styles.headerCell, { minWidth: 150 }]}>
+                    CreatedAt
                   </Text>
                 </View>
 
-                <View style={styles.billingFooter}>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      item.paymentStatus === 'completed'
-                        ? styles.statusPaid
-                        : styles.statusPending,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        item.paymentStatus === 'completed'
-                          ? styles.statusTextPaid
-                          : styles.statusTextPending,
-                      ]}
-                    >
-                      {item.paymentStatus}
-                    </Text>
-                  </View>
-                </View>
+                {/* Table Body */}
+                <FlatList
+                  data={payments}
+                  renderItem={renderItem}
+                  keyExtractor={(_, index) => index.toString()}
+                  scrollEnabled={false}
+                />
               </View>
-            ))
+            </ScrollView>
           )}
         </ScrollView>
       )}

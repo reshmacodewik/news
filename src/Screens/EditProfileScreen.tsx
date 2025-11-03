@@ -6,14 +6,24 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiPost, getApiWithOutQuery } from '../Utils/api/common';
-import { API_EDIT_PROFILE, API_GET_PROFILE } from '../Utils/api/APIConstant';
+import { apiPost } from '../Utils/api/common';
+import {
+  API_GET_PROFILE,
+  API_EDIT_PROFILE,
+} from '../Utils/api/APIConstant';
+import { getApiWithOutQuery } from '../Utils/api/common';
 import { goBackNavigation } from '../Navigators/utils';
 import styles from '../style/EditProfileStyles';
+
+const BACK_ARROW = require('../icons/back.png');
+const USER_ICON = require('../icons/user.png');
+const CAMERA_ICON = require('../icons/camera.png');
 
 interface ImageInterface {
   uri: string;
@@ -22,129 +32,103 @@ interface ImageInterface {
   fileSize?: number;
 }
 
-const BACK_ARROW = require('../icons/back.png');
-const USER_ICON = require('../icons/user.png');
-const CAMERA_ICON = require('../icons/camera.png');
-
 const EditProfileScreen = () => {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const [isNewPhoto, setIsNewPhoto] = useState(false);
-  // Form state
+
   const [imageUri, setImageUri] = useState<ImageInterface | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [language, setLanguage] = useState('en-US');
+  const [timezone, setTimezone] = useState('GMT+05:30');
+  const [saving, setSaving] = useState(false);
 
-  // Fetch profile
-  const { data: profileData, isError } = useQuery({
+  // ✅ Fetch Profile
+  const { data: profileData, refetch } = useQuery({
     queryKey: ['profile-info'],
     queryFn: async () => {
-      try {
-        const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
-        return res.data ?? {};
-      } catch (err: any) {
-        console.log(
-          'Failed to fetch profile',
-          err.response?.status,
-          err.response?.data,
-        );
-        throw err;
-      }
+      const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
+      return res.data ?? {};
     },
   });
 
-  // Prefill form when data arrives
+  // ✅ Prefill data
   useEffect(() => {
     if (profileData) {
       setName(profileData.name || '');
       setEmail(profileData.email || '');
       setPhone(profileData.phoneNumber || '');
+      setLanguage(profileData.language || 'en-US');
+      setTimezone(profileData.timezone || 'GMT+05:30');
       if (profileData.photo) {
         setImageUri({ uri: profileData.photo });
       }
     }
   }, [profileData]);
 
-  // Mutation to update profile
-  const { mutate: updateProfile, isPending: updating } = useMutation({
-    mutationFn: async (payload: FormData) => {
-      try {
-        const res = await apiPost({ url: API_EDIT_PROFILE, values: payload });
-        return res.data;
-      } catch (err: any) {
-        console.log(
-          'Failed to update profile',
-          err.response?.status,
-          err.response?.data,
-        );
-        throw err;
-      }
-    },
-    onSuccess: () => {
-      console.log('Profile updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['profile-info'] });
-      goBackNavigation();
-    },
-  });
-
-  const handleBackPress = () => goBackNavigation();
-  useEffect(() => {
-    if (profileData) {
-      setName(profileData.name || '');
-      setEmail(profileData.email || '');
-      setPhone(profileData.phoneNumber || '');
-      if (profileData.photo) {
-        setImageUri({ uri: profileData.photo });
-        setIsNewPhoto(false);
-      }
-    }
-  }, [profileData]);
-
-  // picker: this will be a LOCAL URI – mark as new
+  // ✅ Image Picker
   const pickImage = () => {
-    launchImageLibrary(
-      { mediaType: 'photo', includeBase64: false },
-      response => {
-        const asset = response?.assets?.[0];
-        if (asset?.uri) {
-          setImageUri({
-            uri: asset.uri,
-            fileName: asset.fileName || `profile-${Date.now()}.jpg`,
-            type: asset.type || 'image/jpeg',
-            fileSize: asset.fileSize,
-          });
-          setIsNewPhoto(true);
-        }
-      },
-    );
+    launchImageLibrary({ mediaType: 'photo' }, (response) => {
+      const asset = response?.assets?.[0];
+      if (asset?.uri) {
+        setImageUri({
+          uri: asset.uri,
+          fileName: asset.fileName ?? `profile-${Date.now()}.jpg`,
+          type: asset.type ?? 'image/jpeg',
+        });
+      }
+    });
   };
-  // Save profile
-  const handleSave = () => {
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('email', email);
-    formData.append('phoneNumber', phone);
 
-    if (imageUri?.uri) {
-      // React Native requires this shape
-      formData.append('photo', {
-        uri: imageUri.uri,
-        name: imageUri.fileName ?? `profile-${Date.now()}.jpg`,
-        type: imageUri.type ?? 'image/jpeg',
-      } as any);
+  // ✅ Save Profile
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const formData = new FormData();
+      formData.append('name', name.trim());
+      formData.append('email', email);
+      formData.append('phoneNumber', phone);
+      formData.append('language', language);
+      formData.append('timezone', timezone);
+
+      if (imageUri?.uri && imageUri.uri.startsWith('file')) {
+        formData.append('photo', {
+          uri: imageUri.uri,
+          name: imageUri.fileName ?? `profile-${Date.now()}.jpg`,
+          type: imageUri.type ?? 'image/jpeg',
+        } as any);
+      }
+
+      const res = await apiPost({
+        url: API_EDIT_PROFILE,
+        values: formData,
+        isForm: true, // ✅ Tell API layer it’s multipart/form-data
+      });
+
+      if (res?.success) {
+        Alert.alert('Success', 'Profile updated successfully!');
+        await queryClient.invalidateQueries({ queryKey: ['profile-info'] });
+        refetch();
+        goBackNavigation();
+      } else {
+        Alert.alert('Error', res?.message || 'Failed to update profile');
+      }
+    } catch (err: any) {
+      console.log('Profile update failed:', err);
+      Alert.alert('Error', 'Something went wrong while saving.');
+    } finally {
+      setSaving(false);
     }
-
-    updateProfile(formData);
   };
 
   return (
     <View style={styles.container}>
       <View style={{ height: insets.top }} />
 
-      {/* Top Bar */}
+      {/* Header */}
       <View style={styles.topBar}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+        <TouchableOpacity onPress={goBackNavigation} style={styles.backButton}>
           <Image source={BACK_ARROW} style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={styles.navTitle}>Edit Profile</Text>
@@ -173,36 +157,37 @@ const EditProfileScreen = () => {
 
         {/* Form */}
         <View style={styles.formSection}>
-          <Text style={styles.sectionLabel}>PROFESSIONAL INFORMATION</Text>
+          <Text style={styles.sectionLabel}>PROFILE INFORMATION</Text>
 
           <Text style={styles.label}>Name</Text>
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="Name"
-            placeholderTextColor="#8892a6"
             style={styles.input}
+            placeholder="Full name"
           />
 
           <Text style={styles.label}>Email</Text>
           <TextInput
             value={email}
-            onChangeText={setEmail}
-            placeholder="Example@email.com"
-            placeholderTextColor="#8892a6"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={styles.input}
+            editable={false}
+            style={[styles.input, { color: '#999' }]}
           />
+
+        
         </View>
 
-        {/* Save */}
         <TouchableOpacity
-          style={styles.saveButton}
           onPress={handleSave}
-          activeOpacity={0.9}
+          disabled={saving}
+          activeOpacity={0.8}
+          style={[styles.saveButton, saving && { opacity: 0.6 }]}
         >
-          <Text style={styles.saveText}>{updating ? 'Saving...' : 'Save'}</Text>
+          {saving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveText}>Save</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </View>

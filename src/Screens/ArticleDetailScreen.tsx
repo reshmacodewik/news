@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,9 @@ import {
   API_ADD_COMMENT,
   API_ARTICLES_DETAILS,
   API_COMMENTS_LIST,
+  API_DELETE_COMMENT,
   API_LIKES,
+  API_UPDATE_COMMENT,
 } from '../Utils/api/APIConstant';
 import BottomSheet from '../Components/BottomSheet';
 import { useAuth } from './Auth/AuthContext';
@@ -31,6 +33,7 @@ import { formatDateTime, getTimeAgo } from '../libs/helper';
 import ShowToast from '../Utils/ShowToast';
 import { navigate } from '../Navigators/utils';
 import RenderHTML from 'react-native-render-html';
+import { useFocusEffect } from '@react-navigation/native';
 
 const HERO = require('../icons/news.png');
 const BACK = require('../icons/back.png');
@@ -52,18 +55,25 @@ type Article = {
   commentCount?: number;
   likeCount?: number;
   viewingType?: 'free' | 'register' | 'premium';
+  isLiked?: boolean; // 👈 add this
 };
 
 const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { id, slug } = route.params;
   const { session } = useAuth();
+  console.log(session);
   const insets = useSafeAreaInsets();
-
+  const currentUserId = session?.user?.id || session?.user?._id;
+  const currentUserName = session?.user?.name?.trim().toLowerCase();
   const [isVisible, setIsVisible] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isFav, setIsFav] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
   const [sortOrder, setSortOrder] = useState<'latest' | 'oldest'>('latest');
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+
   const queryClient = useQueryClient();
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -72,20 +82,34 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     setSortOrder(newOrder);
   };
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['article-details', slug],
     queryFn: async (): Promise<Article> => {
       const res = await getApiWithOutQuery({
         url: `${API_ARTICLES_DETAILS}/${slug}`,
       });
-      return res.data?.article;
+      return {
+        ...res.data.article,
+        likeCount: res.data.likeCount,
+        commentCount: res.data.commentCount,
+        isLiked: res.data.isLiked,
+      };
     },
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [slug]),
+  );
   const isLoggedIn = !!session?.accessToken; // or check from Redux/store
   const isSubscribed =
     session?.user?.plan === 'premium' || session?.user?.isPremium;
 
   const likeCount = data?.likeCount ?? 0;
+  console.log("helooo",likeCount)
+  const fetchedCommentCount = data?.commentCount ?? 0;
+  console.log("helooo",fetchedCommentCount)
 
   const { data: commentData, refetch: refetchComments } = useQuery({
     queryKey: ['comments', id],
@@ -99,10 +123,15 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         content: string;
         createdAt: string;
         photo?: string;
+        authorId: string;
+        author?: { id?: string; _id?: string }; // ✅ allow both
+        user?: { id?: string; _id?: string };
       }>;
     },
     staleTime: 0,
   });
+
+  const article = data;
 
   const { mutate: AddComment, isPending: commenting } = useMutation({
     mutationFn: async (payload: any) => {
@@ -113,17 +142,8 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       setCommentText('');
       setIsVisible(false);
       refetchComments();
-
-      // ✅ Instant optimistic update
-      queryClient.setQueryData(['article-details', slug], (oldData: any) => {
-        if (!oldData) return oldData;
-        return {
-          ...oldData,
-          commentCount: (oldData.commentCount || 0) + 1,
-        };
-      });
-
-      // ✅ No invalidate here (so it doesn’t reset)
+      // Also refresh article details to update commentCount
+      queryClient.invalidateQueries({ queryKey: ['article-details', slug] });
     },
   });
 
@@ -147,36 +167,168 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const { mutate: toggleLike, isPending: likePending } = useMutation({
-    mutationFn: async (_like: boolean) => {
+    mutationFn: async () => {
       const res = await apiPost({
         url: API_LIKES,
         values: { articleId: id },
       });
       return res.data;
     },
-    onSuccess: () => {
-      // ✅ Optimistic cache update
-      queryClient.setQueryData(['article-details', slug], (oldData: any) => {
-        if (!oldData) return oldData;
-        const isLiked = !isFav;
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['article-details', slug] });
+      const prev = queryClient.getQueryData(['article-details', slug]);
+      const previousFav = isFav; // ✅ capture before toggle
+
+      // Optimistic UI
+      setIsFav(!previousFav);
+      setLocalLikeCount(count => count + (previousFav ? -1 : 1));
+
+      return { prev, previousFav };
+    },
+    onError: (error, _, context) => {
+      if (context?.prev)
+        queryClient.setQueryData(['article-details', slug], context.prev);
+      // revert
+      setIsFav(context?.previousFav ?? false);
+      setLocalLikeCount(count => count + (context?.previousFav ? 1 : -1));
+      ShowToast('Failed to update like', 'error');
+    },
+    onSuccess: res => {
+      // 1️⃣ Update the article detail cache instantly
+      queryClient.setQueryData(['article-details', slug], (old: any) => {
+        if (!old) return old;
         return {
-          ...oldData,
-          likeCount: (oldData.likeCount || 0) + (isLiked ? 1 : -1),
+          ...old,
+          likeCount: res.data?.likeCount ?? old.likeCount,
+          isLiked: res.data?.isLiked ?? old.isLiked,
         };
       });
+
+      // 2️⃣ If you have an article list query, update its cache too
+      queryClient.setQueryData(['articles'], (oldList: any) => {
+        if (!oldList) return oldList;
+        return oldList.map((article: any) =>
+          article._id === id
+            ? {
+                ...article,
+                likeCount: res.data?.likeCount ?? article.likeCount,
+                isLiked: res.data?.isLiked ?? article.isLiked,
+              }
+            : article,
+        );
+      });
+
+      // 3️⃣ Optionally invalidate article list to sync from server
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+
+      ShowToast(
+        res.data?.isLiked
+          ? 'Removed from favorites successfully.'
+          : 'Added to favorites successfully.',
+        'success',
+      );
     },
   });
+  useEffect(() => {
+    if (data) {
+      setIsFav(data.isLiked ?? false);
+      setLocalLikeCount(data.likeCount ?? 0);
+    }
+  }, [data]);
 
-  const handleToggleFav = () => {
+  const handleToggleFav = async () => {
     if (!session?.accessToken) {
       ShowToast('Login Required', 'error');
       navigate('Login');
       return;
     }
-    const next = !isFav;
-    setIsFav(next);
-    setLocalLikeCount(c => c + (next ? 1 : -1));
-    toggleLike(next);
+
+    if (!data?._id) return;
+
+    // Optimistic UI update
+    const newLiked = !isFav;
+    const newCount = localLikeCount + (newLiked ? 1 : -1);
+    setIsFav(newLiked);
+    setLocalLikeCount(newCount);
+
+    try {
+      const res = await apiPost({
+        url: API_LIKES, // ✅ your API endpoint
+        values: { articleId: data._id },
+      });
+      console.log('Like toggle response:', res.values);
+      const serverData = res.data?.data; // contains likeCount & isLiked
+
+      // Update UI from server response
+      if (serverData) {
+        setIsFav(serverData.isLiked);
+        setLocalLikeCount(serverData.likeCount);
+      }
+      refetch(); // ✅ re-fetch article to stay in sync
+    } catch (err) {
+      console.error('Like toggle error:', err);
+      // Rollback if API fails
+      setIsFav(!newLiked);
+      setLocalLikeCount(localLikeCount);
+      ShowToast('Failed to update like', 'error');
+    }
+  };
+
+ const handleDeleteComment = async (commentId: string) => {
+  try {
+    const res = await apiPost({
+      url: API_DELETE_COMMENT.replace(':id', commentId),
+      values: {},
+    });
+
+    if (res?.success || res?.status) {
+      ShowToast('Comment deleted successfully', 'success');
+
+      // ✅ Instantly update article commentCount cache
+      queryClient.setQueryData(['article-details', slug], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          commentCount: Math.max((old.commentCount ?? 1) - 1, 0),
+        };
+      });
+
+      // ✅ Refresh comment list to remove deleted one
+      await refetchComments();
+    } else {
+      ShowToast('Failed to delete comment', 'error');
+    }
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    ShowToast('Something went wrong', 'error');
+  }
+};
+
+
+  const handleSaveEdit = async (commentId: string) => {
+    if (!editContent.trim()) {
+      ShowToast('Comment cannot be empty', 'error');
+      return;
+    }
+
+    try {
+      const res = await apiPost({
+        url: API_UPDATE_COMMENT.replace(':id', commentId),
+        values: { content: editContent },
+      });
+
+      if (res?.success || res?.status) {
+        ShowToast('Comment updated successfully', 'success');
+        setEditingCommentId(null);
+        setEditContent('');
+        await refetchComments(); // ✅ Always re-fetch after update
+      } else {
+        ShowToast('Failed to update comment', 'error');
+      }
+    } catch (error) {
+      console.error('Update comment error:', error);
+      ShowToast('Something went wrong', 'error');
+    }
   };
 
   const viewingType = data?.viewingType;
@@ -267,8 +419,8 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                   }
                   style={styles.chatIcon}
                 />
-                {localLikeCount > 0 && (
-                  <Text style={styles.likeCount}>{localLikeCount}</Text>
+                {likeCount > 0 && (
+                  <Text style={styles.likeCount}>{likeCount}</Text>
                 )}
               </TouchableOpacity>
 
@@ -281,8 +433,8 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                   source={require('../icons/comment1.png')}
                   style={styles.chatIcon}
                 />
-                {(data?.commentCount ?? 0) > 0 && (
-                  <Text style={styles.likeCount}>{data?.commentCount}</Text>
+                {fetchedCommentCount > 0 && (
+                  <Text style={styles.likeCount}>{fetchedCommentCount}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -425,46 +577,145 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           keyExtractor={item => item._id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: insets.bottom }}
-          renderItem={({ item }) => (
-            <View
-              style={{
-                marginBottom: 16,
-                padding: 12,
-                borderWidth: 1,
-                borderRadius: 10,
-                borderColor: '#000',
-              }}
-            >
+          renderItem={({ item }) => {
+            const isOwner =
+              item.authorId === currentUserId ||
+              item.author?.id === currentUserId ||
+              item.author?._id === currentUserId ||
+              item.user?.id === currentUserId ||
+              item.user?._id === currentUserId ||
+              item.name?.trim().toLowerCase() === currentUserName;
+            // handle all possible backend shapes
+
+            const isEditing = editingCommentId === item._id;
+
+            return (
               <View
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginBottom: 4,
+                  marginBottom: 16,
+                  padding: 12,
+                  borderWidth: 1,
+                  borderRadius: 10,
+                  borderColor: '#000',
                 }}
               >
-                <Image
-                  source={{ uri: item.photo }}
+                {/* Header: user photo, name, and time */}
+                <View
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    marginRight: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: 4,
                   }}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: '600', fontSize: 14 }}>
-                    {item.name}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: '#6B7280' }}>
-                    {getTimeAgo(item.createdAt)}
-                  </Text>
+                >
+                  <Image
+                    source={{ uri: item.photo }}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      marginRight: 8,
+                    }}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontWeight: '600', fontSize: 14 }}>
+                      {item.name}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: '#6B7280' }}>
+                      {getTimeAgo(item.createdAt)}
+                    </Text>
+                  </View>
                 </View>
+
+                {/* Content or Edit input */}
+                {isEditing ? (
+                  <View>
+                    <TextInput
+                      value={editContent}
+                      onChangeText={setEditContent}
+                      style={{
+                        borderWidth: 1,
+                        borderColor: '#ccc',
+                        borderRadius: 6,
+                        paddingHorizontal: 8,
+                        paddingVertical: 6,
+                        color: '#000',
+                      }}
+                      multiline
+                    />
+                    <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                      <TouchableOpacity
+                        onPress={() => handleSaveEdit(item._id)}
+                        style={{
+                          backgroundColor: '#0A1F44',
+                          paddingHorizontal: 14,
+                          paddingVertical: 6,
+                          borderRadius: 6,
+                          marginRight: 8,
+                        }}
+                      >
+                        <Text style={{ color: '#fff' }}>Save</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setEditingCommentId(null);
+                          setEditContent('');
+                        }}
+                        style={{
+                          backgroundColor: '#ccc',
+                          paddingHorizontal: 14,
+                          paddingVertical: 6,
+                          borderRadius: 6,
+                        }}
+                      >
+                        <Text style={{ color: '#000' }}>Cancel</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    {/* Comment text */}
+                    <Text
+                      style={{ fontSize: 14, lineHeight: 20, color: '#111' }}
+                    >
+                      {item.content}
+                    </Text>
+
+                    {/* Edit/Delete buttons BELOW comment */}
+                    {isOwner && (
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          marginTop: 10,
+                          marginBottom: -5,
+                          justifyContent: 'flex-start',
+                        }}
+                      >
+                        <TouchableOpacity
+                          onPress={() => {
+                            setEditingCommentId(item._id);
+                            setEditContent(item.content);
+                          }}
+                          style={{
+                            paddingHorizontal: 2,
+                          }}
+                        >
+                          <Text style={{ color: '#111' }}>Edit</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => handleDeleteComment(item._id)}
+                          style={{
+                            paddingHorizontal: 8,
+                          }}
+                        >
+                          <Text style={{ color: 'red' }}>Delete</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </>
+                )}
               </View>
-              <Text style={{ fontSize: 14, lineHeight: 20, color: '#111' }}>
-                {item.content}
-              </Text>
-            </View>
-          )}
+            );
+          }}
           ListEmptyComponent={
             <Text style={{ textAlign: 'center', color: '#6B7280' }}>
               {isLoading ? 'Loading comments…' : 'No comments yet'}
