@@ -14,6 +14,7 @@ import { getApiWithOutQuery } from '../../Utils/api/common';
 import { styles } from '../../style/AboutStyles';
 import { API_ABOUT_US } from '../../Utils/api/APIConstant';
 import Header from '../../Components/Header';
+import { useTheme } from '../../context/ThemeContext';
 
 const BG = require('../../icons/backgroundnew.png');
 const LOGO = require('../../icons/headerlogo.png');
@@ -22,6 +23,7 @@ const AVATAR = require('../../icons/user.png');
 const AboutScreen: React.FC = () => {
   const TAB_BAR_HEIGHT = 72; // adjust to your tab's height
   const insets = useSafeAreaInsets();
+   const { theme, colors } = useTheme();
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
   const { data, isLoading, isError } = useQuery({
     queryKey: ['about-us'],
@@ -44,7 +46,7 @@ const AboutScreen: React.FC = () => {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
        bounces={false}
         alwaysBounceVertical={false}
@@ -69,9 +71,9 @@ const AboutScreen: React.FC = () => {
           />
         </ImageBackground>
 
-        <View style={styles.sheet}>
-          <Text style={styles.h1}>About Us</Text>
-          <Text style={styles.body}>
+        <View style={[styles.sheet, { backgroundColor: colors.card }]}>
+          <Text style={[styles.h1, { color: colors.headingtext }]}>About Us</Text>
+          <Text style={[styles.body, { color: colors.text }]}>
             {(
               data?.data?.description ??
               data?.description ??

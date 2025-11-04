@@ -58,12 +58,16 @@ const LIGHTMODE = require('../../icons/day-mode.png');
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
 // Reusable Row Component
-const Row = ({
+
+
+const MoreScreen: React.FC = () => {
+  const Row = ({
   icon,
   label,
   right = true,
   onPress,
   style,
+ 
 }: {
   icon: any;
   label: string;
@@ -76,13 +80,11 @@ const Row = ({
     onPress={onPress} // ✅ ADD THIS LINE
     activeOpacity={0.8}
   >
-    <Image source={icon} style={styles.rowIcon} />
-    <Text style={styles.rowLabel}>{label}</Text>
-    {right && <Image source={CHEVRON} style={styles.chevron} />}
+    <Image source={icon} style={[styles.rowIcon, { tintColor: colors.text }]} />
+    <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
+    {right && <Image source={CHEVRON} style={[styles.chevron, { tintColor: colors.text }]} />}
   </TouchableOpacity>
 );
-
-const MoreScreen: React.FC = () => {
   const version = DeviceInfo.getVersion();
   const buildNumber = DeviceInfo.getBuildNumber();
   const inset = useSafeAreaInsets();
@@ -93,7 +95,7 @@ const MoreScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const confirmRef = React.useRef<TextInput>(null);
   const isFocused = useIsFocused();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme,colors } = useTheme();
 
   const userId = session?.user?.id;
 
@@ -227,7 +229,7 @@ const MoreScreen: React.FC = () => {
 //     console.log('Error toggling dark mode:', error);
 //   }
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Safe top */}
       <View style={{ height: inset.top }} />
 
@@ -240,12 +242,12 @@ const MoreScreen: React.FC = () => {
       />
 
       <ScrollView
-        style={styles.scroll}
+        style={[styles.scroll, { backgroundColor: colors.background }]}
         contentContainerStyle={{ paddingBottom: inset.bottom + scale(120) }}
         showsVerticalScrollIndicator={false}
       >
         {/* Profile card */}
-        <View style={[styles.profileCard]}>
+        <View style={[styles.profileCard, { backgroundColor: colors.card }]}>
           <View style={styles.profileLeft}>
             <View style={styles.bigAvatarWrap}>
               <Image
@@ -259,12 +261,12 @@ const MoreScreen: React.FC = () => {
               />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.name}>
+              <Text style={[styles.name, { color: colors.text }]}>
                 {session?.accessToken ? profile?.name : 'Guest User'}
               </Text>
               <View style={styles.line}>
-                <Image source={MAIL} style={styles.smallIcon} />
-                <Text style={styles.lineText}>
+                <Image source={MAIL} style={[styles.smallIcon, { tintColor: colors.text }]} />
+                <Text style={[styles.lineText, { color: colors.text }]}>
                   {session?.accessToken ? profile?.email : 'Login to see email'}
                 </Text>
               </View>
@@ -273,49 +275,51 @@ const MoreScreen: React.FC = () => {
 
           {session?.accessToken ? (
             <TouchableOpacity
-              style={styles.editBtn}
+              style={[styles.editBtn, { backgroundColor: colors.card }]}
               activeOpacity={0.9}
               onPress={() => navigate('EditProfile' as never)}
             >
-              <Image source={EDIT} style={styles.editIcon} />
-              <Text style={styles.editText}>Edit Profile</Text>
+              <Image source={EDIT} style={[styles.editIcon, { tintColor: colors.text }]} />
+              <Text style={[styles.editText, { color: colors.text }]}>Edit Profile</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={styles.loginBtn}
+              style={[styles.loginBtn, { backgroundColor: colors.card }]}
+              activeOpacity={0.9}
               onPress={() => navigate('Login' as never)}
             >
-              <Text style={styles.editText}>Login</Text>
+              <Text style={[styles.editText, { color: colors.text }]}>Login</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {/* Others header */}
-        <Text style={styles.sectionTitle}>Others</Text>
+        <Text style={[styles.sectionTitle, { color: colors.headingtext }]}>Others</Text>
 
         {/* Group 1 */}
-        <View style={styles.cardGroup}>
+        <View style={[styles.cardGroup, { backgroundColor: colors.card }]}>
           <Row icon={LOCK} label="Change Password" onPress={openNewPassword} />
           <Row
             icon={PLAN}
             label="Subscription Plan"
             onPress={() => navigate('Premium' as never)}
-            style={{ marginTop: -12 }}
+            style={{ marginTop: -12}}
           />
           <Row
             icon={ABOUT}
             label="About Us"
             onPress={() => navigate('Fast News' as never)}
-            style={{ marginTop: -12 }}
+            style={[{ marginTop: -12 }, { color: colors.text }]}
           />
         </View>
 
         {/* Group 2 */}
-        <View style={styles.cardGroup}>
+        <View style={[styles.cardGroup, { backgroundColor: colors.card }]}>
           <Row
             icon={SHIELD}
             label="Privacy Policy"
             onPress={() => navigate('PrivacyPolicy' as never)}
+       
           />
           <Row
             icon={TERMS}
@@ -333,17 +337,17 @@ const MoreScreen: React.FC = () => {
         </View>
 
         {/* Contact + Version */}
-        <View style={styles.cardGroup}>
+        <View style={[styles.cardGroup, { backgroundColor: colors.card }]}>
           <View style={[styles.row, { alignItems: 'flex-start' }]}>
             <Image
               source={CHAT}
-              style={[styles.rowIcon, { marginTop: scale(9) }]}
+              style={[styles.rowIcon, { marginTop: scale(9) }, { tintColor: colors.text }]}
             />
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>Contact Us</Text>
-              <Text style={styles.contactBody}>
+              <Text style={[styles.rowLabel, { color: colors.text }]}>Contact Us</Text>
+              <Text style={[styles.contactBody, { color: colors.text }]}>
                 Please reach out to us on{' '}
-                <Text style={styles.link} onPress={onEmail}>
+                <Text style={[styles.link, { color: colors.text }]} onPress={onEmail}>
                   support@arcalisnews.com
                 </Text>{' '}
                 for any support or discussions. We’ll be more than happy to help
@@ -352,13 +356,13 @@ const MoreScreen: React.FC = () => {
             </View>
           </View>
 
-          <View style={[styles.row, { alignItems: 'flex-start' }]}>
+          <View style={[styles.row, { alignItems: 'flex-start', }]}>
             <Image
               source={LAYERS}
-              style={[styles.rowIcon, { marginTop: scale(9) }]}
+              style={[styles.rowIcon, { marginTop: scale(9) }, { tintColor: colors.text }]}
             />
             <View>
-              <Text style={styles.rowLabel}>App Version</Text>
+              <Text style={[styles.rowLabel, { color: colors.text }]}>App Version</Text>
               <Text style={styles.subtle}>
                 {version} ({buildNumber})
               </Text>
@@ -391,22 +395,22 @@ const MoreScreen: React.FC = () => {
 
         {session?.accessToken && (
           <TouchableOpacity
-            style={styles.logoutRow}
+            style={[styles.logoutRow, { backgroundColor: colors.card }]}
             activeOpacity={0.85}
             onPress={() => handleDeleteAccount()}
           >
-            <Image source={DELETE} style={styles.logoutIcon} />
-            <Text style={styles.logoutText}>Delete Account</Text>
+            <Image source={DELETE} style={[styles.logoutIcon, { tintColor: colors.text }]} />
+            <Text style={[styles.logoutText, { color: colors.text }]}>Delete Account</Text>
           </TouchableOpacity>
         )}
         {session?.accessToken && (
           <TouchableOpacity
-            style={styles.logoutRow}
+            style={[styles.logoutRow, { backgroundColor: colors.card }]}
             activeOpacity={0.85}
             onPress={() => handleLogout()}
           >
-            <Image source={LOGOUT} style={styles.logoutIcon} />
-            <Text style={styles.logoutText}>Logout</Text>
+            <Image source={LOGOUT} style={[styles.logoutIcon, { tintColor: colors.text }]} />
+            <Text style={[styles.logoutText, { color: colors.text }]}>Logout</Text>
           </TouchableOpacity>
         )}
 
@@ -415,7 +419,7 @@ const MoreScreen: React.FC = () => {
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={100}
-            style={{ flex: 1 }}
+            style={{ flex: 1, }}
           >
             <Formik
               initialValues={{ newPassword: '', confirmPassword: '' }}
@@ -436,15 +440,15 @@ const MoreScreen: React.FC = () => {
                   contentContainerStyle={{ paddingBottom: 40 }}
                   keyboardShouldPersistTaps="handled"
                 >
-                  <Text style={styles.sheetTitle}>Create New Password</Text>
-                  <Text style={styles.sheetSub}>
+                  <Text style={[styles.sheetTitle, { color: colors.text }]}>Create New Password</Text>
+                  <Text style={[styles.sheetSub, { color: colors.text }]}>
                     This password should be different from the previous
                     password.
                   </Text>
 
-                  <Text style={styles.inputLabel}>New Password</Text>
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>New Password</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: colors.card }]}
                     placeholder="New Password"
                     placeholderTextColor="#9CA3AF"
                     secureTextEntry
@@ -459,10 +463,10 @@ const MoreScreen: React.FC = () => {
                     <Text style={styles.errorText}>{errors.newPassword}</Text>
                   )}
 
-                  <Text style={styles.inputLabel}>Confirm Password</Text>
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>Confirm Password</Text>
                   <TextInput
                     ref={confirmRef}
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: colors.card }]}
                     placeholder="Confirm Password"
                     placeholderTextColor="#9CA3AF"
                     secureTextEntry
@@ -479,7 +483,7 @@ const MoreScreen: React.FC = () => {
                   )}
 
                   <TouchableOpacity
-                    style={[styles.primaryBtn, { marginTop: 16 }]}
+                    style={[styles.primaryBtn, { marginTop: 16, backgroundColor: colors.headingtext }]}
                     onPress={handleSubmit as any}
                     disabled={resetPassword.isPending}
                   >

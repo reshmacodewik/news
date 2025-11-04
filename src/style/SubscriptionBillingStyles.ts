@@ -139,7 +139,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
   },
   paid: {
-    backgroundColor: '#e6f5ec',
+    backgroundColor: '#09f34fff',
   },
   pending: {
     backgroundColor: '#fff5e0',

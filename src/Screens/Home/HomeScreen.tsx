@@ -62,7 +62,7 @@ const HomeScreen: React.FC = () => {
   const [showTrending, setShowTrending] = useState(true);
   const scrollY = useRef(new Animated.Value(0)).current;
   // === FETCH ALL ARTICLES ===
-  const colors = useTheme();
+  const { theme, colors } = useTheme();
   const { data: allArticles = [], refetch: refetchAllArticles } = useQuery({
     queryKey: ['articles', domain?.type],
     queryFn: async () => {
@@ -169,21 +169,22 @@ const HomeScreen: React.FC = () => {
     <Animated.ScrollView
       bounces={false}
       alwaysBounceVertical={false}
-      style={styles.content}
+      style={[styles.content, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingBottom: 80 }}
       onScroll={handleScroll}
       scrollEventThrottle={16}
     >
-      <View style={[styles.container]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ImageBackground source={BG} style={styles.header} resizeMode="cover">
           <Header
             logoSource={LOGO}
             avatarSource={AVATAR}
             guestRoute="More"
             authRoute="More"
+            isHome={true}
           />
           <View style={styles.welcomeBlock}>
-            <Text style={styles.welcomeHeading}>
+            <Text style={[styles.welcomeHeading]}>
               Welcome back, {session?.user?.name ?? 'Reader'}
             </Text>
             <Text style={styles.welcomeSubtitle}>
@@ -263,12 +264,21 @@ const HomeScreen: React.FC = () => {
                   style={styles.tabBtn}
                 >
                   <Text
-                    style={[styles.tabText, active && styles.tabTextActive]}
+                    style={[
+                      styles.tabText,
+                      active && styles.tabTextActive,
+                      active ? { color: colors.tabtext } : { color: '#777' },
+                    ]}
                   >
                     {tab.label}
                   </Text>
                   {active ? (
-                    <View style={styles.tabIndicator} />
+                    <View
+                      style={[
+                        styles.tabIndicator,
+                        { backgroundColor: colors.tabtext },
+                      ]}
+                    />
                   ) : (
                     <View style={styles.tabIndicatorGhost} />
                   )}

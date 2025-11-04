@@ -13,6 +13,7 @@ import { getApiWithOutQuery } from '../Utils/api/common';
 import { styles } from '../style/PrivacyPolicyStyles';
 import { goBackNavigation, navigate } from '../Navigators/utils';
 import { API_PRIVACY_POLICY } from '../Utils/api/APIConstant';
+import { useTheme } from '../context/ThemeContext';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 const LOGO = require('../icons/Blacklogo.png');
@@ -25,7 +26,7 @@ const PrivacyPolicyScreen: React.FC = () => {
   const handleBackPress = () => {
     goBackNavigation();
   };
-
+ const { theme, colors } = useTheme();
   const { data, isLoading, isError } = useQuery({
     queryKey: ['cms-privacy-policy'], 
     queryFn: async () => {
@@ -58,7 +59,7 @@ const PrivacyPolicyScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={{ height: insets.top }} />
 
       {/* Top Navigation Bar */}
@@ -68,9 +69,9 @@ const PrivacyPolicyScreen: React.FC = () => {
           onPress={handleBackPress}
           activeOpacity={0.7}
         >
-          <Image source={BACK_ARROW} style={styles.backIcon} />
+          <Image source={BACK_ARROW} style={[styles.backIcon, { tintColor: colors.text }]} />
         </TouchableOpacity>
-        <Text style={styles.navTitle}>Privacy Policy</Text>
+        <Text style={[styles.navTitle, { color: colors.text }]}>Privacy Policy</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -81,12 +82,12 @@ const PrivacyPolicyScreen: React.FC = () => {
       >
         {/* Logo Section */}
         <View style={styles.brandSection}>
-          <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+          <Image source={LOGO} style={[styles.logo, { tintColor: colors.text }]} resizeMode="contain" />
         </View>
 
         {/* Main Heading */}
-        <View style={styles.headerSection}>
-          <Text style={styles.mainHeading}>
+        <View style={[styles.headerSection, { backgroundColor: colors.background }]}>
+          <Text style={[styles.mainHeading, { color: colors.text }]}>
             {data?.slug ? data.slug.replace('-', ' ').toUpperCase() : 'PRIVACY POLICY'}
           </Text>
           {lastUpdate ? <Text style={styles.lastUpdate}>Last update: {lastUpdate}</Text> : null}
@@ -96,8 +97,8 @@ const PrivacyPolicyScreen: React.FC = () => {
         {data?.sections?.length ? (
           data.sections.map((section: any, index: number) => (
             <View key={index} style={styles.section}>
-              <Text style={styles.sectionHeading}>{section.title}</Text>
-              <Text style={styles.bodyText}>{section.description}</Text>
+              <Text style={[styles.sectionHeading, { color: colors.text }]}>{section.title}</Text>
+              <Text style={[styles.bodyText, { color: colors.text }]}>{section.description}</Text>
             </View>
           ))
         ) : (

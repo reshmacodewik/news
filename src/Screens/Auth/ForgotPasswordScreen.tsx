@@ -17,8 +17,10 @@ import { apiPost } from '../../Utils/api/common';
 import { API_VERIFY_EMAIL } from '../../Utils/api/APIConstant';
 import { styles } from '../../style/ForgotpasswordStyles';
 import { goBackNavigation, navigate } from '../../Navigators/utils';
+import { useTheme } from '../../context/ThemeContext';
 
 const ForgotPasswordScreen = () => {
+  const { theme, toggleTheme, colors } = useTheme();
   const BACK_ARROW = require('../../icons/back.png');
   const formik = useFormik({
     initialValues: { email: '' },
@@ -77,9 +79,9 @@ const ForgotPasswordScreen = () => {
         </View>
 
         {/* Form Section */}
-        <View style={styles.otpmainContainer}>
+        <View style={[styles.otpmainContainer, { backgroundColor: colors.background }]}>
           <View style={styles.otpContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Email</Text>
             <TextInput
               style={styles.textInput}
               placeholder="Example@email.com"

@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 type Props = {
   mode: 'login' | 'premium' | 'register';
-  token?: string; // 👈 new optional prop
+  token?: string;
   onSignIn?: () => void;
   onSubscribe: () => void;
 };
@@ -14,9 +15,12 @@ const PaywallCard: React.FC<Props> = ({
   onSignIn,
   onSubscribe,
 }) => {
-   const isLogin = mode === 'login';
+  const { theme, colors } = useTheme();
+  const isDark = theme === 'dark';
+
+  const isLogin = mode === 'login';
   const isRegister = mode === 'register';
-    const isLoggedIn = !!token;
+  const isLoggedIn = !!token;
 
   const badgeText =
     mode === 'premium'
@@ -24,7 +28,6 @@ const PaywallCard: React.FC<Props> = ({
       : mode === 'register'
       ? 'Login Required'
       : 'Premium Content';
- // 👈 detect login
 
   return (
     <View
@@ -33,16 +36,16 @@ const PaywallCard: React.FC<Props> = ({
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 20,
-        backgroundColor: '#F9FAFB',
+        backgroundColor: colors.background,
       }}
     >
       <View
         style={{
           width: '100%',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.card,
           borderRadius: 14,
           borderWidth: 1,
-          borderColor: '#E5E7EB',
+          borderColor: isDark ? '#333' : '#E5E7EB',
           paddingVertical: 12,
           paddingHorizontal: 18,
           shadowColor: '#000',
@@ -60,17 +63,20 @@ const PaywallCard: React.FC<Props> = ({
             paddingHorizontal: 12,
             paddingVertical: 6,
             borderRadius: 999,
-            backgroundColor: '#EEF3FB',
+            backgroundColor: isDark ? '#222' : '#EEF3FB',
             marginBottom: 16,
           }}
         >
-          <LockIcon />
+          <LockIcon
+            tintColor={isDark ? '#fff' : '#000'}
+            background={isDark ? '#222' : '#EEF3FB'}
+          />
           <Text
             style={{
               marginLeft: 6,
               fontSize: 12,
               fontWeight: '700',
-              color: '#111827',
+              color: colors.text,
             }}
           >
             {badgeText}
@@ -85,7 +91,7 @@ const PaywallCard: React.FC<Props> = ({
               width: 300,
               height: 60,
               resizeMode: 'contain',
-              alignSelf: 'center',
+              tintColor: isDark ? '#fff' : undefined,
             }}
           />
         </View>
@@ -94,7 +100,7 @@ const PaywallCard: React.FC<Props> = ({
         <Text
           style={{
             textAlign: 'center',
-            color: '#111827',
+            color: colors.text,
             fontWeight: '700',
             fontSize: 16,
             marginBottom: 8,
@@ -106,13 +112,13 @@ const PaywallCard: React.FC<Props> = ({
         <Text
           style={{
             textAlign: 'center',
-            color: '#6B7280',
+            color: colors.text || (isDark ? '#AAA' : '#6B7280'),
             fontSize: 13,
             lineHeight: 18,
             marginBottom: 20,
           }}
         >
-           {isLogin
+          {isLogin
             ? 'Sign in to your account to continue.'
             : isRegister
             ? 'Please sign in to continue reading.'
@@ -120,8 +126,16 @@ const PaywallCard: React.FC<Props> = ({
         </Text>
 
         {/* Buttons */}
-        <View style={{ marginTop: 2, flexDirection: 'row', flex: 1,width:'100%',gap: 10 }}>
-         {((mode === 'login' || mode === 'premium' || mode === 'register') &&
+        <View
+          style={{
+            marginTop: 2,
+            flexDirection: 'row',
+            flex: 1,
+            width: '100%',
+            gap: 10,
+          }}
+        >
+          {((mode === 'login' || mode === 'premium' || mode === 'register') &&
             !isLoggedIn) && (
             <TouchableOpacity
               onPress={onSignIn}
@@ -131,13 +145,17 @@ const PaywallCard: React.FC<Props> = ({
                 width: mode === 'register' ? '60%' : '48%',
                 marginHorizontal: mode === 'register' ? 80 : 0,
                 borderRadius: 10,
-                backgroundColor: '#2260B2',
+                backgroundColor:  '#2260B2',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
               <Text
-                style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}
+                style={{
+                  color: '#FFFFFF',
+                  fontWeight: '700',
+                  fontSize: 15,
+                }}
               >
                 Sign In
               </Text>
@@ -145,34 +163,33 @@ const PaywallCard: React.FC<Props> = ({
           )}
 
           {/* Always show Subscribe Now */}
-           {mode !== 'register' && (
-          <TouchableOpacity
-            onPress={onSubscribe}
-            activeOpacity={0.85}
-            style={{
-              height: 46,
-              width: isLogin && !isLoggedIn ? '48%' : '48%',
-              marginHorizontal: isLogin && !isLoggedIn ? 0 : 100,
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: '#2260B2',
-              alignItems: 'center',
-              justifyContent: 'center',
-
-              marginBottom: 12,
-            }}
-          >
-            <Text
+          {mode !== 'register' && (
+            <TouchableOpacity
+              onPress={onSubscribe}
+              activeOpacity={0.85}
               style={{
-                color: '#2260B2',
-                fontWeight: '700',
-                fontSize: 15,
+                height: 46,
+                width: isLogin && !isLoggedIn ? '48%' : '48%',
+                marginHorizontal: isLogin && !isLoggedIn ? 0 : 100,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor:  '#2260B2',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 12,
               }}
             >
-              Subscribe Now
-            </Text>
-          </TouchableOpacity>
-             )}
+              <Text
+                style={{
+                  color:  '#2260B2',
+                  fontWeight: '700',
+                  fontSize: 15,
+                }}
+              >
+                Subscribe Now
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
@@ -204,12 +221,12 @@ export const LockIcon = ({
     }}
   >
     <Image
-      source={require('../icons/lock.png')} // 👈 update this path
+      source={require('../icons/lock.png')}
       style={[
         {
           width: size * 0.6,
           height: size * 0.6,
-          tintColor: tintColor,
+          tintColor,
           resizeMode: 'contain',
         },
         style,

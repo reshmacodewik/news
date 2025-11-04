@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../Utils/api/common';
 import { useAuth } from './Auth/AuthContext';
 import { API_BILLING_LIST } from '../Utils/api/APIConstant';
+import { useTheme } from '../context/ThemeContext';
 
 const BACK_ARROW = require('../icons/back.png');
 
@@ -23,7 +24,7 @@ interface Payment {
   billingCycle: string;
   startDate: string;
   endDate: string;
-  status: 'Paid' | 'Pending' | 'Failed';
+  paymentStatus: 'Paid' | 'Pending' | 'Failed';
   amount: string;
   createdAt: string;
   planId?: {
@@ -36,7 +37,7 @@ const SubscriptionBillingScreen = () => {
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
   const userId = session?.user?.id;
-
+  const { theme, toggleTheme,colors } = useTheme();
   // ⚙️ Fetch Billing Data
   const { data, isLoading, isError } = useQuery({
     enabled: !!userId,
@@ -64,9 +65,9 @@ const SubscriptionBillingScreen = () => {
       <View
         style={[
           styles.statusBadge,
-          item.status === 'Paid'
+          item.paymentStatus === 'Paid'
             ? styles.paid
-            : item.status === 'Pending'
+            : item.paymentStatus === 'Pending'
               ? styles.pending
               : styles.failed,
         ]}
@@ -74,14 +75,14 @@ const SubscriptionBillingScreen = () => {
         <Text
           style={[
             styles.statusText,
-            item.status === 'Paid'
+            item.paymentStatus === 'Paid'
               ? styles.paidText
-              : item.status === 'Pending'
+              : item.paymentStatus === 'Pending'
                 ? styles.pendingText
                 : styles.failedText,
           ]}
         >
-          {item.status}
+          {item.paymentStatus}
         </Text>
       </View>
 
@@ -97,16 +98,16 @@ const SubscriptionBillingScreen = () => {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.card }]}>
       {/* Header */}
       <View style={styles.headerContainer}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => goBackNavigation()}
         >
-          <Image source={BACK_ARROW} style={styles.backIcon} />
+          <Image source={BACK_ARROW} style={[styles.backIcon, { tintColor: colors.text }]} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Subscription & Billing</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Subscription & Billing</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -189,13 +190,13 @@ const SubscriptionBillingScreen = () => {
           )}
 
           {/* 🧾 Billing History */}
-          <Text style={styles.sectionTitle}>Billing history</Text>
-          <Text style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Billing history</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
             Here you see your billing list.
           </Text>
 
           {payments?.length === 0 ? (
-            <Text style={{ textAlign: 'center', marginTop: 20, color: '#555' }}>
+            <Text style={{ textAlign: 'center', marginTop: 20, color: '#555', }}>
               No billing history found.
             </Text>
           ) : (

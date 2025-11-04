@@ -9,6 +9,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 const { height } = Dimensions.get('window');
 const SHEET_MAX_H = Math.round(height * 0.8);
@@ -24,7 +25,7 @@ export default function BottomSheet({ visible, onClose, children }: Props) {
   const translateY = useRef(new Animated.Value(SHEET_MAX_H)).current;
   const backdrop = useRef(new Animated.Value(0)).current;
   const [sheetHeight, setSheetHeight] = useState(SHEET_MAX_H);
-
+const { colors } = useTheme();
   // --- Open / Close animations ---
   const open = () => {
     Animated.parallel([
@@ -110,6 +111,7 @@ export default function BottomSheet({ visible, onClose, children }: Props) {
         {...pan.panHandlers}
         style={[
           styles.sheet,
+          { backgroundColor: colors.card },
           { height: sheetHeight, transform: [{ translateY }] },
         ]}
       >

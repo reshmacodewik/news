@@ -8,6 +8,7 @@ import {
   Dimensions,
   PixelRatio,
 } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const baseW = 375;
@@ -36,7 +37,7 @@ const NewsCard: React.FC<Props> = ({
   // Capitalize category
   const formattedCategory =
     category?.charAt(0)?.toUpperCase() + category?.slice(1)?.toLowerCase();
-
+ const { theme, colors } = useTheme();
   // Determine view count text
   const viewText = viewCount > 0 ? `${viewCount}+` : '0';
 
@@ -44,7 +45,7 @@ const NewsCard: React.FC<Props> = ({
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={onPress}
-      style={styles.rowCard}
+      style={[styles.rowCard, { backgroundColor: colors.card }]}
     >
       {/* Left Image */}
       {image ? (
@@ -55,13 +56,13 @@ const NewsCard: React.FC<Props> = ({
 
       {/* Right Content */}
       <View style={styles.rowRight}>
-        <Text style={styles.categoryText}>{formattedCategory}</Text>
+        <Text style={[styles.categoryText, { color: colors.headingtext }]}>{formattedCategory}</Text>
 
-        <Text style={styles.rowTitle} numberOfLines={2}>
+        <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={5}>
           {title}
         </Text>
 
-        <Text style={styles.metaDesc} numberOfLines={1} ellipsizeMode="tail">
+        <Text style={[styles.metaDesc]} numberOfLines={1} ellipsizeMode="tail">
           {(description || '').replace(/<[^>]+>/g, '')}
         </Text>
 
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   rowTitle: {
-    fontSize: scale(15),
+    fontSize: scale(13),
     fontWeight: '600',
     color: '#0F172A',
   },

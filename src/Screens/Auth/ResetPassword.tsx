@@ -20,10 +20,12 @@ import { navigate } from '../../Navigators/utils';
 import { changepasswordSchema } from '../../validation/signupSchema';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../Utils/Constant/constant';
+import { useTheme } from '../../context/ThemeContext';
 
 type ResetScreenRouteProp = RouteProp<RootStackParamList, 'ResetPassword'>;
 
 const ResetPasswordScreen = () => {
+  const { theme, toggleTheme, colors } = useTheme();
   const route = useRoute<ResetScreenRouteProp>(); // Use the route prop with the type
   const { email, otp } = route.params;
   const formik = useFormik({
@@ -82,10 +84,10 @@ const ResetPasswordScreen = () => {
           </View>
 
           {/* Form Section */}
-          <View style={styles.otpmainContainer}>
+          <View style={[styles.otpmainContainer, { backgroundColor: colors.background }]}>
             {/* New Password Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>New Password</Text>
+            <View style={[styles.inputContainer, { backgroundColor: colors.background }]}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>New Password</Text>
               <TextInput
                 style={styles.textInput}
                 placeholder="Enter new password"
@@ -105,7 +107,7 @@ const ResetPasswordScreen = () => {
 
             {/* Confirm Password Input */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Confirm Password</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Confirm Password</Text>
               <TextInput
                 style={styles.textInput}
                 placeholder="Confirm your password"

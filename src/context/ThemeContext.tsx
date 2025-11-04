@@ -6,6 +6,9 @@ import { lightColors, darkColors } from '../theme/colors';
 interface ThemeColors {
   background: string;
   text: string;
+  tabtext: string;
+  card: string;
+  headingtext: string;
   // Add all color properties matching your color files
 }
 

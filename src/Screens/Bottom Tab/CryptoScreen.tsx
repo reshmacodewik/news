@@ -29,6 +29,7 @@ import Header from '../../Components/Header';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDomainByType } from '../../Hook/useDomainByType';
 import NewsCard from '../../Components/NewsCard';
+import { useTheme } from '../../context/ThemeContext';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -58,7 +59,7 @@ const CryptoScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [articles, setArticles] = useState<Article[]>([]);
   const { domain, domainId } = useDomainByType('crypto');
-
+ const { theme, colors } = useTheme();
   const { data: categoryDataRaw = [] } = useQuery({
     queryKey: ['categories-domain', domainId],
     queryFn: async () => {
@@ -154,10 +155,10 @@ const CryptoScreen: React.FC = () => {
   };
   // ── UI ─────────────────────────────────────────────────────────────
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View
         style={{
-          backgroundColor: '#e3e9ee',
+          backgroundColor: colors.background,
           borderBottomLeftRadius: scale(18),
           borderBottomRightRadius: scale(15),
           paddingBottom: scale(10),
@@ -188,7 +189,7 @@ const CryptoScreen: React.FC = () => {
                 activeOpacity={0.8}
               >
                 <Text
-                  style={[styles.tabText, isActive && styles.tabTextActive]}
+                  style={[styles.tabText, isActive && styles.tabTextActive,isActive && { color: colors.tabtext }]}
                 >
                   {c.title}
                 </Text>
@@ -196,6 +197,7 @@ const CryptoScreen: React.FC = () => {
                   style={[
                     styles.tabBar,
                     isActive ? styles.tabBarActive : styles.tabBarGhost,
+                    isActive && { backgroundColor: colors.tabtext },
                   ]}
                 />
               </TouchableOpacity>

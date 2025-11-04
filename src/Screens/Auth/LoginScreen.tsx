@@ -29,11 +29,12 @@ import {
   SignInResponse,
 } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
+import { useTheme } from '../../context/ThemeContext';
 
 const LoginScreen = () => {
   const isFocused = useIsFocused();
   const { signIn, session } = useAuth();
-
+  const { theme, toggleTheme,colors } = useTheme();
   // --- GOOGLE CONFIGURATION ---
   useEffect(() => {
     GoogleSignin.configure({
@@ -229,8 +230,6 @@ const handleFacebookSignIn = async () => {
 
   const buttonText = isIOS ? 'Sign in with Apple' : 'Sign in with Facebook';
 
-   const handlePress = isIOS ? handleAppleSignIn : handleFacebookSignIn;
-
   const handleAppleSignIn = async () => {
     try {
       try { LoginManager.logOut(); } catch {}
@@ -263,8 +262,11 @@ const handleFacebookSignIn = async () => {
       ShowToast(e?.message || 'Facebook sign-in failed', 'error');
     }
   };
+
+   const handlePress = isIOS ? handleAppleSignIn : handleFacebookSignIn;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -292,12 +294,12 @@ const handleFacebookSignIn = async () => {
           </View>
 
           {/* Form */}
-          <View style={styles.formContainer}>
+          <View style={[styles.formContainer, { backgroundColor: colors.background }]}>
             {/* Email */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Email</Text>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput]}
                 placeholder="Example@email.com"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.email}
@@ -323,9 +325,9 @@ const handleFacebookSignIn = async () => {
 
             {/* Password */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Password</Text>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, ]}
                 placeholder="Enter a password"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.password}
@@ -355,7 +357,9 @@ const handleFacebookSignIn = async () => {
               style={styles.forgotPasswordContainer}
               onPress={() => navigate('ForgotPassword' as never)}
             >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              <Text style={[styles.forgotPasswordText, { color: colors.headingtext }]}>
+                Forgot Password?
+              </Text>
             </TouchableOpacity>
 
             {/* Email/Password Sign In */}
@@ -378,27 +382,34 @@ const handleFacebookSignIn = async () => {
 
             {/* Google */}
             <TouchableOpacity
-              style={styles.socialButton}
+              style={[styles.socialButton, { backgroundColor: colors.background }]}
               onPress={handleGoogleSignIn}
             >
               <Image
                 source={require('../../icons/Google.png')}
                 style={styles.socialIcon}
               />
-              <Text style={styles.socialButtonText}>Sign in with Google</Text>
+              <Text style={[styles.socialButtonText, { color: colors.text }]}>
+                Sign in with Google
+              </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.socialButton}  onPress={handlePress}>
+            <TouchableOpacity
+              style={[styles.socialButton, { backgroundColor: colors.background }]}
+              onPress={handlePress}
+            >
               <Image source={buttonIcon} style={styles.socialIcon} />
-              <Text style={styles.socialButtonText}>{buttonText}</Text>
+              <Text style={[styles.socialButtonText, { color: colors.text }]}>
+                {buttonText}
+              </Text>
             </TouchableOpacity>
 
             {/* Sign Up */}
             <View style={styles.signUpContainer}>
-              <Text style={styles.signUpText}>
+              <Text style={[styles.signUpText, { color: colors.text }]}>
                 Don't you have an account?{' '}
                 <Text
-                  style={styles.signUpLink}
+                  style={[styles.signUpLink, { color: colors.headingtext }]}
                   onPress={() => navigate('Signup' as never)}
                 >
                   Sign up

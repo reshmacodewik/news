@@ -21,6 +21,8 @@ import { styles } from '../../style/PricingStyles';
 import { useAuth } from '../Auth/AuthContext';
 import PaymentStatusModal from '../../Components/PaymentStatusModal';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -39,6 +41,12 @@ const PricingScreen: React.FC = () => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const [activePlanId, setActivePlanId] = useState<string | null>(null);
+  const { theme, colors } = useTheme();
+  const userId =
+    (session as any)?.user?.id || (session as any)?.user?._id || null;
+  const appState = useRef(AppState.currentState);
+  console.log('hello', userId);
 
   // ✅ Fetch subscription plans
   const { data: plans, isLoading } = useQuery({
@@ -62,32 +70,46 @@ const PricingScreen: React.FC = () => {
       : null;
 
   // ✅ Handle subscribe click
+ const loadActivePlan = async () => {
+  if (!userId) return;
+  try {
+    console.log('hello', userId);
+    const stored = await AsyncStorage.getItem(`activePlan_${userId}`);
+    console.log('🔹 Loaded from AsyncStorage:', `activePlan_${userId}`, '=>', stored);
+
+    if (stored) {
+      setActivePlanId(stored);
+      console.log('✅ Active plan set to:', stored);
+    } else {
+      setActivePlanId(null);
+      console.log('⚪ No plan found for user');
+    }
+  } catch (error) {
+    console.error('Error loading active plan:', error);
+  }
+};
+
+// ✅ Load saved plan on mount or when user logs in
+useEffect(() => {
+  if (userId) {
+    loadActivePlan();
+  }
+}, [userId]);
+
+  // ✅ Handle subscribe click
   const handleSubscribe = async (planId: string) => {
     try {
       const billingCycle = selectedCadence;
-      const userId =
-        (session as any)?.user?.id ||
-        (session as any)?.user?._id ||
-        (session as any)?.user?.userId;
       const token = session?.accessToken;
 
       if (!token || !userId) {
-        Alert.alert(
-          'Please log in',
-          'You need to log in to subscribe to a plan.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Login', onPress: () => navigate('Login', {} as any) },
-          ],
-        );
+        Alert.alert('Please log in', 'You need to log in to subscribe.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Login', onPress: () => navigate('Login', {} as any) },
+        ]);
         return;
       }
 
-      console.log('🟩 Creating checkout for:', {
-        planId,
-        userId,
-        billingCycle,
-      });
       setLoadingPlan(planId);
 
       const res = await fetch(
@@ -98,39 +120,29 @@ const PricingScreen: React.FC = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            planId,
-            userId,
-            billingCycle,
-          }),
+          body: JSON.stringify({ planId, userId, billingCycle }),
         },
       );
 
       const json = await res.json();
-      console.log('🟢 Checkout Response:', json);
-
       if (!res.ok || !json?.data?.checkoutUrl) {
         throw new Error(json?.error || 'Failed to create checkout');
       }
 
       const { checkoutUrl, transactionId } = json.data;
-
-      if (!checkoutUrl || !checkoutUrl.startsWith('http')) {
-        Alert.alert('Error', 'Invalid checkout URL.');
-        return;
-      }
-
-      // ✅ store transaction ID so appState can detect on return
       setTransactionId(transactionId);
 
-      // open checkout
-      await Linking.openURL(checkoutUrl);
+      // ✅ Save plan for this specific user
+      await AsyncStorage.setItem(`activePlan_${userId}`, planId);
+      console.log('✅ Saved plan:', planId, 'for user:', userId);
+      await loadActivePlan(); // recheck immediately
 
-      // ✅ show modal in background as “waiting”
+      setActivePlanId(planId);
+
+      await Linking.openURL(checkoutUrl);
       setPaymentStatus('pending');
       setShowStatusModal(true);
     } catch (e: any) {
-      console.error('Checkout error:', e);
       Alert.alert('Error', e.message || 'Something went wrong.');
     } finally {
       setLoadingPlan(null);
@@ -138,7 +150,7 @@ const PricingScreen: React.FC = () => {
   };
 
   // ✅ Check payment status on resume
-  const appState = useRef(AppState.currentState);
+
   useEffect(() => {
     const sub = AppState.addEventListener('change', async nextAppState => {
       if (
@@ -171,9 +183,27 @@ const PricingScreen: React.FC = () => {
 
     return () => sub.remove();
   }, [transactionId]);
+  useEffect(() => {
+    if (plans && plans.length > 0 && !activePlanId) {
+      const freePlan = plans.find((p: { name: string }) =>
+        /free|starter/i.test(p.name || ''),
+      );
+      if (freePlan) setActivePlanId(freePlan._id);
+    }
+  }, [plans, activePlanId]);
+
+  useEffect(() => {
+    const loadActivePlan = async () => {
+      const storedPlanId = await AsyncStorage.getItem('activePlanId');
+      if (storedPlanId) {
+        setActivePlanId(storedPlanId);
+      }
+    };
+    loadActivePlan();
+  }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={{ height: insets.top }} />
       <Header
         logoSource={LOGO}
@@ -183,14 +213,18 @@ const PricingScreen: React.FC = () => {
       />
 
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: insets.bottom + scale(28) }}
+        style={[styles.scroll, { backgroundColor: colors.background }]}
+        contentContainerStyle={{ paddingBottom: insets.bottom + scale(35) }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Subscription Plans</Text>
+        <Text style={[styles.pageTitle, { color: colors.text }]}>
+          Subscription Plans
+        </Text>
 
         {/* TOGGLE */}
-        <View style={styles.toggleContainer}>
+        <View
+          style={[styles.toggleContainer, { backgroundColor: colors.card }]}
+        >
           {['weekly', 'monthly', 'annual'].map(cadence => (
             <TouchableOpacity
               key={cadence}
@@ -203,6 +237,7 @@ const PricingScreen: React.FC = () => {
               <Text
                 style={[
                   styles.toggleText,
+                  { color: colors.headingtext },
                   selectedCadence === cadence && styles.toggleTextActive,
                 ]}
               >
@@ -215,7 +250,7 @@ const PricingScreen: React.FC = () => {
         </View>
 
         {selectedCadence === 'annual' && (
-          <Text style={styles.discountText}>
+          <Text style={[styles.discountText, { color: colors.text }]}>
             🎉 Save 15% with yearly subscription
           </Text>
         )}
@@ -264,16 +299,26 @@ const PricingScreen: React.FC = () => {
                   </View>
                 )}
 
-                <View style={styles.innerCard}>
-                  <Text style={styles.planTitle}>{plan.name}</Text>
-                  <Text style={styles.planSubtitle}>{description}</Text>
+                <View
+                  style={[styles.innerCard, { backgroundColor: colors.card }]}
+                >
+                  <Text
+                    style={[styles.planTitle, { color: colors.headingtext }]}
+                  >
+                    {plan.name}
+                  </Text>
+                  <Text style={[styles.planSubtitle, { color: colors.text }]}>
+                    {description}
+                  </Text>
 
-                  <View style={styles.priceRow}>
-                    <Text style={styles.price}>
+                  <View
+                    style={[styles.priceRow, { backgroundColor: colors.card }]}
+                  >
+                    <Text style={[styles.price, { color: colors.headingtext }]}>
                       {isFree ? 'Free' : `$${price}`}
                     </Text>
                     {!isFree && (
-                      <Text style={styles.cadence}>
+                      <Text style={[styles.cadence, { color: colors.text }]}>
                         /{' '}
                         {selectedCadence === 'annual'
                           ? 'yearly'
@@ -294,11 +339,19 @@ const PricingScreen: React.FC = () => {
                               i === 0 && styles.featureIconBlue,
                             ]}
                           />
-                          <Text style={styles.featureText}>{feature}</Text>
+                          <Text
+                            style={[styles.featureText, { color: colors.text }]}
+                          >
+                            {feature}
+                          </Text>
                         </View>
                       ))
                     ) : (
-                      <Text style={styles.featureText}>No features listed</Text>
+                      <Text
+                        style={[styles.featureText, { color: colors.text }]}
+                      >
+                        No features listed
+                      </Text>
                     )}
                   </View>
 
@@ -318,7 +371,7 @@ const PricingScreen: React.FC = () => {
                     }
 
                     if (userHasPlan) {
-                      console.log(plan._id)
+                      console.log(plan._id);
                       if (plan._id === currentPlanId) {
                         // ✅ User’s currently active plan
                         buttonText = 'Activated';
@@ -342,24 +395,23 @@ const PricingScreen: React.FC = () => {
                     return (
                       <TouchableOpacity
                         style={[
-                          styles.ctaBtn,
-                          {
-                            backgroundColor: isDisabled
-                              ? '#444'
-                              : buttonText === 'Free'
-                                ? '#888'
-                                : '#2260B2',
-                          },
-                          loadingPlan === plan._id && { opacity: 0.6 },
+                          styles.subscribeButton,
+                          activePlanId === plan._id && {
+                            backgroundColor: '#aaa',
+                          }, // gray for active
+                          activePlanId &&
+                            activePlanId !== plan._id && { opacity: 0.6 }, // dim other plans
                         ]}
-                        activeOpacity={0.9}
-                        disabled={isDisabled}
-                        onPress={() => !isDisabled && handleSubscribe(plan._id)}
+                        onPress={() => handleSubscribe(plan._id)}
                       >
-                        <Text style={[styles.ctaText, { color: '#fff' }]}>
-                          {loadingPlan === plan._id
-                            ? 'Processing...'
-                            : buttonText}
+                        <Text style={styles.buttonText}>
+                          {activePlanId === plan._id
+                            ? 'Activated' // Active purchased plan
+                            : plan.name.toLowerCase().includes('free')
+                              ? 'Free' // Free plan only says Free
+                              : plan.name.toLowerCase().includes('premium')
+                                ? 'Go Premium' // Premium plan CTA
+                                : 'Subscribe'}
                         </Text>
                       </TouchableOpacity>
                     );

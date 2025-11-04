@@ -14,6 +14,7 @@ import { navigate } from '../Navigators/utils';
 import { getApiWithOutQuery } from '../Utils/api/common';
 import { API_GET_PROFILE } from '../Utils/api/APIConstant';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -25,44 +26,31 @@ type HeaderProps = {
   authRoute?: string;
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
+  isHome?: boolean; 
 };
 
 const Header: React.FC<HeaderProps> = ({
   logoSource,
   avatarSource,
-  barStyle = 'dark-content',
+  barStyle = 'light-content',
   guestRoute = 'More',
   authRoute = 'More',
   leftSlot,
   rightSlot,
+  isHome = false, 
 }) => {
   const { session } = useAuth();
   const [avatarErrored, setAvatarErrored] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { theme, colors } = useTheme();
 
-  // Default avatar if no profile photo is available
+  // Default avatar if no profile photo
   const AVATAR = require('../icons/user.png');
 
-  // Fetch profile photo if authenticated
-  useEffect(() => {
-    if (session?.accessToken) {
-      fetchProfile();
-    }
-  }, [session?.accessToken]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (session?.accessToken) {
-        fetchProfile();
-      }
-    }, [session?.accessToken]),
-  );
-
-  // Define fetchProfile outside so both effects can access it:
+  // Fetch profile photo
   const fetchProfile = async () => {
     if (!session?.accessToken) return;
-
     setIsLoading(true);
     try {
       const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
@@ -75,24 +63,43 @@ const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  useEffect(() => {
+    if (session?.accessToken) fetchProfile();
+  }, [session?.accessToken]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (session?.accessToken) fetchProfile();
+    }, [session?.accessToken])
+  );
+
   const handleAvatarPress = () => {
     const route = session?.accessToken ? authRoute : guestRoute;
     navigate(route as never);
   };
 
-  // If avatar image fails, use default avatar
   const avatarSourceUri =
     profilePhoto && !avatarErrored ? { uri: profilePhoto } : AVATAR;
 
+  // ✅ Dynamic tint color (white in dark mode, black in light mode)
+ // ✅ White logo on Home screen (even in light mode)
+const tintColor =
+  theme === 'dark'
+    ? '#fff'
+    : isHome
+    ? '#fff' // 👈 make white if Home and light mode
+    : '#000';
+
+
   return (
-    <View style={styles.header}>
+    <View style={[styles.header]}>
       <StatusBar translucent barStyle={barStyle} />
       <View style={styles.topBar}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {leftSlot ?? (
             <Image
               source={logoSource}
-              style={styles.logo}
+              style={[styles.logo, { tintColor }]} // 👈 logo adapts to mode
               resizeMode="contain"
             />
           )}
@@ -101,18 +108,21 @@ const Header: React.FC<HeaderProps> = ({
         <View style={styles.rightRow}>
           {rightSlot}
           <TouchableOpacity
-            style={styles.avatarBtn}
+            style={[
+              styles.avatarBtn,
+              { backgroundColor: theme === 'dark' ? '#333' : '#F0F4FF' },
+            ]}
             onPress={handleAvatarPress}
             activeOpacity={0.8}
           >
             {isLoading ? (
-              // Show a loading spinner while fetching the profile image
-              <ActivityIndicator size="small" color="#000" />
+              <ActivityIndicator size="small" color={tintColor} />
             ) : (
               <Image
                 source={avatarSourceUri}
-                style={styles.avatar}
-                onError={() => setAvatarErrored(true)} // Mark as errored if the image fails
+                style={[styles.avatar]} // 👈 apply tint only for default avatar
+                onError={() => setAvatarErrored(true)}
+                resizeMode="cover"
               />
             )}
           </TouchableOpacity>
@@ -146,7 +156,6 @@ const styles = StyleSheet.create({
     width: scale(34),
     height: scale(34),
     borderRadius: scale(17),
-    backgroundColor: '#F0F4FF',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

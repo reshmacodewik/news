@@ -20,6 +20,7 @@ import TrendingScreen from '../../../Screens/Bottom Tab/TrendingScreen';
 import MoreScreen from '../../../Screens/Bottom Tab/MoreScreen';
 import PricingScreen from '../../../Screens/Bottom Tab/PricingScreen';
 import CryptoScreen from '../../../Screens/Bottom Tab/CryptoScreen';
+import { useTheme } from '../../../context/ThemeContext';
 
 type IconPair = {
   inactive: any;
@@ -52,7 +53,11 @@ const ICONS: Record<string, IconPair> = {
 const ICON_SIZE = 26; // 26–28 looks right
 const PILL_HPAD = 12; // horizontal padding to make a rounded “capsule”
 
-const iconFor = (route: string, active: boolean) => {
+
+export default function BottomTab() {
+  const insets = useSafeAreaInsets();
+  const { theme, colors } = useTheme();
+  const iconFor = (route: string, active: boolean) => {
   const pair = ICONS[route] ?? ICONS[SCREEN_NAMES.more];
   const src = active ? pair.active : pair.inactive;
 
@@ -60,14 +65,11 @@ const iconFor = (route: string, active: boolean) => {
     <View style={s.iconHitArea}>
       <Image
         source={src}
-        style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }}
+        style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain', tintColor: active ? colors.headingtext : colors.text }}
       />
     </View>
   );
 };
-
-export default function BottomTab() {
-  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -77,14 +79,21 @@ export default function BottomTab() {
         tabBarShowLabel: false,
         tabBarStyle: {
           height: Platform.OS === 'ios' ? 78 : 66,
-          backgroundColor: '#FFF',
+          backgroundColor: colors.card,
         },
       }}
       tabBar={props => {
         const { state, navigation } = props;
         return (
           <View
-            style={[s.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}
+            style={[
+              s.tabBar,
+              {
+                backgroundColor: colors.card,
+                paddingBottom: Math.max(insets.bottom, 8),
+                borderTopColor: theme === 'dark' ? '#222' : '#E5E7EB',
+              },
+            ]}
           >
             {state.routes.map((route, index) => {
               const active = state.index === index;
@@ -100,7 +109,14 @@ export default function BottomTab() {
                   <View style={[s.iconWrap, active && s.iconWrapActive]}>
                     {iconFor(route.name, active)}
                   </View>
-                  <Text style={[s.tabLabel, active && s.tabLabelActive]}>
+                  <Text
+                    style={[
+                      s.tabLabel,
+                      active && s.tabLabelActive,
+                      { color: colors.text },
+                      active && { color: colors.headingtext },
+                    ]}
+                  >
                     {label}
                   </Text>
                 </TouchableOpacity>
@@ -115,12 +131,8 @@ export default function BottomTab() {
       <Tab.Screen name={SCREEN_NAMES.home} component={HomeScreen} />
       <Tab.Screen name={SCREEN_NAMES.about} component={AboutScreen} />
       <Tab.Screen name={SCREEN_NAMES.trending} component={TrendingScreen} />
-       <Tab.Screen name={SCREEN_NAMES.crypto} component={CryptoScreen} />
-      <Tab.Screen
-        name={SCREEN_NAMES.subscription}
-        component={PricingScreen}
-      />
-   
+      <Tab.Screen name={SCREEN_NAMES.crypto} component={CryptoScreen} />
+      <Tab.Screen name={SCREEN_NAMES.subscription} component={PricingScreen} />
     </Tab.Navigator>
   );
 }
@@ -151,16 +163,16 @@ const s = StyleSheet.create({
   },
   iconWrap: {
     borderRadius: 999,
-    paddingVertical: 4, // base small padding
+    paddingVertical: 12, // base small padding
     paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconWrapActive: {
     backgroundColor: 'rgba(34,96,178,0.15)', // #2260B2 with alpha
-    paddingHorizontal: 15,
-    paddingVertical: -2,
-    borderRadius: 20, 
+    paddingVertical: 10,
+    borderRadius: 80,
+    paddingHorizontal: 11,
   },
   tabLabel: { fontSize: 12, color: '#6B7280' },
   tabLabelActive: { color: '#2260B2', fontWeight: '700' },

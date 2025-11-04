@@ -34,6 +34,7 @@ import ShowToast from '../Utils/ShowToast';
 import { navigate } from '../Navigators/utils';
 import RenderHTML from 'react-native-render-html';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
 
 const HERO = require('../icons/news.png');
 const BACK = require('../icons/back.png');
@@ -73,7 +74,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const [sortOrder, setSortOrder] = useState<'latest' | 'oldest'>('latest');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
-
+  const { theme, colors } = useTheme();
   const queryClient = useQueryClient();
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -103,13 +104,19 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     }, [slug]),
   );
   const isLoggedIn = !!session?.accessToken; // or check from Redux/store
-  const isSubscribed =
-    session?.user?.plan === 'premium' || session?.user?.isPremium;
+const isSubscribed =
+  session?.user?.plan === 'premium' ||
+  session?.user?.isPremium ||
+  session?.user?.subscription === 'premium' ||
+  session?.user?.planType === 'premium' ||
+  session?.user?.role === 'premium' ||
+  session?.user?.is_premium === true;
+
 
   const likeCount = data?.likeCount ?? 0;
-  console.log("helooo",likeCount)
+  console.log('helooo', likeCount);
   const fetchedCommentCount = data?.commentCount ?? 0;
-  console.log("helooo",fetchedCommentCount)
+  console.log('helooo', fetchedCommentCount);
 
   const { data: commentData, refetch: refetchComments } = useQuery({
     queryKey: ['comments', id],
@@ -274,36 +281,35 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
- const handleDeleteComment = async (commentId: string) => {
-  try {
-    const res = await apiPost({
-      url: API_DELETE_COMMENT.replace(':id', commentId),
-      values: {},
-    });
-
-    if (res?.success || res?.status) {
-      ShowToast('Comment deleted successfully', 'success');
-
-      // ✅ Instantly update article commentCount cache
-      queryClient.setQueryData(['article-details', slug], (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          commentCount: Math.max((old.commentCount ?? 1) - 1, 0),
-        };
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const res = await apiPost({
+        url: API_DELETE_COMMENT.replace(':id', commentId),
+        values: {},
       });
 
-      // ✅ Refresh comment list to remove deleted one
-      await refetchComments();
-    } else {
-      ShowToast('Failed to delete comment', 'error');
-    }
-  } catch (error) {
-    console.error('Delete comment error:', error);
-    ShowToast('Something went wrong', 'error');
-  }
-};
+      if (res?.success || res?.status) {
+        ShowToast('Comment deleted successfully', 'success');
 
+        // ✅ Instantly update article commentCount cache
+        queryClient.setQueryData(['article-details', slug], (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            commentCount: Math.max((old.commentCount ?? 1) - 1, 0),
+          };
+        });
+
+        // ✅ Refresh comment list to remove deleted one
+        await refetchComments();
+      } else {
+        ShowToast('Failed to delete comment', 'error');
+      }
+    } catch (error) {
+      console.error('Delete comment error:', error);
+      ShowToast('Something went wrong', 'error');
+    }
+  };
 
   const handleSaveEdit = async (commentId: string) => {
     if (!editContent.trim()) {
@@ -337,20 +343,26 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     (viewingType === 'register' || viewingType === 'premium') && !token;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="dark-content" translucent />
       <View style={{ height: insets.top }} />
 
       {/* App Bar */}
-      <View style={styles.appBar}>
+      <View style={[styles.appBar, { backgroundColor: colors.background }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack?.()}
           hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
-          style={styles.backBtn}
+          style={[styles.backBtn]}
         >
-          <Image source={BACK} style={styles.backIcon} />
+          <Image
+            source={BACK}
+            style={[styles.backIcon, { tintColor: colors.text }]}
+          />
         </TouchableOpacity>
-        <Text style={styles.appTitle} numberOfLines={1}>
+        <Text
+          style={[styles.appTitle, { color: colors.text }]}
+          numberOfLines={1}
+        >
           Arcalis News
         </Text>
         <View style={{ width: scale(24) }} />
@@ -385,7 +397,17 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
         {/* Headline & meta */}
         <View style={styles.headerBlock}>
-          <Text style={styles.headline}>
+          <Text
+            style={[
+              styles.headline,
+              {
+                color:
+                  theme === 'dark'
+                    ? colors.headingtext // use dark mode heading color
+                    : '#000', // black for light mode
+              },
+            ]}
+          >
             {data?.title ?? (isLoading ? 'Loading…' : '—')}
           </Text>
 
@@ -417,10 +439,12 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                       ? require('../icons/heart_red.png')
                       : require('../icons/heart.png')
                   }
-                  style={styles.chatIcon}
+                  style={[styles.chatIcon, { tintColor: colors.text }]}
                 />
                 {likeCount > 0 && (
-                  <Text style={styles.likeCount}>{likeCount}</Text>
+                  <Text style={[styles.likeCount, { color: colors.text }]}>
+                    {likeCount}
+                  </Text>
                 )}
               </TouchableOpacity>
 
@@ -431,10 +455,12 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
               >
                 <Image
                   source={require('../icons/comment1.png')}
-                  style={styles.chatIcon}
+                  style={[styles.chatIcon, { tintColor: colors.text }]}
                 />
                 {fetchedCommentCount > 0 && (
-                  <Text style={styles.likeCount}>{fetchedCommentCount}</Text>
+                  <Text style={[styles.likeCount, { color: colors.text }]}>
+                    {fetchedCommentCount}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -446,26 +472,20 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
         {viewingType === 'premium' ? (
           !isLoggedIn ? (
-            // Premium article → not logged in → show Sign In + Subscribe
-            <ScrollView>
-              <PaywallCard
-                mode="login"
-                onSignIn={() => navigation.navigate('Login')}
-                onSubscribe={() => navigation.navigate('Premium')}
-              />
-            </ScrollView>
+            <PaywallCard
+              mode="login"
+              onSignIn={() => navigation.navigate('Login')}
+              onSubscribe={() => navigation.navigate('Premium')}
+            />
           ) : !isSubscribed ? (
-            // Premium article → logged in but not subscribed → show Subscribe only
-            <ScrollView>
-              <PaywallCard
-                mode="premium"
-                token={session?.accessToken}
-                onSignIn={() => {}}
-                onSubscribe={() => navigation.navigate('Premium')}
-              />
-            </ScrollView>
+            <PaywallCard
+              mode="premium"
+              token={session?.accessToken}
+              onSignIn={() => {}}
+              onSubscribe={() => navigation.navigate('Premium')}
+            />
           ) : (
-            // Premium article → subscribed → show full article
+            // ✅ Premium + subscribed → show article
             <Text style={styles.body}>
               {(data?.description ?? '').replace(/<[^>]+>/g, '')}
             </Text>
@@ -492,7 +512,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
               baseStyle={{
                 fontSize: 15,
                 lineHeight: 24,
-                color: '#111',
+                color: colors.text,
               }}
               tagsStyles={{
                 p: { marginBottom: 3 },
@@ -521,7 +541,14 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
       {/* Comments BottomSheet */}
       <BottomSheet visible={isVisible} onClose={() => setIsVisible(false)}>
-        <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: '600',
+            marginBottom: 12,
+            color: colors.text,
+          }}
+        >
           Comments
         </Text>
 

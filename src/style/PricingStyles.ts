@@ -121,6 +121,7 @@ export const styles = StyleSheet.create({
     padding: scale(15),
     paddingHorizontal: scale(22),
     paddingBottom: scale(18),
+    
     borderTopLeftRadius: scale(18),
     borderTopRightRadius: scale(18),
   },
@@ -189,4 +190,98 @@ export const styles = StyleSheet.create({
     fontSize: f(13),
   },
   link: { color: '#333333', textDecorationLine: 'underline' },
+  planContainer: {
+    width: width * 0.9,
+    alignSelf: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+
+  planName: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 6,
+  },
+
+  planDescription: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 10,
+    lineHeight: 20,
+  },
+
+  planPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2260B2',
+    marginBottom: 12,
+  },
+planCycle: {
+  fontSize: 14,
+  color: '#64748B',
+  marginBottom: 10,
+  textTransform: 'capitalize',
+},
+card: {
+  backgroundColor: '#fff',
+  borderRadius: 16,
+  padding: 20,
+  marginVertical: 10,
+  width: '90%',
+  alignSelf: 'center',
+
+  // subtle shadow for elevation
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 6,
+  elevation: 3,
+},
+scrollContainer: {
+  flexGrow: 1,
+  backgroundColor: '#fff',
+  paddingHorizontal: 16,
+  paddingBottom: 20,
+},
+
+   subscribeButton: {
+    backgroundColor: '#3B82F6', // main blue button
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+
+  // ---- Optional: variant styles ----
+  buttonActive: {
+    backgroundColor: '#aaa', // Gray for Activated
+  },
+
+  buttonFree: {
+    backgroundColor: '#00A86B', // Green for Free plan
+  },
+
+  buttonPremium: {
+    backgroundColor: '#D97706', // Gold tone for "Go Premium"
+  },
+
+  buttonDisabled: {
+    opacity: 0.6,
+  },
 });

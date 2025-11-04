@@ -15,13 +15,15 @@ import { navigate } from '../../Navigators/utils';
 import { RootStackParamList } from '../../Utils/Constant/constant';
 import { apiPost } from '../../Utils/api/common';
 import { API_VERIFY_OTP } from '../../Utils/api/APIConstant';
+import { useTheme } from '../../context/ThemeContext';
 
 type OTPScreenRouteProp = RouteProp<RootStackParamList, 'OTPScreen'>;
 
 const OTPScreen = () => {
   const route = useRoute<OTPScreenRouteProp>();
   const { email } = route.params;
-
+  const { theme, toggleTheme, colors } = useTheme();
+  
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -96,8 +98,8 @@ const OTPScreen = () => {
           </View>
 
           {/* OTP Input Boxes */}
-          <View style={styles.otpmainContainer}>
-            <View style={styles.otpContainer}>
+          <View style={[styles.otpmainContainer, { backgroundColor: colors.background }]}>
+            <View style={[styles.otpContainer, { backgroundColor: colors.background }]}>
               {otp.map((digit, index) => (
                 <TextInput
                   key={index}
@@ -118,7 +120,7 @@ const OTPScreen = () => {
               style={styles.resendButton}
               onPress={() => ShowToast('OTP resent to your email', 'success')}
             >
-              <Text style={styles.resendText}>Resend OTP</Text>
+              <Text style={[styles.resendText, { color: colors.headingtext }]}>Resend OTP</Text>
             </TouchableOpacity>
 
             {/* Verify Button */}

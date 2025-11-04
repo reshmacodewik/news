@@ -17,10 +17,11 @@ import ShowToast from "../../Utils/ShowToast";
 import { goBackNavigation, navigate } from "../../Navigators/utils";
 import { AuthSession, useAuth } from "./AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTheme } from "../../context/ThemeContext";
 
 const SignupScreen = () => {
   const { signIn } = useAuth();
-
+  const { theme, toggleTheme,colors } = useTheme();
   const formik = useFormik({
     initialValues: {
       name: "",
@@ -99,10 +100,10 @@ const SignupScreen = () => {
           </View>
 
           {/* Form */}
-          <View style={styles.formContainer}>
+          <View style={[styles.formContainer, { backgroundColor: colors.background }]}>
             {/* Name */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Name</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Name</Text>
               <TextInput
                 style={styles.textInput}
                 placeholder="name"
@@ -120,7 +121,7 @@ const SignupScreen = () => {
 
             {/* Email */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Email</Text>
               <TextInput
                 style={styles.textInput}
                 placeholder="example@email.com"
@@ -140,7 +141,7 @@ const SignupScreen = () => {
 
             {/* Password */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Password</Text>
               <TextInput
                 style={styles.textInput}
                 placeholder="enter the password"
@@ -163,7 +164,7 @@ const SignupScreen = () => {
               onPress={() =>
                 formik.setFieldValue("agreeTerms", !formik.values.agreeTerms)
               }
-              style={styles.checkboxRow}
+              style={[styles.checkboxRow, { backgroundColor: colors.background }]}
             >
               <View
                 style={[
@@ -175,10 +176,10 @@ const SignupScreen = () => {
                   <Text style={styles.checkIcon}>✓</Text>
                 ) : null}
               </View>
-              <Text style={styles.checkboxText}>
+              <Text style={[styles.checkboxText, { color: colors.text }]}>
                 I agree to the website’s{" "}
-                <Text style={styles.linkText}>Terms & Conditions</Text> and{" "}
-                <Text style={styles.linkText}>Privacy Policy</Text>.
+                <Text style={[styles.linkText, { color: colors.text }]}>Terms & Conditions</Text> and{" "}
+                <Text style={[styles.linkText, { color: colors.text }]}>Privacy Policy</Text>.
               </Text>
             </TouchableOpacity>
             {formik.touched.agreeTerms && formik.errors.agreeTerms && (
@@ -207,7 +208,7 @@ const SignupScreen = () => {
                   <Text style={styles.checkIcon}>✓</Text>
                 ) : null}
               </View>
-              <Text style={styles.checkboxText}>
+              <Text style={[styles.checkboxText, { color: colors.text }]}>
                 I want to receive newsletters, updates, and personalized news.
               </Text>
             </TouchableOpacity>
@@ -232,10 +233,10 @@ const SignupScreen = () => {
 
             {/* Footer link */}
             <View style={styles.signUpContainer}>
-              <Text style={styles.signUpText}>
+              <Text style={[styles.signUpText, { color: colors.text }]}>
                 Already have an account?{" "}
                 <Text
-                  style={styles.signUpLink}
+                  style={[styles.signUpLink, { color: colors.headingtext }]}
                   onPress={() => goBackNavigation()}
                 >
                   Log in

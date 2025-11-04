@@ -29,6 +29,7 @@ import Header from '../../Components/Header';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDomainByType } from '../../Hook/useDomainByType';
 import NewsCard from '../../Components/NewsCard';
+import { useTheme } from '../../context/ThemeContext';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -59,6 +60,7 @@ const TrendingScreen: React.FC = () => {
   const [breakingNews, setBreakingNews] = useState<Article[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const { domain, domainId } = useDomainByType('finance');
+  const { theme, colors } = useTheme();
 
   const { data: categoryDataRaw = [] } = useQuery({
     queryKey: ['categories-domain', domainId],
@@ -157,10 +159,10 @@ const TrendingScreen: React.FC = () => {
 
   // ── UI ─────────────────────────────────────────────────────────────
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View
         style={{
-          backgroundColor: '#e3e9ee',
+          backgroundColor:  colors.background,
           borderBottomLeftRadius: scale(18),
           borderBottomRightRadius: scale(15),
           paddingBottom: scale(10),
@@ -191,7 +193,7 @@ const TrendingScreen: React.FC = () => {
                 activeOpacity={0.8}
               >
                 <Text
-                  style={[styles.tabText, isActive && styles.tabTextActive]}
+                  style={[styles.tabText, isActive && styles.tabTextActive, isActive && { color: colors.tabtext }]}
                 >
                   {c.title}
                 </Text>
@@ -199,6 +201,7 @@ const TrendingScreen: React.FC = () => {
                   style={[
                     styles.tabBar,
                     isActive ? styles.tabBarActive : styles.tabBarGhost,
+                    isActive && { backgroundColor: colors.tabtext },
                   ]}
                 />
               </TouchableOpacity>

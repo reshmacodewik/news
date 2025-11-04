@@ -13,6 +13,7 @@ import { getApiWithOutQuery } from '../Utils/api/common';
 import { styles } from '../style/AboutStyles';
 import { API_TERMS_AND_CONDITIONS } from '../Utils/api/APIConstant';
 import Header from '../Components/Header';
+import { useTheme } from '../context/ThemeContext';
 
 const BG = require('../icons/backgroundnew.png');
 const LOGO = require('../icons/headerlogo.png');
@@ -20,7 +21,7 @@ const AVATAR = require('../icons/user.png');
 
 const TermsAndConditionsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-
+ const { theme, colors } = useTheme();
   const { data, isLoading, isError } = useQuery({
     queryKey: ['terms-and-conditions'],
     queryFn: async () => {
@@ -42,7 +43,7 @@ const TermsAndConditionsScreen: React.FC = () => {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar translucent barStyle="light-content" />
 
       <ScrollView
