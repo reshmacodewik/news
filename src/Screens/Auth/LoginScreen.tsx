@@ -30,11 +30,12 @@ import {
 } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
 import { useTheme } from '../../context/ThemeContext';
+import appleAuth from '@invertase/react-native-apple-authentication';
 
 const LoginScreen = () => {
   const isFocused = useIsFocused();
   const { signIn, session } = useAuth();
-  const { theme, toggleTheme,colors } = useTheme();
+  const { theme, toggleTheme, colors } = useTheme();
   // --- GOOGLE CONFIGURATION ---
   useEffect(() => {
     GoogleSignin.configure({
@@ -161,68 +162,77 @@ const LoginScreen = () => {
       }
     }
   };
-const handleFacebookSignIn = async () => {
-  try {
-    // ensure logout before new login
-    try { LoginManager.logOut(); } catch {}
+  const handleFacebookSignIn = async () => {
+    try {
+      // ensure logout before new login
+      try {
+        LoginManager.logOut();
+      } catch {}
 
-    // request permissions
-    const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
-    if (result.isCancelled) {
-      ShowToast('Facebook sign-in cancelled', 'info');
-      return;
-    }
+      // request permissions
+      const result = await LoginManager.logInWithPermissions([
+        'public_profile',
+        'email',
+      ]);
+      if (result.isCancelled) {
+        ShowToast('Facebook sign-in cancelled', 'info');
+        return;
+      }
 
-    const data = await AccessToken.getCurrentAccessToken();
-    if (!data) {
-      ShowToast('No access token received from Facebook', 'error');
-      return;
-    }
+      const data = await AccessToken.getCurrentAccessToken();
+      if (!data) {
+        ShowToast('No access token received from Facebook', 'error');
+        return;
+      }
 
-    const { accessToken } = data;
+      const { accessToken } = data;
 
-    // optionally fetch user info
-    const fbUser = await fetch(`https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`).then(res => res.json());
+      // optionally fetch user info
+      const fbUser = await fetch(
+        `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`,
+      ).then(res => res.json());
 
-    const socialData = {
-      facebookId: fbUser.id,
-      name: fbUser.name,
-      email: fbUser.email,
-      picture: fbUser.picture?.data?.url,
-      accessToken,
-    };
-
-    console.log('📤 Sending to backend:', socialData);
-
-    const response = await axios.post('https://api.arcalisnews.com/api/users/social_login', socialData);
-    console.log('🌍 Backend response:', response.data);
-
-    if (response.data.success && response.data.data?.token) {
-      const newSession = {
-        accessToken: response.data.data.token,
-        user: {
-          id: response.data.data.id,
-          name: response.data.data.name,
-          email: response.data.data.email,
-          photo: response.data.data.photo,
-        },
+      const socialData = {
+        facebookId: fbUser.id,
+        name: fbUser.name,
+        email: fbUser.email,
+        picture: fbUser.picture?.data?.url,
+        accessToken,
       };
 
-      const { signIn } = useAuth();
-      signIn(newSession);
-      await AsyncStorage.setItem('userSession', JSON.stringify(newSession));
+      console.log('📤 Sending to backend:', socialData);
 
-      ShowToast('Login successful', 'success');
-      navigate('Home' as never);
-    } else {
-      ShowToast(response.data.message || 'Facebook login failed', 'error');
+      const response = await axios.post(
+        'https://api.arcalisnews.com/api/users/social_login',
+        socialData,
+      );
+      console.log('🌍 Backend response:', response.data);
+
+      if (response.data.success && response.data.data?.token) {
+        const newSession = {
+          accessToken: response.data.data.token,
+          user: {
+            id: response.data.data.id,
+            name: response.data.data.name,
+            email: response.data.data.email,
+            photo: response.data.data.photo,
+          },
+        };
+        console.log(newSession);
+        const { signIn } = useAuth();
+        signIn(newSession);
+        await AsyncStorage.setItem('userSession', JSON.stringify(newSession));
+
+        ShowToast('Login successful', 'success');
+        navigate('Home' as never);
+      } else {
+        ShowToast(response.data.message || 'Facebook login failed', 'error');
+      }
+    } catch (e: any) {
+      console.log('🔥 Facebook Login Error:', e);
+      ShowToast(e?.message || 'Facebook login failed', 'error');
     }
-
-  } catch (e: any) {
-    console.log('🔥 Facebook Login Error:', e);
-    ShowToast(e?.message || 'Facebook login failed', 'error');
-  }
-};
+  };
   const isIOS = Platform.OS === 'ios';
   const buttonIcon = isIOS
     ? require('../../icons/apple.png')
@@ -231,39 +241,136 @@ const handleFacebookSignIn = async () => {
   const buttonText = isIOS ? 'Sign in with Apple' : 'Sign in with Facebook';
 
   const handleAppleSignIn = async () => {
+    // 1) APPLE AUTH REQUEST
     try {
-      try { LoginManager.logOut(); } catch {}
-      const result = await LoginManager.logInWithPermissions(
-        ['public_profile', 'email']
-      );
-      if (result.isCancelled) return ShowToast('Facebook sign-in cancelled', 'info');
-
-      const tok = await AccessToken.getCurrentAccessToken();
-      if (!tok?.accessToken) return ShowToast('No Facebook access token', 'error');
-
-      const res = await apiPost({
-        url: API_SOCIAL_LOGIN,
-        values: { accessToken: tok.accessToken.toString() },
-      });
-
-      if (!res?.success || !res?.data?.token) {
-        return ShowToast(res?.message || res?.error || 'Facebook login failed', 'error');
+      if (!appleAuth.isSupported) {
+        ShowToast('Apple Sign-In not supported on this device.', 'error');
+        return;
       }
 
-      const session = {
-        accessToken: res.data.token,
-        user: { id: res.data.id, name: res.data.name, email: res.data.email },
-      };
-      signIn(session);
-      await AsyncStorage.setItem('userSession', JSON.stringify(session));
-      ShowToast('Login successful', 'success');
-      navigate('Home' as never);
-    } catch (e: any) {
-      ShowToast(e?.message || 'Facebook sign-in failed', 'error');
+      const res = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      const {
+        user: appleUserId,
+        email: emailFromRes,
+        fullName,
+        identityToken,
+      } = res;
+
+      if (!identityToken) {
+        ShowToast('Apple returned no identity token.', 'error');
+        return;
+      }
+
+      // optional: verify credential state (authorized / revoked / transferred)
+      try {
+        const state = await appleAuth.getCredentialStateForUser(appleUserId);
+        if (state !== appleAuth.State.AUTHORIZED) {
+          ShowToast(`Apple credential state: ${state}`, 'error');
+          return;
+        }
+      } catch (e) {
+        console.log('getCredentialStateForUser error:', e);
+      }
+
+      // Decode + build display data
+      type AppleIdToken = { sub?: string; email?: string };
+      let decoded: AppleIdToken = {};
+      try {
+        decoded = jwtDecode<AppleIdToken>(identityToken);
+      } catch {}
+
+      const builtName = [fullName?.givenName, fullName?.familyName]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+
+      const savedEmail = await AsyncStorage.getItem('apple:lastEmail');
+      const savedName = await AsyncStorage.getItem('apple:lastName');
+
+      const finalEmail = emailFromRes || decoded.email || savedEmail || '';
+      const finalName = builtName || savedName || 'Apple User';
+
+      if (finalEmail) await AsyncStorage.setItem('apple:lastEmail', finalEmail);
+      if (builtName) await AsyncStorage.setItem('apple:lastName', builtName);
+
+      // 2) BACKEND LOGIN
+      try {
+        const response = await axios.post(
+          'http://192.168.1.36:9991/api/users/social_login',
+          {
+            provider: 'apple',
+            appleId: appleUserId ,
+            email: finalEmail ,
+            name: finalName,
+            idToken: identityToken,
+          },
+          { timeout: 10000 },
+        );
+        console.log(response);
+        if (response.data?.success && response.data?.data?.token) {
+          const newSession: AuthSession = {
+            accessToken: response.data.data.token,
+            user: {
+              id: response.data.data.id,
+              name: response.data.data.name || finalName,
+              email: response.data.data.email || finalEmail,
+              photo: response.data.data.photo,
+            },
+          };
+          console.log(newSession);
+          await AsyncStorage.setItem('userSession', JSON.stringify(newSession));
+          signIn(newSession);
+          ShowToast(`Welcome ${newSession.user.name}!`, 'success');
+          navigate('Home' as never);
+          return;
+        }
+
+        console.log('Backend Apple login failed:', response.data);
+        ShowToast(
+          response.data?.message || 'Apple backend login failed',
+          'error',
+        );
+      } catch (netErr: any) {
+        console.log(
+          'Network/backend error:',
+          netErr?.response?.data || netErr?.message || netErr,
+        );
+        ShowToast(
+          netErr?.response?.data?.message || netErr?.message || 'Network error',
+          'error',
+        );
+      }
+    } catch (appleErr: any) {
+      // DETAILED APPLE ERRORS
+      console.log(
+        '🍎 Apple Sign-In Error (raw):',
+        appleErr,
+        JSON.stringify(appleErr),
+      );
+      if (appleErr?.code === appleAuth.Error.CANCELED) {
+        ShowToast('Apple Sign-In cancelled', 'info');
+      } else if (appleErr?.code === appleAuth.Error.FAILED) {
+        ShowToast('Apple Sign-In failed', 'error');
+      } else if (appleErr?.code === appleAuth.Error.INVALID_RESPONSE) {
+        ShowToast('Invalid response from Apple', 'error');
+      } else if (appleErr?.code === appleAuth.Error.NOT_HANDLED) {
+        ShowToast('Apple Sign-In not handled', 'error');
+      } else if (appleErr?.code === appleAuth.Error.UNKNOWN) {
+        ShowToast('Unknown Apple Sign-In error', 'error');
+      } else {
+        ShowToast(
+          appleErr?.message || 'Unexpected Apple Sign-In error',
+          'error',
+        );
+      }
     }
   };
 
-   const handlePress = isIOS ? handleAppleSignIn : handleFacebookSignIn;
+  const handlePress = isIOS ? handleAppleSignIn : handleFacebookSignIn;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -294,10 +401,17 @@ const handleFacebookSignIn = async () => {
           </View>
 
           {/* Form */}
-          <View style={[styles.formContainer, { backgroundColor: colors.background }]}>
+          <View
+            style={[
+              styles.formContainer,
+              { backgroundColor: colors.background },
+            ]}
+          >
             {/* Email */}
             <View style={styles.inputContainer}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Email</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>
+                Email
+              </Text>
               <TextInput
                 style={[styles.textInput]}
                 placeholder="Example@email.com"
@@ -325,9 +439,11 @@ const handleFacebookSignIn = async () => {
 
             {/* Password */}
             <View style={styles.inputContainer}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Password</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>
+                Password
+              </Text>
               <TextInput
-                style={[styles.textInput, ]}
+                style={[styles.textInput]}
                 placeholder="Enter a password"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.password}
@@ -357,7 +473,12 @@ const handleFacebookSignIn = async () => {
               style={styles.forgotPasswordContainer}
               onPress={() => navigate('ForgotPassword' as never)}
             >
-              <Text style={[styles.forgotPasswordText, { color: colors.headingtext }]}>
+              <Text
+                style={[
+                  styles.forgotPasswordText,
+                  { color: colors.headingtext },
+                ]}
+              >
                 Forgot Password?
               </Text>
             </TouchableOpacity>
@@ -382,7 +503,14 @@ const handleFacebookSignIn = async () => {
 
             {/* Google */}
             <TouchableOpacity
-              style={[styles.socialButton, { backgroundColor: colors.background }]}
+              style={[
+                styles.socialButton,
+                {
+                  backgroundColor: theme === 'dark' ? '#222' : '#fff',
+                  borderWidth: 1,
+                  borderColor: theme === 'dark' ? '#fff' : '#ddd',
+                },
+              ]}
               onPress={handleGoogleSignIn}
             >
               <Image
@@ -395,7 +523,14 @@ const handleFacebookSignIn = async () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.socialButton, { backgroundColor: colors.background }]}
+              style={[
+                styles.socialButton,
+                {
+                  backgroundColor: theme === 'dark' ? '#222' : '#fff',
+                  borderWidth: 1,
+                  borderColor: theme === 'dark' ? '#fff' : '#ddd',
+                },
+              ]}
               onPress={handlePress}
             >
               <Image source={buttonIcon} style={styles.socialIcon} />

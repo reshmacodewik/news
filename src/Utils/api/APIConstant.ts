@@ -30,4 +30,5 @@ export const API_DOMAIN_LIST : string="/domain/all"
 export const API_DELETE_ACCOUNT: string = "/users/profile";
 export const API_UPDATE_COMMENT: string = "/users/comments/update/:id";
 export const API_DELETE_COMMENT: string = "/users/comments/delete/:id";
-
+export const API_GET_USER_ACTIVE_PLAN: string = "/users/subscriptions/active/me";
+export const API_GET_PREMIUM_ARTICLES: string = "/users/articles/premium"

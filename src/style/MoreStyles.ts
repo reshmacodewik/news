@@ -113,6 +113,53 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#0F172A',
   },
+optionsCard: {
+  borderRadius: 14,
+  padding: 14,
+  marginTop: 10,
+  marginBottom: 12,
+  overflow: 'hidden',
+  borderWidth: 1,
+  borderColor: '#ECE7FF',     // soft border (light purple tint)
+},
+
+optionsCardInner: {
+  padding: 12,
+  paddingRight: 96,            // leave room for right artwork
+  borderRadius: 12,
+  // soft tinted background like screenshot
+},
+
+optionsTitle: {
+  fontSize: 16,
+  fontWeight: '700',
+  marginBottom: 8,
+},
+
+bullets: {
+  gap: 6,
+},
+
+bullet: {
+  fontSize: 14,
+  lineHeight: 20,
+},
+
+linkText: {
+  fontSize: 14,
+  textDecorationLine: 'underline',
+  fontWeight: '600',
+  color: '#2C6DE0',           // link blue
+},
+
+optionsArt: {
+  position: 'absolute',
+  right: 6,
+  top: 2,
+  width: 108,
+  height: 108,
+  opacity: 0.9,
+},
 
   // Card groups
   cardGroup: {
@@ -134,6 +181,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: scale(14),
     flexDirection: 'row',
     alignItems: 'center',
+    marginVertical: scale(-5),
   },
   rowIcon: {
     width: scale(20),

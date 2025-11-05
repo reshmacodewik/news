@@ -23,6 +23,10 @@ type Props = {
   commentCount?: number;
   viewCount?: number;
   onPress?: () => void;
+
+  /** 👇 NEW: show badge only when you want (e.g., PremiumOnlyScreen) */
+  showPremiumBadge?: boolean;
+  badgeLabel?: string;
 };
 
 const NewsCard: React.FC<Props> = ({
@@ -33,12 +37,14 @@ const NewsCard: React.FC<Props> = ({
   commentCount = 0,
   viewCount = 0,
   onPress,
+  showPremiumBadge = false,
+  badgeLabel = 'PREMIUM',
 }) => {
-  // Capitalize category
+  const { theme, colors } = useTheme();
+
   const formattedCategory =
     category?.charAt(0)?.toUpperCase() + category?.slice(1)?.toLowerCase();
- const { theme, colors } = useTheme();
-  // Determine view count text
+
   const viewText = viewCount > 0 ? `${viewCount}+` : '0';
 
   return (
@@ -56,7 +62,18 @@ const NewsCard: React.FC<Props> = ({
 
       {/* Right Content */}
       <View style={styles.rowRight}>
-        <Text style={[styles.categoryText, { color: colors.headingtext }]}>{formattedCategory}</Text>
+        {/* Category + optional badge */}
+        <View style={styles.catRow}>
+          <Text style={[styles.categoryText, { color: colors.headingtext }]}>
+            {formattedCategory}
+          </Text>
+
+          {showPremiumBadge && (
+            <View style={styles.premiumBadge}>
+              <Text style={styles.premiumText}>{badgeLabel}</Text>
+            </View>
+          )}
+        </View>
 
         <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={5}>
           {title}
@@ -112,13 +129,33 @@ const styles = StyleSheet.create({
     marginLeft: scale(12),
     justifyContent: 'center',
   },
+  /** row for category + badge */
+  catRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(8),
+    marginBottom: scale(2),
+  },
   categoryText: {
     color: '#004EEB',
     fontWeight: '600',
     fontSize: scale(13),
-    marginBottom: scale(2),
     textTransform: 'capitalize',
   },
+  /** PREMIUM pill */
+  premiumBadge: {
+    paddingHorizontal: scale(6),
+    paddingVertical: scale(2),
+    borderRadius: scale(6),
+    backgroundColor: '#E8F0FF', // soft blue bg
+  },
+  premiumText: {
+    fontSize: scale(10),
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    color: '#1E40AF', // deep blue
+  },
+
   rowTitle: {
     fontSize: scale(13),
     fontWeight: '600',

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -10,19 +11,26 @@ import {
   Alert,
   Linking,
   AppState,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { getApiWithOutQuery } from '../../Utils/api/common';
-import { API_SUBSCRIPTION_PLANS } from '../../Utils/api/APIConstant';
+import {
+  API_SUBSCRIPTION_PLANS,
+  API_GET_USER_ACTIVE_PLAN,
+} from '../../Utils/api/APIConstant';
+
 import Header from '../../Components/Header';
 import { navigate } from '../../Navigators/utils';
 import { styles } from '../../style/PricingStyles';
 import { useAuth } from '../Auth/AuthContext';
 import PaymentStatusModal from '../../Components/PaymentStatusModal';
-import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import PremiumOnlyScreen from './PremiumOnlyScreen';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
 
@@ -30,177 +38,370 @@ const LOGO = require('../../icons/logoblack.png');
 const AVATAR = require('../../icons/user.png');
 const CHECK = require('../../icons/checkBlue.png');
 const DOT = require('../../icons/dot.png');
+
+type Cadence = 'weekly' | 'monthly' | 'annual' | 'yearly';
+type Plan = {
+  _id: string;
+  name: string;
+  price?: Partial<Record<Cadence, number>>;
+  description?: Partial<Record<Cadence, string>>;
+  features?: Partial<Record<Cadence, string[]>>;
+};
+
+const ACTIVE_KEY = (uid: string) => `activePlan_${uid}`;
+const ACTIVE_CYCLE_KEY = (uid: string) => `activePlanCycle_${uid}`;
+
+const toId = (v: any): string | undefined => {
+  if (!v) return undefined;
+  try {
+    return String((v as any)?._id ?? v);
+  } catch {
+    return undefined;
+  }
+};
+
+type Tier = 'free' | 'standard' | 'premium';
+const detectTierFromName = (name?: string): Tier => {
+  const n = (name || '').toLowerCase();
+  if (n.includes('premium')) return 'premium';
+  if (n.includes('standard')) return 'standard';
+  if (n.includes('free') || n.includes('starter')) return 'free';
+  return 'standard';
+};
+const tierRank: Record<Tier, number> = { free: 0, standard: 1, premium: 2 };
+
+const normalizeCadence = (
+  c?: string | null,
+): 'weekly' | 'monthly' | 'annual' | null => {
+  if (!c) return null;
+  const v = String(c).toLowerCase();
+  if (v.startsWith('week')) return 'weekly';
+  if (v.startsWith('month')) return 'monthly';
+  if (v.startsWith('year') || v === 'annual') return 'annual';
+  return null;
+};
+
+/** NEW: cadence ordering for lock rules */
+const cycleRank: Record<'weekly' | 'monthly' | 'annual', number> = {
+  weekly: 0,
+  monthly: 1,
+  annual: 2,
+};
+
+/** NEW: determines if a candidate (cycle,tier) is <= active (cycle,tier) */
+const isLowerOrEqualPlan = (
+  candidateCycle: 'weekly' | 'monthly' | 'annual',
+  candidateTier: Tier,
+  activeCycle: 'weekly' | 'monthly' | 'annual' | null,
+  activeTier: Tier | null,
+) => {
+  if (!activeCycle || !activeTier) return false; // nothing active yet
+  const cC = cycleRank[candidateCycle];
+  const cA = cycleRank[activeCycle];
+  if (cC < cA) return true; // lower cadence (e.g., weekly < monthly)
+  if (cC > cA) return false; // higher cadence (e.g., annual > monthly)
+  // same cadence -> lower OR equal tier is locked (equal shows Activated)
+  return tierRank[candidateTier] <= tierRank[activeTier];
+};
+
 const PricingScreen: React.FC = () => {
+  if (Platform.OS === 'ios') {
+    return <PremiumOnlyScreen />;
+  }
+  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const queryClient = useQueryClient();
+  const { session } = useAuth();
+
   const [selectedCadence, setSelectedCadence] = useState<
     'weekly' | 'monthly' | 'annual'
   >('monthly');
-  const insets = useSafeAreaInsets();
-  const { session } = useAuth();
 
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<
+    'pending' | 'completed' | 'failed' | null
+  >(null);
+
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
-  const { theme, colors } = useTheme();
+  const [hasSyncedFromServer, setHasSyncedFromServer] = useState(false);
+  const [showPremiumNow, setShowPremiumNow] = useState(false);
+
+  const [activeBillingCycleLocal, setActiveBillingCycleLocal] = useState<
+    'weekly' | 'monthly' | 'annual' | null
+  >(null);
+
+  const appState = useRef(AppState.currentState);
+  const pendingPlanIdRef = useRef<string | null>(null);
+  const pendingCycleRef = useRef<'weekly' | 'monthly' | 'annual' | null>(null);
+
   const userId =
     (session as any)?.user?.id || (session as any)?.user?._id || null;
-  const appState = useRef(AppState.currentState);
-  console.log('hello', userId);
 
-  // ✅ Fetch subscription plans
-  const { data: plans, isLoading } = useQuery({
+  /* ---------------------------- fetch: plans list --------------------------- */
+  const { data: plans = [], isLoading } = useQuery<Plan[]>({
     queryKey: ['subscription-plans'],
     queryFn: async () => {
       const res = await getApiWithOutQuery({ url: API_SUBSCRIPTION_PLANS });
-      console.log('🟦 Plans Response:', res?.data);
-      return res?.data || [];
+      const raw = res?.data ?? res;
+      const list = raw?.data ?? raw?.plans ?? raw?.items ?? raw;
+      return Array.isArray(list) ? (list as Plan[]) : [];
+    },
+    staleTime: 60_000,
+    refetchOnMount: 'always',
+  });
+
+  /* ------------------------ fetch: server active plan ----------------------- */
+  const { data: activePlanData, isFetching: activeLoading } = useQuery({
+    queryKey: ['active-plan', userId],
+    enabled: !!userId && !!session?.accessToken,
+    refetchOnMount: 'always',
+    queryFn: async () => {
+      const res = await fetch(
+        `https://api.arcalisnews.com/api${API_GET_USER_ACTIVE_PLAN}`,
+        { headers: { Authorization: `Bearer ${session?.accessToken}` } },
+      );
+      const json = await res.json();
+      return json?.data ?? null;
     },
   });
 
-  // ✅ Find the most expensive plan
-  const mostExpensive =
-    Array.isArray(plans) && plans.length
-      ? plans.reduce((prev, curr) =>
-          (curr.price?.[selectedCadence] || 0) >
-          (prev.price?.[selectedCadence] || 0)
-            ? curr
-            : prev,
-        )
+  // Server truth for "Activated"
+  const serverActivePlanId: string | null =
+    activePlanData?.active === true &&
+    activePlanData?.subscription?.status === 'active' &&
+    activePlanData?.subscription?.paymentStatus === 'completed'
+      ? (toId(activePlanData?.plan) ?? null)
       : null;
 
-  // ✅ Handle subscribe click
- const loadActivePlan = async () => {
-  if (!userId) return;
-  try {
-    console.log('hello', userId);
-    const stored = await AsyncStorage.getItem(`activePlan_${userId}`);
-    console.log('🔹 Loaded from AsyncStorage:', `activePlan_${userId}`, '=>', stored);
+  const serverActiveBillingCycle: 'weekly' | 'monthly' | 'annual' | null =
+    normalizeCadence(
+      activePlanData?.subscription?.billingCycle ||
+        activePlanData?.billingCycle ||
+        activePlanData?.activeInfo?.billingCycle ||
+        null,
+    );
 
-    if (stored) {
-      setActivePlanId(stored);
-      console.log('✅ Active plan set to:', stored);
-    } else {
-      setActivePlanId(null);
-      console.log('⚪ No plan found for user');
+  const serverActiveTier: Tier | null = serverActivePlanId
+    ? detectTierFromName(activePlanData?.plan?.name)
+    : null;
+
+  // ✅ Are we actively on a paid plan (not free)?
+  const isPremiumActive = !!serverActivePlanId && serverActiveTier !== 'free';
+
+  // Sync server-active plan to local state + storage; mark sync done
+  useEffect(() => {
+    if (!userId) return;
+    if (serverActivePlanId) {
+      setActivePlanId(serverActivePlanId);
+      AsyncStorage.setItem(ACTIVE_KEY(userId), serverActivePlanId).catch(
+        () => {},
+      );
     }
-  } catch (error) {
-    console.error('Error loading active plan:', error);
+    if (serverActiveBillingCycle) {
+      setActiveBillingCycleLocal(serverActiveBillingCycle);
+      AsyncStorage.setItem(
+        ACTIVE_CYCLE_KEY(userId),
+        serverActiveBillingCycle,
+      ).catch(() => {});
+    }
+    if (activePlanData != null) setHasSyncedFromServer(true);
+  }, [serverActivePlanId, serverActiveBillingCycle, activePlanData, userId]);
+
+  // Local fallback (offline / first paint)
+  const loadLocalState = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const [storedPlan, storedCycle] = await Promise.all([
+        AsyncStorage.getItem(ACTIVE_KEY(userId)),
+        AsyncStorage.getItem(ACTIVE_CYCLE_KEY(userId)),
+      ]);
+      setActivePlanId(storedPlan ?? null);
+      setActiveBillingCycleLocal(normalizeCadence(storedCycle) as any);
+    } catch {}
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) loadLocalState();
+  }, [userId, loadLocalState]);
+
+  useEffect(() => {
+    if (userId && session?.accessToken) {
+      queryClient.invalidateQueries({ queryKey: ['active-plan', userId] });
+    }
+  }, [userId, session?.accessToken, queryClient]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: ['active-plan', userId] });
+      }
+    }, [userId, queryClient]),
+  );
+
+  /* ------------------------------ subscribe flow --------------------------- */
+const handleSubscribe = async (planId: string) => {
+  try {
+    const token = session?.accessToken;
+
+    // 👇 translate UI cadence → API cadence
+    type ApiCycle = 'weekly' | 'monthly' | 'yearly';
+    const apiBillingCycle: ApiCycle =
+      selectedCadence === 'annual' ? 'yearly' : selectedCadence;
+
+    if (!token || !userId) {
+      Alert.alert('Please log in', 'You need to log in to subscribe.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Login', onPress: () => navigate('Login', {} as any) },
+      ]);
+      return;
+    }
+
+    setLoadingPlan(planId);
+    pendingPlanIdRef.current = planId;
+    // keep local state as 'annual' for your UI/locks
+    pendingCycleRef.current = selectedCadence;
+
+    const res = await fetch(`http://192.168.1.36:9991/api/billing/create-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        planId,
+        userId,
+        billingCycle: apiBillingCycle, // ✅ send yearly/monthly/weekly
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok || !json?.data?.checkoutUrl) {
+      queryClient.invalidateQueries({ queryKey: ['active-plan', userId] });
+      throw new Error(json?.error || 'Failed to create checkout');
+    }
+
+    setTransactionId(json.data.transactionId);
+    await Linking.openURL(json.data.checkoutUrl);
+    setPaymentStatus('pending');
+    setShowStatusModal(true);
+  } catch (e: any) {
+    Alert.alert('Error', e?.message || 'Something went wrong.');
+  } finally {
+    setLoadingPlan(null);
   }
 };
 
-// ✅ Load saved plan on mount or when user logs in
-useEffect(() => {
-  if (userId) {
-    loadActivePlan();
-  }
-}, [userId]);
 
-  // ✅ Handle subscribe click
-  const handleSubscribe = async (planId: string) => {
-    try {
-      const billingCycle = selectedCadence;
-      const token = session?.accessToken;
-
-      if (!token || !userId) {
-        Alert.alert('Please log in', 'You need to log in to subscribe.', [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Login', onPress: () => navigate('Login', {} as any) },
-        ]);
-        return;
-      }
-
-      setLoadingPlan(planId);
-
-      const res = await fetch(
-        `http://192.168.1.36:9991/api/billing/create-checkout`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ planId, userId, billingCycle }),
-        },
-      );
-
-      const json = await res.json();
-      if (!res.ok || !json?.data?.checkoutUrl) {
-        throw new Error(json?.error || 'Failed to create checkout');
-      }
-
-      const { checkoutUrl, transactionId } = json.data;
-      setTransactionId(transactionId);
-
-      // ✅ Save plan for this specific user
-      await AsyncStorage.setItem(`activePlan_${userId}`, planId);
-      console.log('✅ Saved plan:', planId, 'for user:', userId);
-      await loadActivePlan(); // recheck immediately
-
-      setActivePlanId(planId);
-
-      await Linking.openURL(checkoutUrl);
-      setPaymentStatus('pending');
-      setShowStatusModal(true);
-    } catch (e: any) {
-      Alert.alert('Error', e.message || 'Something went wrong.');
-    } finally {
-      setLoadingPlan(null);
-    }
-  };
-
-  // ✅ Check payment status on resume
-
+  // Confirm payment when app returns to foreground
   useEffect(() => {
-    const sub = AppState.addEventListener('change', async nextAppState => {
+    const sub = AppState.addEventListener('change', async nextState => {
       if (
         appState.current.match(/inactive|background/) &&
-        nextAppState === 'active'
+        nextState === 'active' &&
+        transactionId
       ) {
-        if (transactionId) {
-          try {
-            console.log('🔄 Checking payment for:', transactionId);
-            const res = await fetch(
-              `http://192.168.1.36:9991/api/billing/billing-check/${transactionId}`,
-            );
-            const json = await res.json();
-            const status = json?.data?.paymentStatus;
+        try {
+          const res = await fetch(
+            `https://api.arcalisnews.com/api/billing/billing-check/${transactionId}`,
+          );
+          const json = await res.json();
+          const status = json?.data?.paymentStatus;
 
-            console.log('✅ Payment check:', status);
+          if (status === 'completed') {
+            const purchasedPlanId = pendingPlanIdRef.current;
+            const purchasedCycle = pendingCycleRef.current;
 
-            if (status === 'completed') setPaymentStatus('completed');
-            else if (status === 'failed') setPaymentStatus('failed');
-            else setPaymentStatus('pending');
+            if (userId && purchasedPlanId) {
+              await AsyncStorage.setItem(ACTIVE_KEY(userId), purchasedPlanId);
+              setActivePlanId(purchasedPlanId);
+            }
+            if (userId && purchasedCycle) {
+              await AsyncStorage.setItem(
+                ACTIVE_CYCLE_KEY(userId),
+                purchasedCycle,
+              );
+              setActiveBillingCycleLocal(purchasedCycle);
+            }
 
-            setShowStatusModal(true);
-          } catch (err) {
-            console.error('Error checking payment:', err);
+            queryClient.invalidateQueries({
+              queryKey: ['active-plan', userId],
+            });
+            setPaymentStatus('completed');
+
+            // ✅ immediately swap to premium-only UI without navigation
+            setShowPremiumNow(true);
+          } else if (status === 'failed') {
+            setPaymentStatus('failed');
+          } else {
+            setPaymentStatus('pending');
           }
-        }
+          setShowStatusModal(true);
+        } catch {}
       }
-      appState.current = nextAppState;
+      appState.current = nextState;
     });
-
     return () => sub.remove();
-  }, [transactionId]);
-  useEffect(() => {
-    if (plans && plans.length > 0 && !activePlanId) {
-      const freePlan = plans.find((p: { name: string }) =>
-        /free|starter/i.test(p.name || ''),
-      );
-      if (freePlan) setActivePlanId(freePlan._id);
-    }
-  }, [plans, activePlanId]);
+  }, [transactionId, userId, queryClient]);
+useEffect(() => {
+  if (!userId || !hasSyncedFromServer) return;
 
+  const planExistsOnServerList = plans.some(
+    p => String(p._id) === String(serverActivePlanId || '')
+  );
+
+  // If server has NO active plan, or the referenced plan doesn't exist anymore,
+  // clear local fallbacks so UI won't show "Activated".
+  if (!serverActivePlanId || !planExistsOnServerList) {
+    setActivePlanId(null);
+    setActiveBillingCycleLocal(null);
+    AsyncStorage.removeItem(ACTIVE_KEY(userId)).catch(() => {});
+    AsyncStorage.removeItem(ACTIVE_CYCLE_KEY(userId)).catch(() => {});
+  }
+}, [userId, hasSyncedFromServer, serverActivePlanId, plans]);
+
+  // Free fallback only AFTER server-sync attempt (prevents overriding paid)
   useEffect(() => {
-    const loadActivePlan = async () => {
-      const storedPlanId = await AsyncStorage.getItem('activePlanId');
-      if (storedPlanId) {
-        setActivePlanId(storedPlanId);
-      }
-    };
-    loadActivePlan();
-  }, []);
+    if (!hasSyncedFromServer) return;
+    if (!plans.length || activePlanId) return;
+    const free = plans.find(
+      p =>
+        p.price?.monthly === 0 ||
+        p.price?.yearly === 0 ||
+        p.price?.annual === 0 ||
+        p.price?.weekly === 0,
+    );
+    if (free) setActivePlanId(free._id);
+  }, [hasSyncedFromServer, plans, activePlanId]);
+
+  const mostExpensive = plans.length
+    ? plans.reduce((prev, curr) =>
+        (curr.price?.[selectedCadence] ?? 0) >
+        (prev.price?.[selectedCadence] ?? 0)
+          ? curr
+          : prev,
+      )
+    : null;
+
+  const activeTier: Tier | null =
+    serverActiveTier ??
+    (activePlanId
+      ? detectTierFromName(
+          plans.find(p => String(p._id) === String(activePlanId))?.name,
+        )
+      : null);
+
+  const activeBillingCycle: 'weekly' | 'monthly' | 'annual' | null =
+    serverActiveBillingCycle ?? activeBillingCycleLocal ?? null;
+
+  /* ----------------- ⛳️ EARLY RETURN / REDIRECT LOGIC ----------------- */
+
+  if (isPremiumActive || showPremiumNow) {
+    return <PremiumOnlyScreen />;
+  }
+
+  /* -------------------------- PRICING UI (default) ------------------------- */
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -221,32 +422,34 @@ useEffect(() => {
           Subscription Plans
         </Text>
 
-        {/* TOGGLE */}
+        {/* cadence switch */}
         <View
           style={[styles.toggleContainer, { backgroundColor: colors.card }]}
         >
-          {['weekly', 'monthly', 'annual'].map(cadence => (
-            <TouchableOpacity
-              key={cadence}
-              style={[
-                styles.toggleButton,
-                selectedCadence === cadence && styles.toggleButtonActive,
-              ]}
-              onPress={() => setSelectedCadence(cadence as any)}
-            >
-              <Text
+          {['weekly', 'monthly', 'annual'].map(cadence => {
+            return (
+              <TouchableOpacity
+                key={cadence}
                 style={[
-                  styles.toggleText,
-                  { color: colors.headingtext },
-                  selectedCadence === cadence && styles.toggleTextActive,
+                  styles.toggleButton,
+                  selectedCadence === cadence && styles.toggleButtonActive,
                 ]}
+                onPress={() => setSelectedCadence(cadence as any)}
               >
-                {cadence === 'annual'
-                  ? 'Yearly'
-                  : cadence.charAt(0).toUpperCase() + cadence.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.toggleText,
+                    { color: colors.headingtext },
+                    selectedCadence === cadence && styles.toggleTextActive,
+                  ]}
+                >
+                  {cadence === 'annual'
+                    ? 'Yearly'
+                    : cadence.charAt(0).toUpperCase() + cadence.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {selectedCadence === 'annual' && (
@@ -255,26 +458,28 @@ useEffect(() => {
           </Text>
         )}
 
-        {/* PLANS */}
+        {/* plans */}
         {isLoading ? (
           <ActivityIndicator
             style={{ marginTop: 30 }}
             size="large"
             color="#2260B2"
           />
-        ) : Array.isArray(plans) && plans.length > 0 ? (
+        ) : plans.length > 0 ? (
           plans.map(plan => {
             const price =
               plan.price?.[selectedCadence] ??
               plan.price?.yearly ??
               plan.price?.annual ??
               0;
+
             const description =
               plan.description?.[selectedCadence] ??
               plan.description?.yearly ??
               plan.description?.annual ??
               plan.description?.monthly ??
               'No description available';
+
             const features =
               plan.features?.[selectedCadence] ??
               plan.features?.yearly ??
@@ -284,6 +489,48 @@ useEffect(() => {
 
             const isMostPopular = plan._id === mostExpensive?._id;
             const isFree = price === 0;
+
+            // Active “id” and “cycle” from server/local
+            const currentActiveId = hasSyncedFromServer
+              ? serverActivePlanId
+              : activePlanId;
+            const activeCycle = activeBillingCycle; // 'weekly' | 'monthly' | 'annual' | null
+            const activeTierSafe = activeTier; // 'free' | 'standard' | 'premium' | null
+
+            // This plan’s “tier” (by name) and the UI-selected cycle
+            const thisTier = detectTierFromName(plan.name);
+            const thisCycle = selectedCadence;
+
+            // Show “Activated” only when both plan id AND cycle match the active
+            const isActivatedHere =
+              String(currentActiveId || '') === String(plan._id) &&
+              !!activeCycle &&
+              activeCycle === thisCycle;
+
+            // Lock anything that is lower-or-equal than the active pair
+            const lowerOrEqualLocked = isLowerOrEqualPlan(
+              thisCycle,
+              thisTier,
+              activeCycle,
+              activeTierSafe,
+            );
+
+            // FINAL disable rule (no UI/class changes)
+            const disableButton =
+              isActivatedHere ||
+              lowerOrEqualLocked ||
+              isFree ||
+              loadingPlan === plan._id;
+
+            const buttonText = isActivatedHere
+              ? 'Activated'
+              : lowerOrEqualLocked
+                ? isFree
+                  ? 'Free'
+                  : 'Subscribe'
+                : isFree
+                  ? 'Free'
+                  : 'Subscribe';
 
             return (
               <View
@@ -327,11 +574,14 @@ useEffect(() => {
                     )}
                   </View>
 
-                  {/* FEATURES */}
+                  {/* features */}
                   <View style={{ marginTop: scale(12) }}>
-                    {Array.isArray(features) && features.length > 0 ? (
-                      features.map((feature: string, i: number) => (
-                        <View key={i} style={styles.featureRow}>
+                    {features.length > 0 ? (
+                      features.map((feature, i) => (
+                        <View
+                          key={`${plan._id}_f_${i}`}
+                          style={styles.featureRow}
+                        >
                           <Image
                             source={i === 0 ? CHECK : DOT}
                             style={[
@@ -355,67 +605,19 @@ useEffect(() => {
                     )}
                   </View>
 
-                  {(() => {
-                    const currentPlanId = session?.user?.planId ?? null;
-                    const userHasPlan = !!currentPlanId;
-
-                    const isFree =
-                      plan.price?.monthly === 0 ||
-                      plan.price?.yearly === 0 ||
-                      plan.price?.annual === 0;
-
-                    let buttonText = 'Subscribe Now';
-
-                    if (plan.name?.toLowerCase().includes('premium')) {
-                      buttonText = 'Go Premium';
-                    }
-
-                    if (userHasPlan) {
-                      console.log(plan._id);
-                      if (plan._id === currentPlanId) {
-                        // ✅ User’s currently active plan
-                        buttonText = 'Activated';
-                      } else if (isFree) {
-                        // ✅ Free plan should show "Free" (not activated)
-                        buttonText = 'Free';
-                      } else {
-                        // ✅ Other paid plans should still say "Subscribe Now"
-                        buttonText = 'Subscribe Now';
-                      }
-                    } else if (!userHasPlan && isFree) {
-                      // ✅ User with no plan → free plan becomes active
-                      buttonText = 'Activated';
-                    }
-
-                    // Disable only if loading or active plan
-                    const isDisabled =
-                      loadingPlan === plan._id ||
-                      (userHasPlan && plan._id === currentPlanId);
-
-                    return (
-                      <TouchableOpacity
-                        style={[
-                          styles.subscribeButton,
-                          activePlanId === plan._id && {
-                            backgroundColor: '#aaa',
-                          }, // gray for active
-                          activePlanId &&
-                            activePlanId !== plan._id && { opacity: 0.6 }, // dim other plans
-                        ]}
-                        onPress={() => handleSubscribe(plan._id)}
-                      >
-                        <Text style={styles.buttonText}>
-                          {activePlanId === plan._id
-                            ? 'Activated' // Active purchased plan
-                            : plan.name.toLowerCase().includes('free')
-                              ? 'Free' // Free plan only says Free
-                              : plan.name.toLowerCase().includes('premium')
-                                ? 'Go Premium' // Premium plan CTA
-                                : 'Subscribe'}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })()}
+                  {/* CTA */}
+                  <TouchableOpacity
+                    style={[
+                      styles.subscribeButton,
+                      (isActivatedHere || lowerOrEqualLocked) && {
+                        backgroundColor: '#aaa',
+                      },
+                    ]}
+                    disabled={disableButton}
+                    onPress={() => handleSubscribe(plan._id)}
+                  >
+                    <Text style={styles.buttonText}>{buttonText}</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             );
@@ -429,13 +631,7 @@ useEffect(() => {
         {transactionId && (
           <PaymentStatusModal
             visible={showStatusModal}
-            status={
-              paymentStatus === 'pending' ||
-              paymentStatus === 'completed' ||
-              paymentStatus === 'failed'
-                ? paymentStatus
-                : null
-            }
+            status={paymentStatus}
             onClose={() => setShowStatusModal(false)}
           />
         )}
