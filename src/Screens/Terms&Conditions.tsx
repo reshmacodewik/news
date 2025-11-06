@@ -21,7 +21,7 @@ const AVATAR = require('../icons/user.png');
 
 const TermsAndConditionsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
- const { theme, colors } = useTheme();
+  const { theme, colors } = useTheme();
   const { data, isLoading, isError } = useQuery({
     queryKey: ['terms-and-conditions'],
     queryFn: async () => {
@@ -62,9 +62,16 @@ const TermsAndConditionsScreen: React.FC = () => {
         </ImageBackground>
 
         {/* CONTENT */}
-        <View style={styles.sheet}>
-          <Text style={styles.h1}>Terms & Conditions</Text>
-          <Text style={styles.body}>
+        <View style={[styles.sheet, { backgroundColor: colors.card }]}>
+          <Text
+            style={[
+              styles.h1,
+              { color: theme === 'dark' ? colors.headingtext : '#000000' },
+            ]}
+          >
+            Terms & Conditions
+          </Text>
+          <Text style={[styles.body, { color: colors.text }]}>
             {data?.description || 'No content available.'}
           </Text>
         </View>

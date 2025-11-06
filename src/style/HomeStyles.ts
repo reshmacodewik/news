@@ -1,23 +1,69 @@
-import { StyleSheet, Dimensions, PixelRatio } from 'react-native';
+import { StyleSheet, Dimensions, PixelRatio, Platform } from 'react-native';
 import { darkColors } from '../theme/colors';
 
 const { width, height } = Dimensions.get('window');
 const baseW = 375;
-export const scale = (n: number) => (width / baseW) * n;
+
+// detect tablet once
+const isTablet =
+  (Platform.OS === 'ios' && (Platform as any).isPad) || width >= 768;
+
+// ✅ clamp scale on iPad so UI doesn’t blow up
+const SCALE = Math.min(width / baseW, isTablet ? 1.12 : 1.0);
+
+export const scale = (n: number) => SCALE * n;
 const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
+
+// keep content readable in the center on tablets
+const CONTENT_MAX = isTablet ? 760 : undefined;
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: darkColors.background },
+header: {
+  width: '100%',
+  paddingTop: scale(40),
+  paddingBottom: scale(16),
+  borderBottomLeftRadius: scale(20),
+  borderBottomRightRadius: scale(20),
+  overflow: 'hidden',
+},
 
-  // ===== Header / Hero =====
-  header: {
-    width: '100%',
-    paddingTop: scale(45),
-    paddingBottom: scale(16),
-    borderBottomLeftRadius: scale(20),
-    borderBottomRightRadius: scale(20),
-    overflow: 'hidden',
-  },
+welcomeBlock: {
+  paddingHorizontal: scale(16),
+  marginTop: scale(20),
+},
+
+welcomeHeading: {
+  color: '#FFFFFF',
+  fontSize: isTablet ? f(30) : f(22),  // slightly larger than phone, not huge
+  fontWeight: '700',
+},
+
+welcomeSubtitle: {
+  color: '#D7E5FF',
+  fontSize: isTablet ? f(25) : f(13),
+  marginTop: scale(6),
+},
+
+
+trendingTitle: {
+  color: '#FFFFFF',
+  fontSize: isTablet ? f(30) : f(16),
+  marginBottom: isTablet ? scale(10) : scale(0),
+  marginTop: isTablet ? scale(15) : scale(0),
+  fontWeight: '400',
+},
+
+
+
+sectionTitle: {
+  fontSize: isTablet ? f(25) : f(16),
+  fontWeight: '700',
+  color: '#0F172A',
+  marginTop: scale(8),
+},
+
+
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -40,50 +86,46 @@ export const styles = StyleSheet.create({
   },
   avatar: { width: '100%', height: '100%' },
 
-  welcomeBlock: {
-    paddingHorizontal: scale(16),
-    marginTop: scale(20),
-  },
-  welcomeHeading: {
-    color: '#FFFFFF',
-    fontSize: f(22),
-    fontWeight: '700',
-  },
-  welcomeSubtitle: {
-    color: '#D7E5FF',
-    fontSize: f(13),
-    marginTop: scale(6),
-  },
+  // welcomeBlock: {
+  //   paddingHorizontal: scale(16),
+  //   marginTop: scale(20),
+  // },
+  // welcomeHeading: {
+  //   color: '#FFFFFF',
+  //   fontSize: f(22),
+  //   fontWeight: '700',
+  // },
+  // welcomeSubtitle: {
+  //   color: '#D7E5FF',
+  //   fontSize: f(13),
+  //   marginTop: scale(6),
+  // },
 
-  trendingHeader: {
-    marginTop: scale(20),
-    paddingHorizontal: scale(16),
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  trendingTitle: {
-    color: '#FFFFFF',
-    fontSize: f(16),
-    fontWeight: '400',
-  },
-  seeAll: {
-    color: '#E5ECFF',
-    fontSize: f(13),
-    fontWeight: '600',
-  },
+  // trendingTitle: {
+  //   color: '#FFFFFF',
+  //   fontSize: f(16),
+  //   fontWeight: '400',
+  // },
+  
 
   slideWrap: {
     width, // paging
   },
   slideCard: {
-    marginHorizontal: scale(16),
-    marginTop: scale(10),
-    height: Math.min(height * 0.28, scale(210)),
-    borderRadius: scale(14),
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
+  marginHorizontal: 16,                         // fixed so it doesn’t balloon
+  marginTop: isTablet ? 8 : scale(10),
+  height: isTablet ? Math.min(height * 0.22, 210) : Math.min(height * 0.28, scale(210)),
+  borderRadius: 14,
+  overflow: 'hidden',
+  justifyContent: 'flex-end',
+},
+trendingHeader: {
+  marginTop: isTablet ? 12 : scale(20),         // less gap on iPad
+  paddingHorizontal: 16,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
   slideImage: {
     borderRadius: scale(14),
   },
@@ -132,16 +174,17 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabText: {
-    fontSize: f(14),
+    fontSize: isTablet ? f(25) : f(14),
     color: '#6B7280',
     fontWeight: '600',
     paddingVertical: scale(8),
+    paddingHorizontal: isTablet ? scale(15) : 0,
   },
   tabTextActive: {
     color: '#2260B2',
   },
   tabIndicator: {
-    width: scale(70),
+    width: isTablet ? scale(150) : scale(70),
     height: scale(3),
     borderRadius: scale(2),
     backgroundColor: '#2260B2',
@@ -159,11 +202,11 @@ export const styles = StyleSheet.create({
     paddingHorizontal: scale(16),
     marginBottom: scale(8),
   },
-  sectionTitle: {
-    fontSize: f(16),
-    fontWeight: '700',
-    color: '#0F172A',
-  },
+  // sectionTitle: {
+  //   fontSize: f(16),
+  //   fontWeight: '700',
+  //   color: '#0F172A',
+  // },
 
   // Ads carousel
   adCard: {

@@ -75,30 +75,34 @@ const NewsCard: React.FC<Props> = ({
           )}
         </View>
 
-        <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={5}>
+        <Text
+          style={[styles.rowTitle, { color: colors.text }]}
+          numberOfLines={3}
+        >
           {title}
         </Text>
 
         <Text style={[styles.metaDesc]} numberOfLines={1} ellipsizeMode="tail">
           {(description || '').replace(/<[^>]+>/g, '')}
         </Text>
-
-        {/* Meta Info Row */}
         <View style={styles.metaRow}>
           <View style={styles.metaGroup}>
             <Image
               source={require('../icons/comment.png')}
               style={styles.metaIconImg}
             />
-            <Text style={styles.metaText}>{commentCount ?? 0}</Text>
+            {commentCount > 0 && (
+              <Text style={styles.metaText}>{commentCount}</Text>
+            )}
           </View>
 
+          {/* View icon + count */}
           <View style={styles.metaGroup}>
             <Image
               source={require('../icons/eye.png')}
               style={styles.metaIconImg}
             />
-            <Text style={styles.metaText}>{viewText}</Text>
+            {viewCount > 0 && <Text style={styles.metaText}>{viewCount}+</Text>}
           </View>
         </View>
       </View>

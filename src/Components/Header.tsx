@@ -8,6 +8,7 @@ import {
   Dimensions,
   ImageSourcePropType,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useAuth } from '../Screens/Auth/AuthContext';
 import { navigate } from '../Navigators/utils';
@@ -17,7 +18,16 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 
 const scale = (size: number) => (Dimensions.get('window').width / 375) * size;
+const { width } = Dimensions.get('window');
+const isTablet =
+  (Platform.OS === 'ios' && (Platform as any).isPad) || width >= 768;
 
+// helper: keep phone exactly as-is, but don't scale up on iPad
+const padH = isTablet ? 22 : scale(16);
+const logoW = isTablet ? 300 : scale(155);
+const logoH = isTablet ? 45 : scale(28);
+const headerPadTop = isTablet ? scale(15) : scale(10);
+const avatarSize = isTablet ? 50 : scale(34);
 type HeaderProps = {
   logoSource: ImageSourcePropType;
   avatarSource: ImageSourcePropType;
@@ -133,33 +143,35 @@ const tintColor =
 };
 
 const styles = StyleSheet.create({
-  header: {
+
+  rightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+   header: {
     width: '100%',
     paddingBottom: scale(16),
     borderBottomLeftRadius: scale(20),
     borderBottomRightRadius: scale(20),
     overflow: 'hidden',
-    paddingTop: scale(10),
+    paddingTop: headerPadTop,        // ⬅️ was scale(10)
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: scale(16),
+    paddingHorizontal: padH,         // ⬅️ clamp on iPad
     justifyContent: 'space-between',
   },
-  rightRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logo: { width: scale(155), height: scale(28) },
+  logo: { width: logoW, height: logoH }, // ⬅️ smaller on iPad so it doesn’t push
   avatarBtn: {
-    width: scale(34),
-    height: scale(34),
-    borderRadius: scale(17),
+    width: avatarSize,
+    height: avatarSize,
+    borderRadius: avatarSize / 2,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    marginLeft: scale(12),
+    marginLeft: isTablet ? 10 : scale(12),
   },
   avatar: { width: '100%', height: '100%' },
 });

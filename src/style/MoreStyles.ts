@@ -1,11 +1,27 @@
-import { StyleSheet, Dimensions, PixelRatio } from 'react-native';
+import { StyleSheet, Dimensions, PixelRatio, Platform } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 const BASE_W = 375;
-export const scale = (n: number) => (width / BASE_W) * n;
+
+// --- tablet detection + scale clamp ---
+const isTablet = (Platform.OS === 'ios' && (Platform as any).isPad) || width >= 768;
+// iPad screens are wide; cap the scale so UI doesn’t blow up
+const SCALE = Math.min(width / BASE_W, isTablet ? 1.15 : 1.0);
+
+export const scale = (n: number) => SCALE * n;
 const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
+// Use a nice reading width on tablets
+const CONTENT_MAX = isTablet ? 560 : undefined;
+
 export const styles = StyleSheet.create({
+  // Wrap all screen content in this to keep a neat width on iPad
+  centerWrap: {
+    width: '100%',
+    maxWidth: CONTENT_MAX as number | undefined,
+    alignSelf: 'center',
+  },
+
   container: { flex: 1, backgroundColor: '#e3e9ee' },
   scroll: { flex: 1, backgroundColor: '#e3e9ee' },
 
@@ -73,7 +89,7 @@ export const styles = StyleSheet.create({
     tintColor: '#6B7280',
     marginRight: scale(8),
   },
-  lineText: { fontSize: f(14), color: '#111827' },
+  lineText: { fontSize: f(14), color: '#111827', marginRight: 30 },
 
   editBtn: {
     marginTop: scale(12),
@@ -113,51 +129,51 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#0F172A',
   },
-optionsCard: {
-  borderRadius: 14,
-  padding: 14,
-  marginTop: 10,
-  marginBottom: 12,
+
+  optionsCard: {
+  borderRadius: scale(14),
+  padding: scale(14),
+  marginTop: scale(10),
+  marginBottom: scale(12),
   overflow: 'hidden',
   borderWidth: 1,
-  borderColor: '#ECE7FF',     // soft border (light purple tint)
+  borderColor: '#ECE7FF',
 },
 
 optionsCardInner: {
-  padding: 12,
-  paddingRight: 96,            // leave room for right artwork
-  borderRadius: 12,
-  // soft tinted background like screenshot
+  padding: scale(12),
+  paddingRight: scale(96),
+  borderRadius: scale(12),
 },
 
 optionsTitle: {
-  fontSize: 16,
+  fontSize: f(16),
   fontWeight: '700',
-  marginBottom: 8,
+  marginBottom: scale(8),
 },
 
 bullets: {
-  gap: 6,
+  gap: scale(6),
 },
 
 bullet: {
-  fontSize: 14,
-  lineHeight: 20,
+  fontSize: f(14),
+  lineHeight: f(20),
 },
 
 linkText: {
-  fontSize: 14,
+  fontSize: f(14),
   textDecorationLine: 'underline',
   fontWeight: '600',
-  color: '#2C6DE0',           // link blue
+  color: '#2C6DE0',
 },
 
 optionsArt: {
   position: 'absolute',
-  right: 6,
-  top: 2,
-  width: 108,
-  height: 108,
+  right: scale(6),
+  top: scale(2),
+  width: scale(108),
+  height: scale(108),
   opacity: 0.9,
 },
 
@@ -231,7 +247,8 @@ optionsArt: {
     tintColor: '#EF4444',
     marginRight: scale(12),
   },
-  // bottom-sheet content (reuses your scale/f helpers)
+
+  // bottom-sheet content
   sheetTitle: {
     fontSize: f(18),
     fontWeight: '800',
@@ -254,12 +271,12 @@ optionsArt: {
     marginBottom: scale(6),
   },
   errorText: {
-  color: '#EF4444', // red color for error
-  fontSize: 12,
-  marginTop: -4,
-  marginBottom: 8,
-  marginLeft:8
-},
+    color: '#EF4444',
+    fontSize: 12,
+    marginTop: -4,
+    marginBottom: 8,
+    marginLeft: 8,
+  },
 
   input: {
     height: scale(46),

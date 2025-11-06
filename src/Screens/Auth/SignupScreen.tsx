@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   View,
   Text,
@@ -7,26 +7,27 @@ import {
   ScrollView,
   Image,
   ImageBackground,
-} from "react-native";
-import { styles } from "../../style/SignupScreenstyles";
-import { apiPost } from "../../Utils/api/common";
-import { signupSchema } from "../../validation/signupSchema";
-import { useFormik } from "formik";
-import { API_REGISTER } from "../../Utils/api/APIConstant";
-import ShowToast from "../../Utils/ShowToast";
-import { goBackNavigation, navigate } from "../../Navigators/utils";
-import { AuthSession, useAuth } from "./AuthContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useTheme } from "../../context/ThemeContext";
+} from 'react-native';
+import { styles } from '../../style/SignupScreenstyles';
+import { apiPost } from '../../Utils/api/common';
+import { signupSchema } from '../../validation/signupSchema';
+import { useFormik } from 'formik';
+import { API_REGISTER } from '../../Utils/api/APIConstant';
+import ShowToast from '../../Utils/ShowToast';
+import { goBackNavigation, navigate } from '../../Navigators/utils';
+import { AuthSession, useAuth } from './AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../../context/ThemeContext';
 
 const SignupScreen = () => {
   const { signIn } = useAuth();
-  const { theme, toggleTheme,colors } = useTheme();
+  const { theme, colors } = useTheme();
+
   const formik = useFormik({
     initialValues: {
-      name: "",
-      email: "",
-      password: "",
+      name: '',
+      email: '',
+      password: '',
       agreeTerms: false,
       subscribeNews: false,
     },
@@ -53,23 +54,23 @@ const SignupScreen = () => {
             },
           };
 
-          // Save session in context and AsyncStorage
           signIn(session);
-          await AsyncStorage.setItem("userSession", JSON.stringify(session));
+          await AsyncStorage.setItem('userSession', JSON.stringify(session));
 
-          ShowToast(res.message || "Registered successfully", "success");
-          navigate("Home" as never);
+          ShowToast(res.message || 'Registered successfully', 'success');
+          navigate('Home' as never);
         } else {
-          ShowToast(res?.message || "Registration failed", "error");
+          ShowToast(res?.message || 'Registration failed', 'error');
         }
       } catch (error: any) {
-        console.log("Signup error:", error);
-        ShowToast(error?.message || "Something went wrong", "error");
+        console.log('Signup error:', error);
+        ShowToast(error?.message || 'Something went wrong', 'error');
       } finally {
         setSubmitting(false);
       }
     },
   });
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -79,15 +80,15 @@ const SignupScreen = () => {
         keyboardShouldPersistTaps="handled"
       >
         <ImageBackground
-          source={require("../../icons/background.png")}
+          source={require('../../icons/background.png')}
           resizeMode="cover"
           style={{ flex: 1 }}
         >
-          {/* Header */}
-          <View style={styles.headerContainer}>
+          {/* Header (clamped like login) */}
+          <View style={[styles.headerContainer]}>
             <View style={styles.logoContainer}>
               <Image
-                source={require("../../icons/logo.png")}
+                source={require('../../icons/logo.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />
@@ -100,71 +101,92 @@ const SignupScreen = () => {
           </View>
 
           {/* Form */}
-          <View style={[styles.formContainer, { backgroundColor: colors.background }]}>
+          <View
+            style={[
+              styles.formContainer,
+              { backgroundColor: colors.background },
+            ]}
+          >
             {/* Name */}
-            <View style={styles.inputContainer}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Name</Text>
+            <View style={[styles.inputContainer, styles.fieldMax]}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>
+                Name
+              </Text>
               <TextInput
                 style={styles.textInput}
                 placeholder="name"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.name}
-                onChangeText={formik.handleChange("name")}
-                onBlur={formik.handleBlur("name")}
+                onChangeText={formik.handleChange('name')}
+                onBlur={formik.handleBlur('name')}
               />
-              {formik.touched.name && formik.errors.name && (
-              <Text style={{ color: "red", fontSize: 12,marginLeft: 10 }}>
+            </View>
+            {formik.touched.name && formik.errors.name && (
+              <View style={styles.fieldMax}>
+                <Text style={{ color: 'red', fontSize: 12, marginLeft: 10 }}>
                   {formik.errors.name}
                 </Text>
-              )}
-            </View>
+              </View>
+            )}
 
             {/* Email */}
-            <View style={styles.inputContainer}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Email</Text>
+            <View style={[styles.inputContainer, styles.fieldMax]}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>
+                Email
+              </Text>
               <TextInput
                 style={styles.textInput}
                 placeholder="example@email.com"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.email}
-                onChangeText={formik.handleChange("email")}
-                onBlur={formik.handleBlur("email")}
+                onChangeText={formik.handleChange('email')}
+                onBlur={formik.handleBlur('email')}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
-              {formik.touched.email && formik.errors.email && (
-               <Text style={{ color: "red", fontSize: 12,marginLeft: 10 }}>
+            </View>
+            {formik.touched.email && formik.errors.email && (
+              <View style={styles.fieldMax}>
+                <Text style={{ color: 'red', fontSize: 12, marginLeft: 10 }}>
                   {formik.errors.email}
                 </Text>
-              )}
-            </View>
+              </View>
+            )}
 
             {/* Password */}
-            <View style={styles.inputContainer}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Password</Text>
+            <View style={[styles.inputContainer, styles.fieldMax]}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>
+                Password
+              </Text>
               <TextInput
                 style={styles.textInput}
                 placeholder="enter the password"
                 placeholderTextColor="#9CA3AF"
                 value={formik.values.password}
-                onChangeText={formik.handleChange("password")}
-                onBlur={formik.handleBlur("password")}
+                onChangeText={formik.handleChange('password')}
+                onBlur={formik.handleBlur('password')}
                 secureTextEntry
               />
-              {formik.touched.password && formik.errors.password && (
-                <Text style={{ color: "red", fontSize: 12,marginLeft: 10 }}>
+            </View>
+            {formik.touched.password && formik.errors.password && (
+              <View style={styles.fieldMax}>
+                <Text style={{ color: 'red', fontSize: 12, marginLeft: 10 }}>
                   {formik.errors.password}
                 </Text>
-              )}
-            </View>
+              </View>
+            )}
 
-            {/* --- Checkboxes --- */}
+            {/* Checkboxes (clamped) */}
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() =>
-                formik.setFieldValue("agreeTerms", !formik.values.agreeTerms)
+                formik.setFieldValue('agreeTerms', !formik.values.agreeTerms)
               }
-              style={[styles.checkboxRow, { backgroundColor: colors.background }]}
+              style={[
+                styles.checkboxRow,
+                styles.fieldMax,
+                { backgroundColor: colors.background },
+              ]}
             >
               <View
                 style={[
@@ -177,26 +199,34 @@ const SignupScreen = () => {
                 ) : null}
               </View>
               <Text style={[styles.checkboxText, { color: colors.text }]}>
-                I agree to the website’s{" "}
-                <Text style={[styles.linkText, { color: colors.text }]}>Terms & Conditions</Text> and{" "}
-                <Text style={[styles.linkText, { color: colors.text }]}>Privacy Policy</Text>.
+                I agree to the website’s{' '}
+                <Text style={[styles.linkText, { color: colors.text }]}>
+                  Terms & Conditions
+                </Text>{' '}
+                and{' '}
+                <Text style={[styles.linkText, { color: colors.text }]}>
+                  Privacy Policy
+                </Text>
+                .
               </Text>
             </TouchableOpacity>
             {formik.touched.agreeTerms && formik.errors.agreeTerms && (
-              <Text style={{ color: "red", fontSize: 12,marginBottom: 10}}>
-                {formik.errors.agreeTerms}
-              </Text>
+              <View style={styles.fieldMax}>
+                <Text style={{ color: 'red', fontSize: 12, marginBottom: 10 }}>
+                  {formik.errors.agreeTerms}
+                </Text>
+              </View>
             )}
 
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() =>
                 formik.setFieldValue(
-                  "subscribeNews",
-                  !formik.values.subscribeNews
+                  'subscribeNews',
+                  !formik.values.subscribeNews,
                 )
               }
-              style={styles.checkboxRow}
+              style={[styles.checkboxRow, styles.fieldMax]}
             >
               <View
                 style={[
@@ -213,19 +243,26 @@ const SignupScreen = () => {
               </Text>
             </TouchableOpacity>
             {formik.touched.subscribeNews && formik.errors.subscribeNews && (
-              <Text style={{ color: "red", fontSize: 12,marginBottom: 10 }}>
-                {formik.errors.subscribeNews}
-              </Text>
+              <View style={styles.fieldMax}>
+                <Text style={{ color: 'red', fontSize: 12, marginBottom: 10 }}>
+                  {formik.errors.subscribeNews}
+                </Text>
+              </View>
             )}
 
-            {/* CTA */}
+            {/* CTA (clamped) */}
             <TouchableOpacity
               style={[
                 styles.signInButton,
+                styles.fieldMax,
                 !formik.values.agreeTerms && { opacity: 0.6 },
               ]}
               onPress={formik.handleSubmit as any}
-              disabled={!formik.values.agreeTerms || !formik.values.subscribeNews || formik.isSubmitting}
+              disabled={
+                !formik.values.agreeTerms ||
+                !formik.values.subscribeNews ||
+                formik.isSubmitting
+              }
               activeOpacity={0.9}
             >
               <Text style={styles.signInButtonText}>Sign Up</Text>
@@ -234,7 +271,7 @@ const SignupScreen = () => {
             {/* Footer link */}
             <View style={styles.signUpContainer}>
               <Text style={[styles.signUpText, { color: colors.text }]}>
-                Already have an account?{" "}
+                Already have an account?{' '}
                 <Text
                   style={[styles.signUpLink, { color: colors.headingtext }]}
                   onPress={() => goBackNavigation()}

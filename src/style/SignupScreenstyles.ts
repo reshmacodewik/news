@@ -1,63 +1,74 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions, Platform } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
+const isTablet = (Platform.OS === 'ios' && Platform.isPad) || width >= 768;
+const CONTENT_MAX = isTablet ? 750 : undefined;
 
 export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+  scrollView: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
 
+  /** center + clamp content like Login */
+  centerWrap: {
+    width: '100%',
+    maxWidth: CONTENT_MAX as number | undefined,
+    alignSelf: 'center',
   },
-  scrollView: {
-    flex: 1,
+  /** clamp fields (inputs/buttons/rows) */
+  fieldMax: {
+    width: '100%',
+    maxWidth: CONTENT_MAX as number | undefined,
+    alignSelf: 'center',
   },
-  scrollContent: {
-    flexGrow: 1,
+  /** right-aligned row (for links aligned to right within same clamp) */
+  fieldRowRight: {
+    width: '100%',
+    maxWidth: CONTENT_MAX as number | undefined,
+    alignSelf: 'center',
+    alignItems: 'flex-end',
   },
+
   headerContainer: {
-
     paddingTop: 20,
     paddingBottom: 40,
     paddingHorizontal: 24,
-   
-    minHeight: height * 0.35,
+    minHeight: isTablet ? 420 : height * 0.35,
     justifyContent: 'center',
   },
-  logoContainer: {
-    marginBottom:15,
-  },
+  logoContainer: { marginBottom: 15 },
   logo: {
-    width: 46,
-    height: 46,
-    
+    width: isTablet ? 100 : 46,
+    height: isTablet ? 100 : 46,
   },
   welcomeText: {
-    fontSize: 28,
+    fontSize: isTablet ? 32 : 28,
     fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitleText: {
-    fontSize: 14,
+    fontSize: isTablet ? 22 : 14,
     color: '#BFDBFE',
-    lineHeight: 18,
-    paddingHorizontal: 0,
+    lineHeight: 22,
     fontWeight: '400',
-     marginBottom: '8%',
+    marginTop: isTablet ? 20 : 0,
+    marginBottom: isTablet ? 100 : 16,
   },
+
   formContainer: {
     flex: 1,
     backgroundColor: '#e3e9ee',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    marginTop: '-18%',
+    marginTop: - (height * 0.10),
     paddingHorizontal: 24,
     paddingTop: 32,
     paddingBottom: 24,
     minHeight: height * 0.65,
   },
-  inputContainer: {
-    marginBottom: 20,
-  },
+
+  inputContainer: { marginBottom: 20 },
   inputLabel: {
     fontSize: 14,
     fontWeight: '500',
@@ -74,15 +85,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E1E1E1',
   },
-  forgotPasswordContainer: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: '#1E4AE9',
-    fontWeight: '500',
-  },
+
   signInButton: {
     backgroundColor: '#1E293B',
     borderRadius: 12,
@@ -95,46 +98,46 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
- // --- Checkboxes ---
-checkboxRow: {
-  flexDirection: 'row',
-  alignItems: 'flex-start',
-  marginBottom: 14,
-},
-checkboxBox: {
-  width: 20,
-  height: 20,
-  borderRadius: 4,
-  borderWidth: 2,
-  borderColor: '#0B1A2F', // deep navy to match your Sign Up button
-  backgroundColor: '#FFF',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginTop: 2,     // aligns box with first line of text
-},
-checkboxBoxChecked: {
-  backgroundColor: '#0B1A2F',
-  borderColor: '#0B1A2F',
-},
-checkIcon: {
-  color: '#FFFFFF',
-  fontSize: 14,
-  lineHeight: 18,
-  fontWeight: '800',
-},
-checkboxText: {
-  marginLeft: 12,
-  flex: 1,                // lets text wrap
-  fontSize: 14,
-  color: '#000',
-  lineHeight: 20,
-  fontWeight: '400',
-},
-linkText: {
-  color: '#000',       // blue link color
-  fontWeight: '400',
 
-},
+  // --- Checkboxes ---
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 14,
+  },
+  checkboxBox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#0B1A2F',
+    backgroundColor: '#FFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  checkboxBoxChecked: {
+    backgroundColor: '#0B1A2F',
+    borderColor: '#0B1A2F',
+  },
+  checkIcon: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '800',
+  },
+  checkboxText: {
+    marginLeft: 12,
+    flex: 1,
+    fontSize: 14,
+    color: '#000',
+    lineHeight: 20,
+    fontWeight: '400',
+  },
+  linkText: {
+    color: '#000',
+    fontWeight: '400',
+  },
 
   signUpContainer: {
     alignItems: 'center',

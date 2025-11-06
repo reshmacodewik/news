@@ -1,7 +1,8 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions, Platform } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
-
+const isTablet = (Platform.OS === 'ios' && Platform.isPad) || width >= 768;
+const CONTENT_MAX = isTablet ? 750 : undefined;
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -12,40 +13,60 @@ export const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
+  centerWrap: {
+    width: '100%',
+    maxWidth: CONTENT_MAX, // becomes a number at runtime
+    alignSelf: 'center',
+  },
+   fieldMax: {
+    width: '100%',
+    maxWidth: CONTENT_MAX,   // only becomes a number on iPad
+    alignSelf: 'center',
+  },
+
+  /** right-aligned row that follows the same max width */
+  fieldRowRight: {
+    width: '100%',
+    maxWidth: CONTENT_MAX,
+    alignSelf: 'center',
+    alignItems: 'flex-end',
+  },
   headerContainer: {
     paddingTop: 20,
     paddingBottom: 40,
     paddingHorizontal: 24,
 
-    minHeight: height * 0.35,
+    minHeight: isTablet ? 420 : height * 0.38,
     justifyContent: 'center',
   },
   logoContainer: {
     marginBottom: 15,
   },
   logo: {
-    width: 46,
-    height: 46,
+    width: isTablet ? 100 : 50,
+    height: isTablet ? 100 : 50,
   },
   welcomeText: {
-    fontSize: 28,
+    fontSize: isTablet ? 32 : 28,
     fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitleText: {
-    fontSize: 14,
+    fontSize: isTablet ? 25 : 14,
     color: '#BFDBFE',
     lineHeight: 24,
     paddingHorizontal: 0,
     fontWeight: '400',
+    marginTop:isTablet ? 12 : 0,
+    marginBottom: isTablet ? 100: 0,
   },
   formContainer: {
     flex: 1,
     backgroundColor: '#e3e9ee',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    marginTop: '-18%',
+    marginTop: -(height * 0.1),
     paddingHorizontal: 24,
     paddingTop: 32,
     paddingBottom: 24,
@@ -100,6 +121,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     height: 1,
     backgroundColor: '#E5E7EB',
+    
   },
   separatorText: {
     fontSize: 14,

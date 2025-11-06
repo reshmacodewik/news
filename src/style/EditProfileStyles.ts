@@ -144,6 +144,8 @@ export default StyleSheet.create({
     marginTop: '8%',
     width: Math.min(width * 0.62, 560),
     alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: '#E1E1E1',
   },
   saveText: {
     color: '#FFFFFF',

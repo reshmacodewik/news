@@ -1,8 +1,17 @@
-import { StyleSheet, Dimensions, PixelRatio } from 'react-native';
+import { StyleSheet, Dimensions, PixelRatio, Platform } from 'react-native';
+
 
 const { width, height } = Dimensions.get('window');
-const BASE_W = 375;
-export const scale = (n: number) => (width / BASE_W) * n;
+const baseW = 375;
+
+// detect tablet once
+const isTablet =
+  (Platform.OS === 'ios' && (Platform as any).isPad) || width >= 768;
+
+// ✅ clamp scale on iPad so UI doesn’t blow up
+const SCALE = Math.min(width / baseW, isTablet ? 1.12 : 1.0);
+
+export const scale = (n: number) => SCALE * n;
 const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
@@ -33,11 +42,11 @@ export const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  tabBtn: { paddingHorizontal: scale(18), alignItems: 'center' },
+  tabBtn: { paddingHorizontal: isTablet ? scale(25) : scale(18), marginLeft: isTablet ? scale(-5) :0 ,alignItems: 'center' },
   tabText: {
     paddingTop: scale(10),
     paddingBottom: scale(8),
-    fontSize: 16,
+    fontSize: isTablet ? f(25) : f(14),
     color: '#6B7280',
     fontWeight: '500',
   },

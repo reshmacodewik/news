@@ -138,8 +138,10 @@ const MoreScreen: React.FC = () => {
       const res = await getApiWithOutQuery({ url: API_GET_PROFILE });
       return res?.data;
     },
+    enabled: !!session?.accessToken, // ⬅️ only fetch when logged in
     staleTime: 0,
   });
+
   useEffect(() => {
     if (isFocused && session?.accessToken) {
       queryClient.invalidateQueries({ queryKey: ['profile-info'] });
@@ -182,14 +184,20 @@ const MoreScreen: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(); // clears session in AsyncStorage and state
+      await signOut();
+
+      // wipe profile cache so UI switches to guest immediately
+      queryClient.setQueryData(['profile-info'], null);
+      queryClient.removeQueries({ queryKey: ['profile-info'] });
+
       ShowToast('Logged out successfully');
-      navigate('Home' as never); // redirect to login screen
+      navigate('Home' as never);
     } catch (err) {
       console.log('Logout error:', err);
       ShowToast('Failed to logout. Try again.');
     }
   };
+
   const handleDeleteAccount = async () => {
     if (!userId) {
       ShowToast('User not logged in');
@@ -257,8 +265,8 @@ const MoreScreen: React.FC = () => {
             <View style={styles.bigAvatarWrap}>
               <Image
                 source={
-                  profile?.photo
-                    ? { uri: `${profile.photo}?v=${Date.now()}` }
+                  session?.accessToken && profile?.photo
+                    ? { uri: `${profile.photo}?v=${Date.now()}` } // cache-bust
                     : AVATAR_BG
                 }
                 style={styles.bigAvatar}
@@ -274,7 +282,10 @@ const MoreScreen: React.FC = () => {
                   source={MAIL}
                   style={[styles.smallIcon, { tintColor: colors.text }]}
                 />
-                <Text style={[styles.lineText, { color: colors.text }]} numberOfLines={1}>
+                <Text
+                  style={[styles.lineText, { color: colors.text }]}
+                  numberOfLines={1}
+                >
                   {session?.accessToken ? profile?.email : 'Login to see email'}
                 </Text>
               </View>
@@ -337,7 +348,9 @@ const MoreScreen: React.FC = () => {
 
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => Linking.openURL('https://arcalisnews.com/subscription')}
+              onPress={() =>
+                Linking.openURL('https://arcalisnews.com/subscription')
+              }
               style={{ marginTop: 8 }}
             >
               <Text style={styles.linkText}>Go to arcalisnews.com</Text>
@@ -394,7 +407,9 @@ const MoreScreen: React.FC = () => {
 
         {/* Contact + Version */}
         <View style={[styles.cardGroup, { backgroundColor: colors.card }]}>
-          <View style={[styles.row, { alignItems: 'flex-start' }]}>
+          <View
+            style={[styles.row, { alignItems: 'flex-start', marginTop: 10 }]}
+          >
             <Image
               source={CHAT}
               style={[
@@ -421,7 +436,9 @@ const MoreScreen: React.FC = () => {
             </View>
           </View>
 
-          <View style={[styles.row, { alignItems: 'flex-start' }]}>
+          <View
+            style={[styles.row, { alignItems: 'flex-start', marginTop: 12 }]}
+          >
             <Image
               source={LAYERS}
               style={[
@@ -444,12 +461,14 @@ const MoreScreen: React.FC = () => {
               source={theme === 'dark' ? LIGHTMODE : DARKMODE}
               style={[
                 styles.rowIcon,
+                { marginTop: scale(-8) },
                 { tintColor: theme === 'dark' ? '#fff' : '#000' },
               ]}
             />
             <Text
               style={[
                 styles.rowLabel,
+                { marginTop: scale(-8) },
                 { color: theme === 'dark' ? '#fff' : '#000' },
               ]}
             >
@@ -458,7 +477,7 @@ const MoreScreen: React.FC = () => {
             <Switch
               style={{
                 transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
-                marginTop: 8,
+                marginTop: 10,
               }}
               value={theme === 'dark'}
               onValueChange={toggleTheme}
@@ -476,13 +495,22 @@ const MoreScreen: React.FC = () => {
           >
             <Image
               source={DELETE}
-              style={[styles.logoutIcon, { tintColor: colors.text }]}
+              style={[
+                styles.logoutIcon,
+                { tintColor: theme === 'dark' ? '#fff' : 'red' },
+              ]}
             />
-            <Text style={[styles.logoutText, { color: colors.text }]}>
+            <Text
+              style={[
+                styles.logoutText,
+                { color: theme === 'dark' ? '#fff' : 'red' },
+              ]}
+            >
               Delete Account
             </Text>
           </TouchableOpacity>
         )}
+
         {session?.accessToken && (
           <TouchableOpacity
             style={[styles.logoutRow, { backgroundColor: colors.card }]}
@@ -491,9 +519,17 @@ const MoreScreen: React.FC = () => {
           >
             <Image
               source={LOGOUT}
-              style={[styles.logoutIcon, { tintColor: colors.text }]}
+              style={[
+                styles.logoutIcon,
+                { tintColor: theme === 'dark' ? '#fff' : 'red' },
+              ]}
             />
-            <Text style={[styles.logoutText, { color: colors.text }]}>
+            <Text
+              style={[
+                styles.logoutText,
+                { color: theme === 'dark' ? '#fff' : 'red' },
+              ]}
+            >
               Logout
             </Text>
           </TouchableOpacity>

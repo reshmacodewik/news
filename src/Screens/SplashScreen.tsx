@@ -3,8 +3,8 @@ import { View, Image, StatusBar, ImageBackground } from 'react-native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { styles } from '../style/SplashStyles';
 
-const LOGO = require('../icons/mainlogo.png');          // Center logo
-const BG_IMAGE = require('../icons/background.png');    // Background image
+const LOGO = require('../icons/mainlogo.png');
+const BG_IMAGE = require('../icons/background.png');
 
 type SplashScreenProps = { navigation: StackNavigationProp<any, any> };
 
@@ -18,14 +18,18 @@ const SplashScreen = ({ navigation }: SplashScreenProps) => {
   };
 
   useEffect(() => {
-    const t = setTimeout(goNext, 3000); // 3 seconds
+    const t = setTimeout(goNext, 3000);
     return () => clearTimeout(t);
   }, []);
 
   return (
-    <View style={styles.container}>
-      <StatusBar hidden translucent />
-      <ImageBackground source={BG_IMAGE} style={styles.container}>
+    <View style={styles.root}>
+      <StatusBar hidden translucent backgroundColor="transparent" />
+      <ImageBackground
+        source={BG_IMAGE}
+        resizeMode="cover"
+        style={styles.bg}
+      >
         <View style={styles.centerBox}>
           <Image source={LOGO} style={styles.logo} resizeMode="contain" />
         </View>

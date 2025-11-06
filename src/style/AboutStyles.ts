@@ -93,7 +93,7 @@ export const styles = StyleSheet.create({
   body: {
     fontSize: f(16),
     lineHeight: f(24),
-    color: '#111827',
+    color: '#333333',
     marginBottom: scale(16),
   },
   stickyHeaderContainer: {

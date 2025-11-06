@@ -20,6 +20,7 @@ import {
 import { getApiWithOutQuery } from '../Utils/api/common';
 import { goBackNavigation } from '../Navigators/utils';
 import styles from '../style/EditProfileStyles';
+import { useTheme } from '../context/ThemeContext';
 
 const BACK_ARROW = require('../icons/back.png');
 const USER_ICON = require('../icons/user.png');
@@ -35,7 +36,7 @@ interface ImageInterface {
 const EditProfileScreen = () => {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-
+   const { theme, colors } = useTheme();
   const [imageUri, setImageUri] = useState<ImageInterface | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -123,15 +124,15 @@ const EditProfileScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={{ height: insets.top }} />
 
       {/* Header */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={goBackNavigation} style={styles.backButton}>
-          <Image source={BACK_ARROW} style={styles.backIcon} />
+          <Image source={BACK_ARROW} style={[styles.backIcon,{tintColor:colors.text}]} />
         </TouchableOpacity>
-        <Text style={styles.navTitle}>Edit Profile</Text>
+        <Text style={[styles.navTitle,{color:colors.text}]}>Edit Profile</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -148,18 +149,18 @@ const EditProfileScreen = () => {
                 style={styles.profileImage}
               />
               <View style={styles.cameraBadge}>
-                <Image source={CAMERA_ICON} style={styles.cameraIcon} />
+                <Image source={CAMERA_ICON} style={[styles.cameraIcon,{tintColor:colors.text}]}  />
               </View>
             </View>
           </TouchableOpacity>
-          <Text style={styles.profileName}>{name || ' '}</Text>
+          <Text style={[styles.profileName,{color:colors.text}]}>{name || ' '}</Text>
         </View>
 
         {/* Form */}
         <View style={styles.formSection}>
-          <Text style={styles.sectionLabel}>PROFILE INFORMATION</Text>
+          <Text style={[styles.sectionLabel,{color:colors.text}]}>PROFILE INFORMATION</Text>
 
-          <Text style={styles.label}>Name</Text>
+          <Text style={[styles.label,{color:colors.text}]}>Name</Text>
           <TextInput
             value={name}
             onChangeText={setName}
@@ -167,7 +168,7 @@ const EditProfileScreen = () => {
             placeholder="Full name"
           />
 
-          <Text style={styles.label}>Email</Text>
+          <Text style={[styles.label,{color:colors.text}]}>Email</Text>
           <TextInput
             value={email}
             editable={false}

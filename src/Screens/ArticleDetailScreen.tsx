@@ -821,7 +821,7 @@ const ArticleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     refetchOnMount: 'always',
     queryFn: async () => {
       const res = await fetch(
-        `http://192.168.1.36:9991${API_GET_USER_ACTIVE_PLAN}`,
+        `http://192.168.1.36:9991/api${API_GET_USER_ACTIVE_PLAN}`,
         { headers: { Authorization: `Bearer ${session?.accessToken}` } },
       );
       const json = await res.json();

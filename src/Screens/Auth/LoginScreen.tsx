@@ -113,7 +113,7 @@ const LoginScreen = () => {
       console.log('📤 Sending to backend:', googleData);
 
       const response = await axios.post(
-        'https://api.arcalisnews.com/api/users/social_login',
+          API_SOCIAL_LOGIN,
         googleData,
         { timeout: 10000 },
       );
@@ -203,7 +203,7 @@ const LoginScreen = () => {
       console.log('📤 Sending to backend:', socialData);
 
       const response = await axios.post(
-        'https://api.arcalisnews.com/api/users/social_login',
+        API_SOCIAL_LOGIN,
         socialData,
       );
       console.log('🌍 Backend response:', response.data);
@@ -300,7 +300,7 @@ const LoginScreen = () => {
       // 2) BACKEND LOGIN
       try {
         const response = await axios.post(
-          'http://192.168.1.36:9991/api/users/social_login',
+            API_SOCIAL_LOGIN,
           {
             provider: 'apple',
             appleId: appleUserId ,
@@ -385,6 +385,7 @@ const LoginScreen = () => {
           resizeMode="cover"
           style={{ flex: 1 }}
         >
+ 
           {/* Header */}
           <View style={styles.headerContainer}>
             <View style={styles.logoContainer}>
@@ -408,7 +409,7 @@ const LoginScreen = () => {
             ]}
           >
             {/* Email */}
-            <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, styles.fieldMax]}>
               <Text style={[styles.inputLabel, { color: colors.text }]}>
                 Email
               </Text>
@@ -438,7 +439,7 @@ const LoginScreen = () => {
             </View>
 
             {/* Password */}
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, styles.fieldMax]}>
               <Text style={[styles.inputLabel, { color: colors.text }]}>
                 Password
               </Text>
@@ -469,6 +470,7 @@ const LoginScreen = () => {
             </View>
 
             {/* Forgot */}
+            <View style={styles.fieldRowRight}>
             <TouchableOpacity
               style={styles.forgotPasswordContainer}
               onPress={() => navigate('ForgotPassword' as never)}
@@ -482,10 +484,10 @@ const LoginScreen = () => {
                 Forgot Password?
               </Text>
             </TouchableOpacity>
-
+          </View> 
             {/* Email/Password Sign In */}
             <TouchableOpacity
-              style={styles.signInButton}
+              style={[styles.signInButton, styles.fieldMax]}
               onPress={() => formik.handleSubmit()}
               disabled={formik.isSubmitting}
             >
@@ -495,7 +497,7 @@ const LoginScreen = () => {
             </TouchableOpacity>
 
             {/* Or */}
-            <View style={styles.separatorContainer}>
+           <View style={[styles.separatorContainer, styles.fieldMax]}>
               <View style={styles.separatorLine} />
               <Text style={styles.separatorText}>Or</Text>
               <View style={styles.separatorLine} />
@@ -503,8 +505,7 @@ const LoginScreen = () => {
 
             {/* Google */}
             <TouchableOpacity
-              style={[
-                styles.socialButton,
+               style={[styles.socialButton, styles.fieldMax,
                 {
                   backgroundColor: theme === 'dark' ? '#222' : '#fff',
                   borderWidth: 1,
@@ -523,8 +524,7 @@ const LoginScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.socialButton,
+              style={[styles.socialButton, styles.fieldMax,
                 {
                   backgroundColor: theme === 'dark' ? '#222' : '#fff',
                   borderWidth: 1,
@@ -552,6 +552,7 @@ const LoginScreen = () => {
               </Text>
             </View>
           </View>
+   
         </ImageBackground>
       </ScrollView>
     </View>

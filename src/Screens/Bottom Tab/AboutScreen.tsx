@@ -72,7 +72,7 @@ const AboutScreen: React.FC = () => {
         </ImageBackground>
 
         <View style={[styles.sheet, { backgroundColor: colors.card }]}>
-          <Text style={[styles.h1, { color: colors.headingtext }]}>About Us</Text>
+          <Text style={[styles.h1,   { color: theme === 'dark' ? colors.headingtext : '#000000' },]}>About Us</Text>
           <Text style={[styles.body, { color: colors.text }]}>
             {(
               data?.data?.description ??

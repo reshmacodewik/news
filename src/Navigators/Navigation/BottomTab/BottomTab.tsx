@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,7 +27,18 @@ type IconPair = {
   inactive: any;
   active: any;
 };
+const { width } = Dimensions.get('window');
+const isTablet =
+  (Platform.OS === 'ios' && (Platform as any).isPad) || width >= 768;
 
+// scale up a bit on iPad
+const ICON_SIZE = isTablet ? 50 : 25;
+const LABEL_SIZE = isTablet ? 20 : 12;
+const TAB_HEIGHT =
+  Platform.OS === 'ios' ? (isTablet ? 86 : 78) : isTablet ? 74 : 66;
+const ACTIVE_PAD_V = isTablet ? 12 : 10;
+const ACTIVE_PAD_H = isTablet ? 14 : 11;
+const HIT_SIZE = ICON_SIZE;
 const ICONS: Record<string, IconPair> = {
   [SCREEN_NAMES.home]: {
     inactive: require('../../../icons/Home.png'),
@@ -50,26 +62,30 @@ const ICONS: Record<string, IconPair> = {
   },
 };
 
-const ICON_SIZE = 26; // 26–28 looks right
+// 26–28 looks right
 const PILL_HPAD = 12; // horizontal padding to make a rounded “capsule”
-
 
 export default function BottomTab() {
   const insets = useSafeAreaInsets();
   const { theme, colors } = useTheme();
   const iconFor = (route: string, active: boolean) => {
-  const pair = ICONS[route] ?? ICONS[SCREEN_NAMES.more];
-  const src = active ? pair.active : pair.inactive;
+    const pair = ICONS[route] ?? ICONS[SCREEN_NAMES.more];
+    const src = active ? pair.active : pair.inactive;
 
-  return (
-    <View style={s.iconHitArea}>
-      <Image
-        source={src}
-        style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain', tintColor: active ? colors.headingtext : colors.text }}
-      />
-    </View>
-  );
-};
+    return (
+      <View style={s.iconHitArea}>
+        <Image
+          source={src}
+          style={{
+            width: ICON_SIZE,
+            height: ICON_SIZE,
+            resizeMode: 'contain',
+            tintColor: active ? colors.headingtext : colors.text,
+          }}
+        />
+      </View>
+    );
+  };
 
   return (
     <Tab.Navigator
@@ -156,31 +172,31 @@ const s = StyleSheet.create({
   tabItem: { alignItems: 'center', justifyContent: 'center', gap: 4, flex: 1 },
 
   iconHitArea: {
-    width: ICON_SIZE,
-    height: ICON_SIZE,
+    width: HIT_SIZE,
+    height: HIT_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconWrap: {
     borderRadius: 999,
-    paddingVertical: 12, // base small padding
+    paddingVertical: 12,
     paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconWrapActive: {
-    backgroundColor: 'rgba(34,96,178,0.15)', // #2260B2 with alpha
-    paddingVertical: 10,
+    backgroundColor: 'rgba(34,96,178,0.15)',
+    paddingVertical: ACTIVE_PAD_V,
+    paddingHorizontal: ACTIVE_PAD_H,
     borderRadius: 80,
-    paddingHorizontal: 11,
   },
-  tabLabel: { fontSize: 12, color: '#6B7280' },
+  tabLabel: { fontSize: LABEL_SIZE, color: '#6B7280' },
   tabLabelActive: { color: '#2260B2', fontWeight: '700' },
   homeIndicator: {
     position: 'absolute',
     bottom: 4,
     alignSelf: 'center',
-    width: 80,
+    width: isTablet ? 100 : 80,
     height: 4,
     borderRadius: 999,
     backgroundColor: '#E5E7EB',

@@ -232,7 +232,7 @@ const PremiumOnlyScreen: React.FC = () => {
         keyExtractor={item => item._id}
         ListHeaderComponent={ListHeader}
         ItemSeparatorComponent={() => <View style={{ height: 0 }} />}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

@@ -1,8 +1,13 @@
-import { StyleSheet, Dimensions, PixelRatio } from 'react-native';
+import { StyleSheet, Dimensions, PixelRatio, Platform } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 const BASE_W = 375;
-export const scale = (n: number) => (width / BASE_W) * n;
+// --- tablet detection + scale clamp ---
+const isTablet = (Platform.OS === 'ios' && (Platform as any).isPad) || width >= 768;
+// iPad screens are wide; cap the scale so UI doesn’t blow up
+const SCALE = Math.min(width / BASE_W, isTablet ? 1.15 : 1.0);
+
+export const scale = (n: number) => SCALE * n;
 const f = (n: number) => Math.round(PixelRatio.roundToNearestPixel(scale(n)));
 
 export const styles = StyleSheet.create({
@@ -19,7 +24,7 @@ export const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     backgroundColor: '#FFFFFF',
   },
-  backBtn: {  },
+  backBtn: {},
   backIcon: { width: scale(20), height: scale(20), tintColor: '#111827' },
   appTitle: { fontSize: f(16), fontWeight: '700', color: '#374151' },
 
@@ -50,27 +55,36 @@ export const styles = StyleSheet.create({
 
   /* Scroll content */
   scroll: { flex: 1 },
-  hero: {
-    height: Math.min(height * 0.25, scale(220)),
-    width: '100%',
-    backgroundColor: '#F3F4F6',
-  },
+  // hero: {
+  //   height: Math.min(height * 0.25, scale(220)),
+  //   width: '100%',
+  //   backgroundColor: '#F3F4F6',
+  // },
   heroImg: { resizeMode: 'cover' },
-
-  /* Header block */
   headerBlock: {
     paddingHorizontal: scale(16),
     paddingTop: scale(16),
     paddingBottom: scale(8),
   },
+
   headline: {
-    fontSize: 24,
-    lineHeight: f(32),
+    // bump the size on iPad, and make lineHeight derived from it
+    fontSize: isTablet ? f(28) : f(24),
+    lineHeight: isTablet ? f(36) : f(32), // >= 1.25× fontSize
     fontWeight: '700',
     color: '#0F172A',
     letterSpacing: 0.2,
     marginBottom: scale(10),
+    flexShrink: 1, // avoids odd wrapping/cut on narrow inner layouts
   },
+
+  hero: {
+    height: Math.min(height * 0.28, scale(isTablet ? 260 : 220)),
+    width: '100%',
+    backgroundColor: '#F3F4F6',
+  },
+
+
   byline: { fontSize: 14, color: '#727272' },
   byAuthor: { color: '#727272', fontSize: f(13) },
   dateline: { marginTop: scale(2), fontSize: f(13), color: '#727272' },
@@ -123,7 +137,14 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
   },
   divider: { height: 1, backgroundColor: '#eee', marginVertical: 10 },
-  commentBox: { flexDirection: 'row', marginBottom: 0,borderWidth:1 ,borderColor:'#ECEFF3',borderRadius:10,paddingHorizontal:10},
+  commentBox: {
+    flexDirection: 'row',
+    marginBottom: 0,
+    borderWidth: 1,
+    borderColor: '#ECEFF3',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+  },
   avatar: { width: 36, height: 36, borderRadius: 18, marginRight: 10 },
   username: { fontWeight: '600', fontSize: 14 },
   time: { color: '#888', fontSize: 12 },
@@ -164,7 +185,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#ECEFF3',
     marginTop: scale(10),
   },
-   filterWrap: {
+  filterWrap: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     marginBottom: 12,
