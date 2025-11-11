@@ -96,5 +96,19 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>icon-60.png</string>  <!-- 60x60 icon for iPhone -->
+				<string>icon-76.png</string>  <!-- 76x76 icon for iPad -->
+				<string>icon-120.png</string> <!-- 120x120 icon for iPhone Retina -->
+				<string>icon-152.png</string> <!-- 152x152 icon for iPad Retina -->
+				<string>icon-180.png</string> <!-- 180x180 icon for iPhone Retina -->
+			</array>
+		</dict>
+	</dict>
 </dict>
 </plist>

@@ -1,5 +1,6 @@
 {
-  "name": "arcalisNews",
-  "displayName": "Arcalis News"
-}
+  "name": "arcalisnews",   
+  "displayName": "Arcalis News", 
+    "package": "com.arcalisnews"
+  }
 
