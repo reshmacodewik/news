@@ -81,7 +81,7 @@ android {
 
     namespace "com.arcalisnews"
     defaultConfig {
-        applicationId "com.arcalisnews"
+        applicationId "com.arcalisNews"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 8

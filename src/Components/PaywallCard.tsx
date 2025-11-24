@@ -1,9 +1,17 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, Dimensions, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  Platform,
+} from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
-const isTablet = (Platform.OS === 'ios' && (Platform as any).isPad) || width >= 768;
+const isTablet =
+  (Platform.OS === 'ios' && (Platform as any).isPad) || width >= 768;
 
 type Props = {
   mode: 'login' | 'premium' | 'register';
@@ -12,17 +20,27 @@ type Props = {
   onSubscribe: () => void;
 };
 
-const PaywallCard: React.FC<Props> = ({ mode, token, onSignIn, onSubscribe }) => {
+const PaywallCard: React.FC<Props> = ({
+  mode,
+  token,
+  onSignIn,
+  onSubscribe,
+}) => {
   const { theme, colors } = useTheme();
   const isDark = theme === 'dark';
-
+  const isIOS = Platform.OS === 'ios';
   const isLoggedIn = !!token;
-  const showSignIn = (mode === 'login' || mode === 'premium' || mode === 'register') && !isLoggedIn;
-  const showSubscribe = mode !== 'register';
+  const showSignIn =
+    (mode === 'login' || mode === 'premium' || mode === 'register') &&
+    !isLoggedIn;
+  const showSubscribe = mode !== 'register' && !isIOS;
 
   const badgeText =
-    mode === 'premium' ? 'Premium Content' :
-    mode === 'register' ? 'Login Required' : 'Premium Content';
+    mode === 'premium'
+      ? 'Premium Content'
+      : mode === 'register'
+        ? 'Login Required'
+        : 'Premium Content';
 
   return (
     <View
@@ -64,8 +82,18 @@ const PaywallCard: React.FC<Props> = ({ mode, token, onSignIn, onSubscribe }) =>
             marginBottom: 16,
           }}
         >
-          <LockIcon tintColor={isDark ? '#fff' : '#000'} background={isDark ? '#222' : '#EEF3FB'} />
-          <Text style={{ marginLeft: 6, fontSize: 12, fontWeight: '700', color: colors.text }}>
+          <LockIcon
+            tintColor={isDark ? '#fff' : '#000'}
+            background={isDark ? '#222' : '#EEF3FB'}
+          />
+          <Text
+            style={{
+              marginLeft: 6,
+              fontSize: 12,
+              fontWeight: '700',
+              color: colors.text,
+            }}
+          >
             {badgeText}
           </Text>
         </View>
@@ -108,8 +136,8 @@ const PaywallCard: React.FC<Props> = ({ mode, token, onSignIn, onSubscribe }) =>
           {mode === 'login'
             ? 'Sign in to your account to continue.'
             : mode === 'register'
-            ? 'Please sign in to continue reading.'
-            : 'Become a member to unlock this article and more.'}
+              ? 'Please sign in to continue reading.'
+              : 'Become a member to unlock this article and more.'}
         </Text>
 
         {/* Buttons */}
@@ -138,7 +166,11 @@ const PaywallCard: React.FC<Props> = ({ mode, token, onSignIn, onSubscribe }) =>
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>Sign In</Text>
+              <Text
+                style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}
+              >
+                Sign In
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -154,7 +186,11 @@ const PaywallCard: React.FC<Props> = ({ mode, token, onSignIn, onSubscribe }) =>
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: '#2260B2', fontWeight: '700', fontSize: 15 }}>Subscribe Now</Text>
+              <Text
+                style={{ color: '#2260B2', fontWeight: '700', fontSize: 15 }}
+              >
+                Subscribe Now
+              </Text>
             </TouchableOpacity>
           </View>
         ) : showSignIn ? (
@@ -174,7 +210,9 @@ const PaywallCard: React.FC<Props> = ({ mode, token, onSignIn, onSubscribe }) =>
               marginBottom: 12,
             }}
           >
-            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>Sign In</Text>
+            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>
+              Sign In
+            </Text>
           </TouchableOpacity>
         ) : showSubscribe ? (
           // Single Subscribe button – centered
@@ -194,7 +232,9 @@ const PaywallCard: React.FC<Props> = ({ mode, token, onSignIn, onSubscribe }) =>
               marginBottom: 12,
             }}
           >
-            <Text style={{ color: '#2260B2', fontWeight: '700', fontSize: 15 }}>Subscribe Now</Text>
+            <Text style={{ color: '#2260B2', fontWeight: '700', fontSize: 15 }}>
+              Subscribe Now
+            </Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -229,7 +269,12 @@ export const LockIcon = ({
     <Image
       source={require('../icons/lock.png')}
       style={[
-        { width: size * 0.6, height: size * 0.6, tintColor, resizeMode: 'contain' },
+        {
+          width: size * 0.6,
+          height: size * 0.6,
+          tintColor,
+          resizeMode: 'contain',
+        },
         style,
       ]}
     />

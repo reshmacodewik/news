@@ -17,7 +17,7 @@ import {
 import { styles } from '../../style/HomeStyles';
 import { navigate } from '../../Navigators/utils';
 import { useAuth } from '../Auth/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { getApiWithOutQuery } from '../../Utils/api/common';
 import {
   API_ARTICLES_CATEGORIES,
@@ -60,18 +60,40 @@ const HomeScreen: React.FC = () => {
   const [trendingNews, setTrendingNews] = useState<Article[]>([]);
   const [selectedType, setSelectedType] = useState('top-news');
   const [showTrending, setShowTrending] = useState(true);
+  const [pageNumber, setPageNumber] = useState(1);
+  const { theme, colors } = useTheme();
   const scrollY = useRef(new Animated.Value(0)).current;
   // === FETCH ALL ARTICLES ===
-  const { theme, colors } = useTheme();
-  const { data: allArticles = [], refetch: refetchAllArticles } = useQuery({
-    queryKey: ['articles', domain?.type],
-    queryFn: async () => {
-      const res = await getApiWithOutQuery({
-        url: API_ARTICLES_LIST + `/${domain?.type}`,
-      });
-      return res.data?.articles ?? [];
-    },
-  });
+  const {
+  data,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  refetch: refetchAllArticles,
+} = useInfiniteQuery({
+  queryKey: ['articles', domain?.type, selectedType],
+
+  initialPageParam: 1,   // FIXES your TypeScript error
+
+  queryFn: async ({ pageParam }) => {
+    const res = await getApiWithOutQuery({
+      url: `${API_ARTICLES_LIST}/${domain?.type}?type=${selectedType}&page=${pageParam}&limit=10`,
+    });
+
+    return {
+      articles: res.data?.articles ?? [],
+      nextPage: pageParam + 1,
+      totalPages: res.data?.pagination?.totalPages,
+    };
+  },
+
+  getNextPageParam: lastPage => {
+    return lastPage.nextPage <= lastPage.totalPages
+      ? lastPage.nextPage
+      : undefined;
+  },
+});
+
   const { data: categories = [], refetch: refetchCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -111,13 +133,9 @@ const HomeScreen: React.FC = () => {
   }, []);
 
   // === TAB FILTER ===
-  const tabArticles = useMemo(
-    () =>
-      allArticles.filter(
-        (a: { articleType: string }) => a.articleType === selectedType,
-      ),
-    [allArticles, selectedType],
-  );
+const tabArticles = useMemo(() => {
+  return data?.pages.flatMap(p => p.articles) ?? [];
+}, [data]);
 
   // Helper to get category title
   const getCategoryTitle = (articleCategoryId: any) => {
@@ -196,7 +214,6 @@ const HomeScreen: React.FC = () => {
           {Array.isArray(trendingNews) && trendingNews.length > 0 && (
             <View style={styles.trendingHeader}>
               <Text style={styles.trendingTitle}>Trending news</Text>
-
             </View>
           )}
 
@@ -244,7 +261,9 @@ const HomeScreen: React.FC = () => {
 
         {/* RECOMMENDED SECTION */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommended</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Recommended
+          </Text>
         </View>
 
         {/* CATEGORY TABS */}
@@ -310,7 +329,13 @@ const HomeScreen: React.FC = () => {
               onPress={() => handleArticlePress(item._id, item.slug)}
             />
           )}
+            onEndReached={() => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }}
+  onEndReachedThreshold={0.3}
+
           ListEmptyComponent={() => (
+            
             <View
               style={{
                 alignItems: 'center',
@@ -326,6 +351,8 @@ const HomeScreen: React.FC = () => {
           ListFooterComponent={<View style={{ height: 16 }} />}
         />
       </View>
+   
+
     </Animated.ScrollView>
   );
 };

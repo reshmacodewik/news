@@ -323,47 +323,7 @@ const MoreScreen: React.FC = () => {
         <Text style={[styles.sectionTitle, { color: colors.headingtext }]}>
           Others
         </Text>
-        <View
-          style={[
-            styles.cardGroup,
-            { backgroundColor: colors.card }, // keeps theme shadows consistent
-          ]}
-        >
-          <View style={styles.optionsCardInner}>
-            <Text style={[styles.optionsTitle, { color: colors.headingtext }]}>
-              You have got options!
-            </Text>
-
-            <View style={styles.bullets}>
-              <Text style={[styles.bullet, { color: colors.text }]}>
-                • Change plan
-              </Text>
-              <Text style={[styles.bullet, { color: colors.text }]}>
-                • Manage payment method
-              </Text>
-              <Text style={[styles.bullet, { color: colors.text }]}>
-                • Cancel and more
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() =>
-                Linking.openURL('https://arcalisnews.com/subscription')
-              }
-              style={{ marginTop: 8 }}
-            >
-              <Text style={styles.linkText}>Go to arcalisnews.com</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* right illustration (optional) */}
-          {/* <Image
-            source={require('../../assets/paper-plane.png')} // <- replace with your asset
-            style={styles.optionsArt}
-            resizeMode="contain"
-          /> */}
-        </View>
+      
         {/* Group 1 */}
         <View style={[styles.cardGroup, { backgroundColor: colors.card }]}>
           <Row icon={LOCK} label="Change Password" onPress={openNewPassword} />
@@ -396,12 +356,15 @@ const MoreScreen: React.FC = () => {
             onPress={() => navigate('TermsAndConditions' as never)}
             style={{ marginTop: -12 }}
           />
-          <Row
+          {Platform.OS !== 'ios' && (
+            <Row
             icon={PLAN}
             label="Subscription Billing"
             onPress={() => navigate('SubscriptionBillingScreen' as never)}
             style={{ marginTop: -12 }}
           />
+          )}
+          
           SubscriptionBillingScreen
         </View>
 
@@ -497,13 +460,13 @@ const MoreScreen: React.FC = () => {
               source={DELETE}
               style={[
                 styles.logoutIcon,
-                { tintColor: theme === 'dark' ? '#fff' : 'red' },
+                { tintColor: theme === 'dark' ? 'red' : 'red' },
               ]}
             />
             <Text
               style={[
                 styles.logoutText,
-                { color: theme === 'dark' ? '#fff' : 'red' },
+                { color: theme === 'dark' ? 'red' : 'red' },
               ]}
             >
               Delete Account
@@ -521,13 +484,13 @@ const MoreScreen: React.FC = () => {
               source={LOGOUT}
               style={[
                 styles.logoutIcon,
-                { tintColor: theme === 'dark' ? '#fff' : 'red' },
+                { tintColor: theme === 'dark' ? 'red' : 'red' },
               ]}
             />
             <Text
               style={[
                 styles.logoutText,
-                { color: theme === 'dark' ? '#fff' : 'red' },
+                { color: theme === 'dark' ? 'red' : 'red' },
               ]}
             >
               Logout
