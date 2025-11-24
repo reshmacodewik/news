@@ -84,7 +84,7 @@ android {
         applicationId "com.arcalisnews"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
+        versionCode 8
         versionName "1.0"
        manifestPlaceholders = [
         appAuthRedirectScheme: "com.googleusercontent.apps.702876724757-jds7gqa7sush8s6jquccr4plj24mmfas"
