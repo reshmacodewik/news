@@ -190,11 +190,11 @@ const s = StyleSheet.create({
     paddingHorizontal: ACTIVE_PAD_H,
     borderRadius: 80,
   },
-  tabLabel: { fontSize: LABEL_SIZE, color: '#6B7280' },
+  tabLabel: { fontSize: LABEL_SIZE, color: '#6B7280' ,bottom: isTablet ? 6 : 6},
   tabLabelActive: { color: '#2260B2', fontWeight: '700' },
   homeIndicator: {
     position: 'absolute',
-    bottom: 4,
+    bottom: 8,
     alignSelf: 'center',
     width: isTablet ? 100 : 80,
     height: 4,

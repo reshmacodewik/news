@@ -196,7 +196,12 @@ const HomeScreen: React.FC = () => {
           {Array.isArray(trendingNews) && trendingNews.length > 0 && (
             <View style={styles.trendingHeader}>
               <Text style={styles.trendingTitle}>Trending news</Text>
-
+              <TouchableOpacity
+                hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
+                onPress={() => navigate('Trending' as never)}
+              >
+               
+              </TouchableOpacity>
             </View>
           )}
 
@@ -244,7 +249,7 @@ const HomeScreen: React.FC = () => {
 
         {/* RECOMMENDED SECTION */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommended</Text>
+          <Text style={styles.sectionTitle}>Recommended</Text>
         </View>
 
         {/* CATEGORY TABS */}

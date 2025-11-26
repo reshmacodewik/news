@@ -21,7 +21,7 @@ const LOGO = require('../../icons/headerlogo.png');
 const AVATAR = require('../../icons/user.png');
 
 const AboutScreen: React.FC = () => {
-  const TAB_BAR_HEIGHT = 72; // adjust to your tab's height
+  const TAB_BAR_HEIGHT = 100; // adjust to your tab's height
   const insets = useSafeAreaInsets();
    const { theme, colors } = useTheme();
   const scale = (size: number) => (Dimensions.get('window').width / 375) * size;

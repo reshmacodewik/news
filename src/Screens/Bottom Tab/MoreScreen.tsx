@@ -323,15 +323,7 @@ const MoreScreen: React.FC = () => {
         <Text style={[styles.sectionTitle, { color: colors.headingtext }]}>
           Others
         </Text>
-        <View
-          style={[
-            styles.cardGroup,
-            { backgroundColor: colors.card }, // keeps theme shadows consistent
-          ]}
-        >
-
-          
-        </View>
+      
         {/* Group 1 */}
         <View style={[styles.cardGroup, { backgroundColor: colors.card }]}>
           <Row icon={LOCK} label="Change Password" onPress={openNewPassword} />
@@ -468,13 +460,13 @@ const MoreScreen: React.FC = () => {
               source={DELETE}
               style={[
                 styles.logoutIcon,
-                { tintColor: theme === 'dark' ? '#fff' : 'red' },
+                { tintColor: theme === 'dark' ? 'red' : 'red' },
               ]}
             />
             <Text
               style={[
                 styles.logoutText,
-                { color: theme === 'dark' ? '#fff' : 'red' },
+                { color: theme === 'dark' ? 'red' : 'red' },
               ]}
             >
               Delete Account
@@ -492,13 +484,13 @@ const MoreScreen: React.FC = () => {
               source={LOGOUT}
               style={[
                 styles.logoutIcon,
-                { tintColor: theme === 'dark' ? '#fff' : 'red' },
+                { tintColor: theme === 'dark' ? 'red' : 'red' },
               ]}
             />
             <Text
               style={[
                 styles.logoutText,
-                { color: theme === 'dark' ? '#fff' : 'red' },
+                { color: theme === 'dark' ? 'red' : 'red' },
               ]}
             >
               Logout

@@ -8,6 +8,7 @@ import {
   Dimensions,
   ActivityIndicator,
   ScrollView,
+  FlatList,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../../style/TrendingStyles';
@@ -60,7 +61,8 @@ const TrendingScreen: React.FC = () => {
   const [breakingNews, setBreakingNews] = useState<Article[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const { domain, domainId } = useDomainByType('finance');
-  const { theme, colors } = useTheme();
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(true);
 
   const { data: categoryDataRaw = [] } = useQuery({
     queryKey: ['categories-domain', domainId],
@@ -72,14 +74,7 @@ const TrendingScreen: React.FC = () => {
       return res.data ?? [];
     },
   });
-  const getCategoryTitle = (articleCategoryId: any) => {
-    if (!articleCategoryId) return 'General';
-    if (typeof articleCategoryId === 'object' && articleCategoryId.title)
-      return articleCategoryId.title;
 
-    const match = categories.find((c: any) => c._id === articleCategoryId);
-    return match?.title || 'General';
-  };
   const rawCategoryArray: any[] = useMemo(() => {
     if (Array.isArray(categoryDataRaw)) return categoryDataRaw;
     if (Array.isArray((categoryDataRaw as any)?.data))
@@ -127,24 +122,35 @@ const TrendingScreen: React.FC = () => {
   }, [activeTab, tabs]);
 
   const fetchArticles = useCallback(async () => {
-    setLoading(true);
     try {
       const res = await getApiWithOutQuery({
         url:
           API_ARTICLES_CATEGORIES +
-          `?categoryId=${activeTab !== 'all' ? activeTab : ''}&domainType=${
-            domain?.type
-          }`,
+          `?categoryId=${activeTab !== 'all' ? activeTab : ''}` +
+          `&domainType=${domain?.type}` +
+          `&page=${page}&limit=10`,
       });
-      setArticles(res.data?.articles ?? []);
-      // setArticles(list);
+
+      const newItems = res.data?.articles ?? [];
+
+      if (page === 1) {
+        setArticles(newItems); // first load
+      } else {
+        setArticles(prev => [...prev, ...newItems]); // append pages
+      }
+
+      setHasNextPage(
+        res.data?.pagination?.page < res.data?.pagination?.totalPages,
+      );
     } catch (err) {
-      setArticles([]);
-      console.log('Error fetching articles for tab:', activeTab, err);
-    } finally {
-      setLoading(false);
+      console.log('Error:', err);
     }
-  }, [activeTab, domain?.type]);
+  }, [page, activeTab, domain?.type]);
+
+  useEffect(() => {
+    setPage(1);
+    setArticles([]);
+  }, [activeTab]);
 
   // Fetch on focus + when tab/domain changes
   useFocusEffect(
@@ -156,13 +162,13 @@ const TrendingScreen: React.FC = () => {
   const handleArticlePress = (id: string, slug: string) => {
     navigate('ArticleDetail' as never, { id, slug } as never);
   };
-
+  const { theme, colors } = useTheme();
   // ── UI ─────────────────────────────────────────────────────────────
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View
         style={{
-          backgroundColor:  colors.background,
+          backgroundColor: colors.background,
           borderBottomLeftRadius: scale(18),
           borderBottomRightRadius: scale(15),
           paddingBottom: scale(10),
@@ -193,7 +199,11 @@ const TrendingScreen: React.FC = () => {
                 activeOpacity={0.8}
               >
                 <Text
-                  style={[styles.tabText, isActive && styles.tabTextActive, isActive && { color: colors.tabtext }]}
+                  style={[
+                    styles.tabText,
+                    isActive && styles.tabTextActive,
+                    isActive && { color: colors.tabtext },
+                  ]}
                 >
                   {c.title}
                 </Text>
@@ -211,38 +221,49 @@ const TrendingScreen: React.FC = () => {
       </View>
 
       {/* Scroll Content */}
-      <ScrollView
-        style={{ flex: 1 }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + scale(80) }}
-      >
-         {loading ? (
-          <ActivityIndicator style={{ marginTop: scale(20) }} />
-        ) : (
-          articles.map(item => {
-            const rawCategory =
-              item.articleCategoryId?.title ||
-              getCategoryTitle(item.articleCategoryId) ||
-              'Uncategorized';
-
-            const category =
-              rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1);
-
-            return (
-              <NewsCard
-                key={item._id}
-                category={category}
-                title={item.title}
-                description={(item.description || '').replace(/<[^>]+>/g, '')}
-                image={item.image}
-                commentCount={item.commentCount ?? 0}
-                viewCount={item.viewCount ?? 0}
-                onPress={() => handleArticlePress(item._id, item.slug)}
-              />
-            );
-          })
+      {/* Content - FlatList for infinite scroll */}
+      <FlatList
+        data={articles}
+        keyExtractor={item => item._id}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + scale(80),
+        }}
+        ListEmptyComponent={
+          <Text style={{ textAlign: 'center', marginTop: scale(20) }}>
+            No articles found
+          </Text>
+        }
+        renderItem={({ item }) => (
+          <NewsCard
+            category={
+              (item.articleCategoryId?.title || 'News')
+                .charAt(0)
+                .toUpperCase() +
+              (item.articleCategoryId?.title || 'News').slice(1)
+            }
+            title={item.title}
+            description={(item.description || '').replace(/<[^>]+>/g, '')}
+            image={item.image}
+            commentCount={item.commentCount}
+            viewCount={item.viewCount}
+            onPress={() => handleArticlePress(item._id, item.slug)}
+          />
         )}
-      </ScrollView>
+        // 🔥 Infinite scroll
+        onEndReached={() => {
+          if (hasNextPage) {
+            setPage(prev => prev + 1);
+          }
+        }}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={
+          hasNextPage ? (
+            <ActivityIndicator style={{ marginVertical: scale(20) }} />
+          ) : (
+            <View style={{ height: scale(20) }} />
+          )
+        }
+      />
     </View>
   );
 };

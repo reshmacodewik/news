@@ -8,6 +8,7 @@ import {
   Dimensions,
   ActivityIndicator,
   ScrollView,
+  FlatList,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../../style/TrendingStyles';
@@ -60,6 +61,8 @@ const CryptoScreen: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const { domain, domainId } = useDomainByType('crypto');
  const { theme, colors } = useTheme();
+  const [page, setPage] = useState<number>(1);
+  const [hasNextPage, setHasNextPage] = useState<boolean>(true);
   const { data: categoryDataRaw = [] } = useQuery({
     queryKey: ['categories-domain', domainId],
     queryFn: async () => {
@@ -117,23 +120,37 @@ const CryptoScreen: React.FC = () => {
     return tab ? tab.title : 'All';
   }, [activeTab, tabs]);
 
-  const fetchArticles = useCallback(async () => {
-    setLoading(true);
+ const fetchArticles = useCallback(async () => {
     try {
       const res = await getApiWithOutQuery({
         url:
           API_ARTICLES_CATEGORIES +
-          `?categoryId=${activeTab !== 'all' ? activeTab : ''}&domainType=${domain?.type}`,
+          `?categoryId=${activeTab !== 'all' ? activeTab : ''}` +
+          `&domainType=${domain?.type}` +
+          `&page=${page}&limit=10`,
       });
-      setArticles(res.data?.articles ?? []);
-      // setArticles(list);
+
+      const newItems = res.data?.articles ?? [];
+
+      if (page === 1) {
+        setArticles(newItems); // first load
+      } else {
+        setArticles(prev => [...prev, ...newItems]); // append pages
+      }
+
+      setHasNextPage(
+        res.data?.pagination?.page < res.data?.pagination?.totalPages,
+      );
     } catch (err) {
-      setArticles([]);
-      console.log('Error fetching articles for tab:', activeTab, err);
-    } finally {
-      setLoading(false);
+      console.log('Error:', err);
     }
-  }, [activeTab, domain?.type]);
+  }, [page, activeTab, domain?.type]);
+
+  useEffect(() => {
+    setPage(1);
+    setArticles([]);
+  }, [activeTab]);
+
 
   // Fetch on focus + when tab/domain changes
   useFocusEffect(
@@ -207,38 +224,48 @@ const CryptoScreen: React.FC = () => {
       </View>
 
       {/* Scroll Content */}
-      <ScrollView
-        style={{ flex: 1 }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + scale(80) }}
-      >
-        {loading ? (
-          <ActivityIndicator style={{ marginTop: scale(20) }} />
-        ) : (
-          articles.map(item => {
-            const rawCategory =
-              item.articleCategoryId?.title ||
-              getCategoryTitle(item.articleCategoryId) ||
-              'Uncategorized';
-
-            const category =
-              rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1);
-
-            return (
-              <NewsCard
-                key={item._id}
-                category={category}
-                title={item.title}
-                description={(item.description || '').replace(/<[^>]+>/g, '')}
-                image={item.image}
-                commentCount={item.commentCount ?? 0}
-                viewCount={item.viewCount ?? 0}
-                onPress={() => handleArticlePress(item._id, item.slug)}
-              />
-            );
-          })
+     <FlatList
+        data={articles}
+        keyExtractor={item => item._id}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + scale(80),
+        }}
+        ListEmptyComponent={
+          <Text style={{ textAlign: 'center', marginTop: scale(20) }}>
+            No articles found
+          </Text>
+        }
+        renderItem={({ item }) => (
+          <NewsCard
+            category={
+              (item.articleCategoryId?.title || 'News')
+                .charAt(0)
+                .toUpperCase() +
+              (item.articleCategoryId?.title || 'News').slice(1)
+            }
+            title={item.title}
+            description={(item.description || '').replace(/<[^>]+>/g, '')}
+            image={item.image}
+            commentCount={item.commentCount}
+            viewCount={item.viewCount}
+            onPress={() => handleArticlePress(item._id, item.slug)}
+          />
         )}
-      </ScrollView>
+        // 🔥 Infinite scroll
+        onEndReached={() => {
+          if (hasNextPage) {
+            setPage(prev => prev + 1);
+          }
+        }}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={
+          hasNextPage ? (
+            <ActivityIndicator style={{ marginVertical: scale(20) }} />
+          ) : (
+            <View style={{ height: scale(20) }} />
+          )
+        }
+      />
     </View>
   );
 };
