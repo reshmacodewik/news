@@ -22,7 +22,7 @@ export const useSubscriptionStatus = (
     refetchOnMount: "always",
     queryFn: async (): Promise<ActivePlanResponse | null> => {
       const res = await fetch(
-        `http://192.168.1.36:9991/users/subscriptions/active/me`,
+        `http://api.arcalisnews.com/users/subscriptions/active/me`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

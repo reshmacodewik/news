@@ -335,14 +335,14 @@ const MoreScreen: React.FC = () => {
         {/* Group 1 */}
         <View style={[styles.cardGroup, { backgroundColor: colors.card }]}>
           <Row icon={LOCK} label="Change Password" onPress={openNewPassword} />
-          {Platform.OS !== 'ios' && (
+          
             <Row
               icon={PLAN}
               label="Subscription Plan"
               onPress={() => navigate('Premium' as never)}
               style={{ marginTop: -12 }}
             />
-          )}
+          
           <Row
             icon={ABOUT}
             label="About Us"
@@ -364,16 +364,16 @@ const MoreScreen: React.FC = () => {
             onPress={() => navigate('TermsAndConditions' as never)}
             style={{ marginTop: -12 }}
           />
-          {Platform.OS !== 'ios' && (
+      
             <Row
             icon={PLAN}
             label="Subscription Billing"
             onPress={() => navigate('SubscriptionBillingScreen' as never)}
             style={{ marginTop: -12 }}
           />
-          )}
+         
           
-          SubscriptionBillingScreen
+          
         </View>
 
         {/* Contact + Version */}

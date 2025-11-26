@@ -5,6 +5,9 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
+# Make sure the Specs repo is listed
+source 'https://github.com/CocoaPods/Specs.git'
+
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
@@ -23,6 +26,10 @@ target 'arcalisNews' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
+  # 👇 Add these two lines so CocoaPods uses the local podspecs in node_modules
+  pod 'NitroModules',    :path => '../node_modules/react-native-nitro-modules'
+ 
+
   post_install do |installer|
     react_native_post_install(
       installer,
@@ -30,5 +37,12 @@ target 'arcalisNews' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # 👇 (Optional but helps with some Nitro builds)
+    installer.pods_project.targets.each do |t|
+      if t.name == 'NitroModules'
+        t.build_configurations.each { |c| c.build_settings['SWIFT_VERSION'] = '5.10' }
+      end
+    end
   end
 end

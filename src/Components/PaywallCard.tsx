@@ -28,12 +28,11 @@ const PaywallCard: React.FC<Props> = ({
 }) => {
   const { theme, colors } = useTheme();
   const isDark = theme === 'dark';
-  const isIOS = Platform.OS === 'ios';
   const isLoggedIn = !!token;
   const showSignIn =
     (mode === 'login' || mode === 'premium' || mode === 'register') &&
     !isLoggedIn;
-  const showSubscribe = mode !== 'register' && !isIOS;
+  const showSubscribe = mode !== 'register' ;
 
   const badgeText =
     mode === 'premium'
